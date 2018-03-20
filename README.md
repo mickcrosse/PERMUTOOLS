@@ -1,2 +1,2 @@
-# CNL_Toolbox
-The Cognitive Neurophysiology Laboratory Toolbox
+# StatsTools
+A repository of MATLAB functions for non-parametric statistical analyses
