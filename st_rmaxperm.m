@@ -6,10 +6,8 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %   coefficient. If X and Y are matrices, multiple permutation tests are
 %   performed simultaneously between each pair of columns in X and Y and
 %   family-wise error rate is controlled using the max statistic correction
-%   method (Blair et al., 1994; Westfall & Young, 1993). This method is
-%   suitable for multivariate or multiple permutation tests in
-%   psychophysics (Gondan, 2010) and physiology (Blair & Karniski, 1993;
-%   Groppe et al., 2011).
+%   method (Blair et al., 1994; Westfall & Young, 1993; Groppe et al., 
+%   2011). 
 %
 %   [...,CORX] = ST_RMAXPERM(...) returns a structure containing the
 %   corrected test statistics of the permutation tests.
@@ -18,26 +16,25 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %   original, uncorrected test statistics of the permutation tests.
 %
 %   [...,STATS] = ST_RMAXPERM(...) returns a structure containing some
-%   general data statistics.
+%   general data statistics including the effect size.
 %
 %   Inputs:
 %   x     - column vector or matrix of data (observations by variables)
 %   y     - column vector or matrix of data (observations by variables)
-%   nperm - number of permutations (default=10,000; all possible
-%           permutations are computed for less than 8 observations)
+%   nperm - scalar specifying the number of permutations (default=10,000 or 
+%           all possible permutations are computed for less than 8 obs.)
 %   tail  - string specifying the alternative hypothesis
 %           'both'  - correlation is not zero (default)
 %           'right' - correlation is greater than zero
 %           'left'  - correlation is less than zero
-%   alpha - significance level (default==0.05)
-%   type  - type of measure used to determine the correlation coefficient
-%           'Pearson'  - Pearson's linear correlation coefficient (default)
+%   alpha - scalar between 0 and 1 specifying the significance level as 
+%           100*ALPHA% (default=0.05)
+%   type  - string specifying the type of correlation measure
+%           'Pearson'  - Pearson correlation coefficient (default)
 %           'Spearman' - Spearman's rank correlation coefficient
 %
 %   Outputs:
-%   rval  - scalar or vector of correlation coefficients between each pair
-%           of columns in X and Y based on Pearson's linear correlation
-%           coefficient or Spearman's rank correlation coefficient
+%   rval  - scalar or vector containing the correlation coefficients
 %   corx  - structure of corrected test statistics containing the following
 %           fields:
 %           p     - probability of observing the given result by chance
@@ -47,12 +44,14 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %           the same fields as CORX
 %   stats - structure of data statistics containing the following fields:
 %           df    - degrees of freedom of each test
-%           sdx   - estimated population standard deviation
-%           sdy   - estimated population standard deviation
+%           sdx   - estimated population standard deviation of X
+%           sdy   - estimated population standard deviation of Y
 %
 %   See README for examples of use.
 %
-%   See also ST_TMAXPERM ST_TMAXCORR ST_BOXDOTPLOT ST_PLOTPOLYCI.
+%   See also ST_TMAXPERM ST_TMAXPERM2 ST_BOXDOTPLOT ST_PLOTPOLYCI.
+%
+%   StatsTools https://github.com/mickcrosse/StatsTools
 
 %   References:
 %      [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
@@ -60,14 +59,11 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %          Test in Prescribed Circumstances. Mult Behav Res, 29(2):141-163.
 %      [2] Westfall PH, Young SS (1993) Resampling-Based Multiple Testing:
 %           Examples and Methods for p-Value Adjustment. Wiley, New York.
-%      [3] Gondan M (2010) A permutation test for the race model inequality
-%          Behav Res Methods, 42(1):23-28.
-%      [4] Blair RC, Karniski W (1993) An alternative method for
-%          significance testing of waveform difference potentials.
-%          Psychophysiology, 30:518-524.
-%      [5] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis of
+%      [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis of
 %          event-related brain potentials/fields I: A critical tutorial
 %          review. Psychophysiology, 48(12):1711-1725.
+%      [4] Cohen J (1988) Statistical Power Analysis for the Behavioral 
+%          Sciences, 2nd Ed. Lawrence Earlbaum Associates, Hilsdale, NJ.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -128,8 +124,8 @@ if strcmpi(tail,'both')
     p = zeros(1,nvar);
     p(rval>0) = mean(abs(rval)<rmax)*2;
     p(rval<=0) = mean(abs(rval)>rmax)*2;
-    rcrit(2) = prctile(rmax,100*alpha/2);
-    rcrit(1) = prctile(rmax,100-100*alpha/2);
+    rcrit(1) = prctile(rmax,100*alpha/2);
+    rcrit(2) = prctile(rmax,100-100*alpha/2);
     estal = mean(rcrit(2)<rmax)+mean(rcrit(1)>rmax);
 elseif strcmpi(tail,'right')
     rmax = max(rp,[],2);
@@ -158,8 +154,8 @@ if nargout > 2
         p = zeros(1,nvar);
         p(rval>0) = mean(abs(rval)<rp)*2;
         p(rval<=0) = mean(abs(rval)>rp)*2;
-        rcrit(2,:) = prctile(rp,100*alpha/2);
-        rcrit(1,:) = prctile(rp,100-100*alpha/2);
+        rcrit(1,:) = prctile(rp,100*alpha/2);
+        rcrit(2,:) = prctile(rp,100-100*alpha/2);
         estal = mean(rcrit(2,:)<rp)+mean(rcrit(1,:)>rp);
     elseif strcmpi(tail,'right')
         p = mean(rval<rp);
