@@ -116,14 +116,14 @@ for i = 1:nperm
     rp(i,:) = (sum(x(idx(:,i),:).*y)-muxy)./sdxy;
 end
 
-% Compute adjusted test statistics using Tmax correction
+% Compute adjusted test statistics using Rmax correction
 if strcmpi(tail,'both')
     [~,idx] = max(abs(rp),[],2);
     csvar = [0;cumsum(ones(nperm-1,1)*nvar)];
     rpT = rp'; rmax = rpT(idx+csvar);
     p = zeros(1,nvar);
-    p(rval>0) = mean(abs(rval)<rmax)*2;
-    p(rval<=0) = mean(abs(rval)>rmax)*2;
+    p(rval>0) = mean(rval<rmax)*2;
+    p(rval<=0) = mean(rval>rmax)*2;
     rcrit(1) = prctile(rmax,100*alpha/2);
     rcrit(2) = prctile(rmax,100-100*alpha/2);
     estal = mean(rcrit(2)<rmax)+mean(rcrit(1)>rmax);
@@ -152,8 +152,8 @@ if nargout > 2
     % Compute original test statistics without correction
     if strcmpi(tail,'both')
         p = zeros(1,nvar);
-        p(rval>0) = mean(abs(rval)<rp)*2;
-        p(rval<=0) = mean(abs(rval)>rp)*2;
+        p(rval>0) = mean(rval<rp)*2;
+        p(rval<=0) = mean(rval>rp)*2;
         rcrit(1,:) = prctile(rp,100*alpha/2);
         rcrit(2,:) = prctile(rp,100-100*alpha/2);
         estal = mean(rcrit(2,:)<rp)+mean(rcrit(1,:)>rp);
