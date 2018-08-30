@@ -160,8 +160,14 @@ if nargout > 2
     % Compute original test statistics without correction
     if strcmpi(tail,'both')
         p = zeros(1,nvar);
-        p(rval>0) = mean(rval(rval>0)<rp)*2;
-        p(rval<=0) = mean(rval(rval<=0)>rp)*2;
+        if nvar>1
+            p(rval>0) = mean(rval(rval>0)<rmax)*2;
+            p(rval<=0) = mean(rval(rval<=0)>rmax)*2;
+        else
+            rmax = rmax';
+            p(rval>0) = mean(rval<rmax)*2;
+            p(rval<=0) = mean(rval>rmax)*2;
+        end
         rcrit(1,:) = prctile(rp,100*alpha/2);
         rcrit(2,:) = prctile(rp,100-100*alpha/2);
         estal = mean(rcrit(2,:)<rp)+mean(rcrit(1,:)>rp);
