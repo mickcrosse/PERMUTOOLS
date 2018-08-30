@@ -21,6 +21,8 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %   Inputs:
 %   x     - column vector or matrix of data (observations by variables)
 %   y     - column vector or matrix of data (observations by variables)
+% 
+%   Optional Inputs:
 %   nperm - scalar specifying the number of permutations (default=10,000 or 
 %           all possible permutations are computed for less than 8 obs.)
 %   tail  - string specifying the alternative hypothesis
@@ -69,7 +71,7 @@ function [rval,corx,orig,stats] = st_rmaxperm(x,y,nperm,tail,alpha,type)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Jan 2018; Last Revision: 20-Mar-2018
+%   Jan 2018; Last Revision: 29-Aug-2018
 
 if ~exist('y','var') || isempty(y)
     error('st_rmaxperm: Requires at least two input arguments')
@@ -92,8 +94,6 @@ end
 
 % Compute some constants
 [nobs,nvar] = size(x);
-muxy = sum(x).*sum(y)/nobs;
-sdxy = sqrt((sum(y.^2)-(sum(y).^2)/nobs).*(sum(x.^2)-(sum(x).^2)/nobs));
 if size(y,1)~=nobs
     error('X and Y must have the same number of observations')
 elseif size(y,2)~=nvar
@@ -101,6 +101,8 @@ elseif size(y,2)~=nvar
 end
 
 % Compute correlation coefficient
+muxy = sum(x).*sum(y)/nobs;
+sdxy = sqrt((sum(y.^2)-(sum(y).^2)/nobs).*(sum(x.^2)-(sum(x).^2)/nobs));
 rval = (sum(x.*y)-muxy)./sdxy;
 
 % Permute data and generate distribution of r-values
@@ -122,8 +124,14 @@ if strcmpi(tail,'both')
     csvar = [0;cumsum(ones(nperm-1,1)*nvar)];
     rpT = rp'; rmax = rpT(idx+csvar);
     p = zeros(1,nvar);
-    p(rval>0) = mean(rval<rmax)*2;
-    p(rval<=0) = mean(rval>rmax)*2;
+    if nvar>1
+        p(rval>0) = mean(rval(rval>0)<rmax)*2;
+        p(rval<=0) = mean(rval(rval<=0)>rmax)*2;
+    else
+        rmax = rmax';
+        p(rval>0) = mean(rval<rmax)*2;
+        p(rval<=0) = mean(rval>rmax)*2;
+    end
     rcrit(1) = prctile(rmax,100*alpha/2);
     rcrit(2) = prctile(rmax,100-100*alpha/2);
     estal = mean(rcrit(2)<rmax)+mean(rcrit(1)>rmax);
@@ -152,8 +160,8 @@ if nargout > 2
     % Compute original test statistics without correction
     if strcmpi(tail,'both')
         p = zeros(1,nvar);
-        p(rval>0) = mean(rval<rp)*2;
-        p(rval<=0) = mean(rval>rp)*2;
+        p(rval>0) = mean(rval(rval>0)<rp)*2;
+        p(rval<=0) = mean(rval(rval<=0)>rp)*2;
         rcrit(1,:) = prctile(rp,100*alpha/2);
         rcrit(2,:) = prctile(rp,100-100*alpha/2);
         estal = mean(rcrit(2,:)<rp)+mean(rcrit(1,:)>rp);

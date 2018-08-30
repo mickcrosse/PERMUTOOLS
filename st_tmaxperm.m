@@ -15,25 +15,28 @@ function [tstat,corx,orig,stats] = st_tmaxperm(x1,x2,nperm,tail,alpha,m)
 %   corrected test statistics of the permutation tests.
 %
 %   [...,ORIG] = ST_TMAXPERM(...) returns a structure containing the
-%   original, uncorrected test statistics of the permutation tests.
+%   original, uncorrected test statAVistics of the permutation tests.
 %
 %   [...,STATS] = ST_TMAXPERM(...) returns a structure containing some
-%   general data statistics.
+%   general data statistics including the effect size.
 %
 %   Inputs:
 %   x1    - column vector or matrix of data (observations by variables)
 %   x2    - column vector or matrix of data (observations by variables)
-%   nperm - number of permutations (default=10,000)
+% 
+%   Optional Inputs:
+%   nperm - scalar specifying the number of permutations (default=10,000) 
 %   tail  - string specifying the alternative hypothesis
 %           'both'  - mean is not M (two-tailed test, default)
 %           'right' - mean is greater than M (right-tailed test)
 %           'left'  - mean is less than M (left-tailed test)
-%   alpha - significance level between 0 and 1 (default=0.05)
-%   m     - scalar or row vector of the mean of the null hypothesis for
-%           each variable (default=0)
+%   alpha - scalar between 0 and 1 specifying the significance level as 
+%           100*ALPHA% (default=0.05)
+%   m     - scalar or row vector specifying the mean of the null hypothesis 
+%           for each variable (default=0)
 %
 %   Outputs:
-%   tstat - t-statistic of each permutation test
+%   tstat - scalar or vector containing t-statistic of each permutation test
 %   corx  - structure of corrected test statistics containing the following
 %           fields:
 %           h     - test results (H=0: cannot reject, H=1: can reject)
@@ -52,6 +55,8 @@ function [tstat,corx,orig,stats] = st_tmaxperm(x1,x2,nperm,tail,alpha,m)
 %   See README for examples of use.
 %
 %   See also ST_TMAXPERM2 ST_RMAXPERM ST_BOXDOTPLOT ST_PLOTPOLYCI.
+%
+%   StatsTools https://github.com/mickcrosse/StatsTools
 
 %   References:
 %      [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
@@ -103,7 +108,8 @@ if ~exist('m','var') || isempty(m)
 end
 
 % Compute some constants
-[nobs,nvar] = size(x); df = nobs-1;
+[nobs,nvar] = size(x); 
+df = nobs-1;
 mx = sum(x)/nobs;
 se = std(x)/sqrt(nobs);
 dfp = sqrt(nobs*df);

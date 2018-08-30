@@ -7,7 +7,7 @@ function [tstat,corx,orig,stats] = st_tmaxperm2(x1,x2,nperm,tail,alpha,varx)
 %   controlled using the Tmax correction method (Blair et al., 1994;
 %   Westfall & Young, 1993). This method is suitable for multivariate or
 %   multiple permutation tests in psychophysics (Gondan, 2010) and
-%   physiology (Blair & Karniski, 1993; Groppe et al., 2011).
+%   psychophysiology (Blair & Karniski, 1993; Groppe et al., 2011).
 %
 %   [...,CORX] = ST_TMAXPERM(...) returns a structure containing the
 %   corrected test statistics of the permutation tests.
@@ -16,23 +16,26 @@ function [tstat,corx,orig,stats] = st_tmaxperm2(x1,x2,nperm,tail,alpha,varx)
 %   original, uncorrected test statistics of the permutation tests.
 %
 %   [...,STATS] = ST_TMAXPERM2(...) returns a structure containing some
-%   general data statistics.
+%   general data statistics including the effect size.
 %
 %   Inputs:
 %   x1    - column vector or matrix of data (observations by variables)
 %   x2    - column vector or matrix of data (observations by variables)
-%   nperm - number of permutations (default=10,000)
+% 
+%   Optional Inputs:
+%   nperm - scalar specifying the number of permutations (default=10,000) 
 %   tail  - string specifying the alternative hypothesis
 %           'both'  - means are not equal (two-tailed test, default)
 %           'right' - mean of X1 greater than mean of X2 (right-tailed test)
 %           'left'  - mean of X1 less than mean of X2 (left-tailed test)
-%   alpha - significance level between 0 and 1 (default=0.05)
-%   varx  - variance equivalence of independent samples
+%   alpha - scalar between 0 and 1 specifying the significance level as 
+%           100*ALPHA% (default=0.05)
+%   varx  - string specifying the variance equivalence of X1 and X2
 %           'equal'   - assume samples have equal variances (default)
 %           'unequal' - assume samples have unequal variances
 %
 %   Outputs:
-%   tstat - t-statistic of each permutation test
+%   tstat - scalar or vector containing t-statistic of each permutation test
 %   corx  - structure of corrected test statistics containing the following
 %           fields:
 %           h     - test results (H=0: cannot reject, H=1: can reject)
@@ -44,13 +47,16 @@ function [tstat,corx,orig,stats] = st_tmaxperm2(x1,x2,nperm,tail,alpha,varx)
 %   orig  - structure of original, uncorrected test statistics containing
 %           the same fields as CORX
 %   stats - structure of data statistics containing the following fields:
+% 
 %           df    - degrees of freedom of each test
 %           sd    - pooled estimate (equal variances) or unpooled estimates
-%                   (unequal variances) of the population standard deviation
+%                   (unequal variances) of population standard deviation
 %
 %   See README for examples of use.
 %
 %   See also ST_TMAXPERM ST_RMAXPERM ST_BOXDOTPLOT ST_PLOTPOLYCI.
+%
+%   StatsTools https://github.com/mickcrosse/StatsTools
 
 %   References:
 %      [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
