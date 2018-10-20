@@ -1,2 +1,2 @@
 # StatsTools
-A repository of MATLAB functions for non-parametric statistical analyses
+A repository of MATLAB functions for permutation-based statistical analyses
