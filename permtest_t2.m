@@ -3,14 +3,18 @@ function [t,stats,orig,param] = permtest_t2(x1,x2,varargin)
 %   T = PERMTEST_T2(X1,X2) returns the t-statistic of a two-sample
 %   permutation test. If X1 and X2 are matrices, multiple permutation tests
 %   are performed simultaneously between each corresponding pair of columns
-%   in X1 and X2 and family-wise error rate is controlled using the Tmax
-%   correction method (Blair et al., 1994). See Groppe et al. (2011) for
-%   comparisons with alternative correction methods and for simulations of
-%   its sensitivity to differences in population variance. If X2 is not
-%   entered, a permutaiton test between each pair of columns in X1 is
-%   performed and output as a t-matrix. Samples of different sizes may be
-%   used by padding certain columns of X1 with NaNs. This function treats
-%   NaNs as missing values, and ignores them.
+%   in X1 and X2 and family-wise error rate (FWER) is controlled using the
+%   Tmax correction method (Blair et al., 1994). This method provides
+%   strong control of FWER, even for small sample sizes, and is much more
+%   powerful than traditional correction methods (Groppe et al., 2011a). It
+%   is also rather insensitive to differences in population variance when
+%   samples of equal size are used (Groppe et al., 2011b). For samples of
+%   unequal size or variance, Welch's t-statistic may be used as it is less
+%   sensitive to differences in variance (but also less sensitive to
+%   differences in means). If X2 is not entered, a permutation test between
+%   each pair of columns in X1 is performed and output as a matrix. Samples
+%   of different sizes may be used by replacing missing values with NaNs.
+%   This function treats NaNs as missing values, and ignores them.
 %
 %   [...,STATS] = permtest_t2(...) returns the adjusted test statistics in
 %   a structure containing the following fields:
@@ -50,6 +54,7 @@ function [t,stats,orig,param] = permtest_t2(x1,x2,varargin)
 %                   'all'       use all rows, and ignore any NaNs (default)
 %                   'complete'  use only rows with no NaNs
 %   'varx'      a string specifying the variance equivalence of X1 and X2
+%               to determine the SD and test statistic estimation method
 %                   'equal'   	assume equal variances (default)
 %                   'unequal' 	assume unequal variances
 %
@@ -79,7 +84,10 @@ function [t,stats,orig,param] = permtest_t2(x1,x2,varargin)
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011a) Mass univariate analysis
+%           of event-related brain potentials/fields I: A critical tutorial
+%           review. Psychophysiology, 48(12):1711-1725.
+%       [3] Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis
 %           of event-related brain potentials/fields II: Simulation studies
 %           Psychophysiology, 48(12):1726-1737.
 
@@ -203,10 +211,10 @@ p(isnan(tcrit)) = NaN;
 
 % Arrange test results in a matrix if specified
 if mat==true
-    h = statmat(h);
-    p = statmat(p);
-    ciLwr = statmat(ci(1,:));
-    ciUpr = statmat(ci(2,:));
+    h = vec2mat(h);
+    p = vec2mat(p);
+    ciLwr = vec2mat(ci(1,:));
+    ciUpr = vec2mat(ci(2,:));
     ci = cat(3,ciLwr,ciUpr);
     ci = permute(ci,[3,1,2]);
 end
@@ -245,14 +253,14 @@ if nargout > 2
     
     % Arrange test results in a matrix if specified
     if mat==true
-        h = statmat(h);
-        p = statmat(p);
-        tcrit = statmat(tcrit);
-        ciLwr = statmat(ci(1,:));
-        ciUpr = statmat(ci(2,:));
+        h = vec2mat(h);
+        p = vec2mat(p);
+        tcrit = vec2mat(tcrit);
+        ciLwr = vec2mat(ci(1,:));
+        ciUpr = vec2mat(ci(2,:));
         ci = cat(3,ciLwr,ciUpr);
         ci = permute(ci,[3,1,2]);
-        estal = statmat(estal);
+        estal = vec2mat(estal);
     end
     
     % Store values in structure
@@ -263,19 +271,22 @@ end
 % Execute if user requests additional statistical parameters
 if nargout > 3
     if mat==true
-        df = statmat(df);
-        sd = statmat(sd);
+        df = vec2mat(df);
+        sd = vec2mat(sd);
     end
     param = struct('df',df,'sd',sd);
 end
 
 % Arrange t-values in a matrix if specified
 if mat==true
-    t = statmat(t);
+    t = vec2mat(t);
 end
 
 function [y1,y2] = paircols(x)
 %paircols pair matrix columns and output as two separate matrices
+%   [Y1,Y2] = PAIRCOLS(X) returns matrices Y1 and Y2 whose paired columns
+%   correspond to every combination of column pairs in X. For efficiency,
+%   repeated column pairs are skipped.
 
 % Get matrix dimensions
 [nobs,nvar] = size(x);
@@ -300,8 +311,12 @@ for i = 1:nvar
     jctr = jctr+1;
 end
 
-function [y] = statmat(x)
-%statmat generate a matrix of the test statistics between all variables
+function [y] = vec2mat(x)
+%vec2mat convert vector output to matrix format
+%   [Y] = VEC2MAT(X) returns a matrix Y by rearranging the values in vector
+%   X according to their position as determined by PAIRCOLS. The values in
+%   X may represent the output of some statistical test between every pair
+%   of rows and columns in Y.
 
 % Compute matrix dimensions
 nvar = ceil(sqrt(length(x)*2));
@@ -326,7 +341,10 @@ for i = 1:nvar
 end
 
 function [alpha,nperm,tail,rows,varx] = decode_varargin(varargin)
-% decode_varargin decode input variable arguments
+%decode_varargin decode input variable arguments
+%   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
+%   decodes the input variable arguments of the main function.
+
 varargin = varargin{1,1};
 if any(strcmpi(varargin,'alpha')) && ~isempty(varargin{find(strcmpi(varargin,'alpha'))+1})
     alpha = varargin{find(strcmpi(varargin,'alpha'))+1};
