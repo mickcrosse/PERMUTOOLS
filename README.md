@@ -28,7 +28,7 @@ For usage, please see [examples](#examples) and [example M-files](examples).
 
 ## Max Statistic Correction
 
-The the maximum statistic method provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe et al., 2011a). For unpaired testing it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe et al., 2011b). For samples of unequal size or variance, Welch's t-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
+The maximum statistic method provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe et al., 2011a). For unpaired testing it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe et al., 2011b). For samples of unequal size or variance, Welch's t-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
 
 ## Contents
 
@@ -36,7 +36,7 @@ The the maximum statistic method provides strong control of FWER, even for small
 * `permuttest2()` - unpaired two-sample permutation test with tmax correction
 * `permuvartest2()` - permutation-based F-test with max statistic correction
 * `permucorr()` - permutation-based correlation with max statistic correction
-* `deffectsize()` - effect size measure with bootsrapped confidence intervals
+* `deffectsize()` - effect size measure with bootstrapped confidence intervals
 
 ## Examples
 
@@ -88,7 +88,7 @@ y(:,1:8) = y(:,1:8)-1;
 [t,stats] = permuttest2(x,y)
 ```
 
-Here, we generate univariate random data for 5 samples, each with 30 observations and perform unpaired permutation tests between every sample (5 samples = 10 comparisons). Note that each column of X represents an independent sample and may contain NaNs for samples with smaller number of observations.
+Here, we generate univariate random data for 5 samples, each with 30 observations and perform unpaired permutation tests between every sample (5 samples = 10 comparisons). Note that each column of X represents an independent sample and may contain NaNs for samples with a smaller number of observations.
 
 ```matlab
 % Generate random data
