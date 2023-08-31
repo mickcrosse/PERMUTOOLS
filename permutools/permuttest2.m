@@ -1,38 +1,44 @@
-function [t,stats,orig,params] = permuttest(x,y,varargin)
-%PERMUTTEST  One/paired-sample permutation test with Tmax correction.
-%   T = PERMUTTEST(X,Y) returns the t-statistic of a paired-sample
+function [t,stats,orig,params] = permuttest2(x,y,varargin)
+%PERMUTTEST2  Unpaired two-sample permutation test with tmax correction.
+%   T = PERMUTTEST2(X,Y) returns the t-statistic of a two-sample
 %   permutation test. If X and Y are matrices, multiple permutation tests
 %   are performed simultaneously between each corresponding pair of columns
 %   in X and Y and family-wise error rate (FWER) is controlled using the
-%   Tmax correction method (Blair et al., 1994). This method provides
+%   tmax correction method (Blair et al., 1994). This method provides
 %   strong control of FWER, even for small sample sizes, and is much more
-%   powerful than traditional correction methods (Gondan, 2010; Groppe et
-%   al., 2011). For one-sample tests, enter the data column-wise in X and
-%   leave Y empty. This function treats NaNs as missing values, and ignores
-%   them.
+%   powerful than traditional correction methods (Groppe et al., 2011a). It
+%   is also rather insensitive to differences in population variance when
+%   samples of equal size are used (Groppe et al., 2011b). For samples of
+%   unequal size or variance, Welch's t-statistic may be used as it is less
+%   sensitive to differences in variance (but also less sensitive to
+%   differences in means). If Y is not entered, a permutation test between
+%   each pair of columns in X is performed and output as a matrix. Samples
+%   of different sizes may be used by replacing missing values with NaNs.
+%   This function treats NaNs as missing values, and ignores them.
 %
-%   [T,STATS] = PERMUTTEST(...) returns the adjusted test statistics in a
+%   [T,STATS] = PERMUTTEST2(...) returns the adjusted test statistics in a
 %   structure with the following fields:
 %       'h'         -- test results. H=0 indicates the null hypothesis
 %                      cannot be rejected, H=1 indicates the null
 %                      hypothesis can be rejected.
 %       'p'         -- the probability of observing the result by chance
-%       'ci'    	-- 100*(1-ALPHA)% confidence interval for the true mean
-%                      of X, or of X-Y for a paired test
+%       'ci'    	-- 100*(1-(1/NPERM+ALPHA))% confidence interval for the
+%                      true difference of population means (Groppe, 2016)
 %       'tcrit'     -- critical t-value for the given alpha level. For two-
 %                      tailed tests, the lower value is equal to -1*TCRIT.
 %       'estal' 	-- the estimated alpha level of each test
 %
-%   [T,STATS,ORIG] = PERMUTTEST(...) returns the original, unadjusted test
+%   [T,STATS,ORIG] = PERMUTTEST2(...) returns the original, unadjusted test
 %   statistics in a structure with the same fields as STATS.
 %
-%   [T,STATS,ORIG,PARAMS] = PERMUTTEST(...) returns other parameters in a
+%   [T,STATS,ORIG,PARAMS] = PERMUTTEST2(...) returns other parameters in a
 %   structure with the following fields:
 %       'df'        -- the degrees of freedom of each test
-%       'sd'    	-- the estimated population standard deviation of X, or
-%                      of X-Y for a paired test
+%       'sd'    	-- the pooled estimate (equal variances) or unpooled
+%                      estimates (unequal variances) of population standard
+%                      deviation
 %
-%   [...] = PERMUTTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = PERMUTTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -43,43 +49,38 @@ function [t,stats,orig,params] = permuttest(x,y,varargin)
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'nperm'     A scalar specifying the number of permutations
-%                   (default=10,000, or all possible permutations for less
-%                   than 14 observations).
+%                   (default=10,000).
 %       'tail'      A string specifying the alternative hypothesis:
-%                       'both'      mean is not M (two-tailed, default)
-%                       'right'     mean is greater than M (right-tailed)
-%                       'left'      mean is less than M (left-tailed)
+%                       'both'      means are not equal (default)
+%                       'right'     mean of X is greater than mean of Y
+%                       'left'      mean of X is less than mean of Y
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
-%       'sample'    A string specifying whether to perform a one-sample
-%                   test or a paired-sample test when only X is entered:
-%                       'one'       compare each column of X to zero and
-%                                   store the results in a vector (default)
-%                       'paired'    compare each pair of columns in X and
-%                                   store the results in a matrix
-%       'm'         A scalar or row vector specifying the mean of the null
-%                   hypothesis for each variable (default=0).
+%       'vartype'   A string specifying the variance equivalence of X and Y
+%                   to determine the SD and t-statistic estimation method:
+%                       'equal'   	assume equal variances (default)
+%                       'unequal' 	assume unequal variances
 %
-%   Example 1: generate multivariate data for 2 conditions, each with 20
-%   variables and 30 observations and perform paired permutation tests
-%   between the corresponding variables of each condition.
+%   Example 1: generate multivariate data for 2 samples, each with 20
+%   variables and 30 observations and perform unpaired permutation tests
+%   between the corresponding variables of each sample.
 %       x = randn(30,20);
 %       y = randn(30,20);
 %       y(:,1:8) = y(:,1:8)-1;
-%       [t,stats] = permuttest(x,y) % paired-sample test
-%       or
-%       [t,stats] = permuttest(x) % one-sample test
+%       [t,stats] = permuttest2(x,y)
 %
-%   Example 2: generate univariate data for 5 conditions, each with 30
-%   observations and perform paired permutation tests between every pair of
-%   conditions (5 conditions = 10 comparisons).
+%   Example 2: generate univariate data for 5 samples, each with 30
+%   observations and perform unpaired permutation tests between every
+%   sample (5 samples = 10 comparisons). Note that each column of X
+%   represents an independent sample and may contain NaNs for samples with
+%   smaller number of observations.
 %       x = randn(30,5);
 %       x(:,3:5) = x(:,3:5)-1;
-%       [t,stats] = permuttest(x,[],'sample','paired') % paired-sample test
+%       [t,stats] = permuttest2(x)
 %
-%   See also PERMUTTEST2 PERMUVARTEST2 PERMUCORR DEFFECTSIZE.
+%   See also PERMUTTEST PERMUVARTEST2 PERMUCORR DEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -88,11 +89,14 @@ function [t,stats,orig,params] = permuttest(x,y,varargin)
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Gondan M (2010) A permutation test for the race model
-%           inequality. Behav Res Methods, 42(1):23-28.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011a) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
+%       [3] Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis
+%           of event-related brain potentials/fields II: Simulation studies
+%           Psychophysiology, 48(12):1726-1737.
+%       [4] Groppe DM (2016) Combating the scientific decline effect with
+%           confidence (intervals). Psychophysiology, 54(1):139-145.
 
 %   © 2018 Mick Crosse <mickcrosse@gmail.com>
 %   CNL, Albert Einstein College of Medicine, NY.
@@ -116,108 +120,119 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
 end
 
 % Set up permutation test
-switch arg.sample
-    case 'paired'
-        if isempty(y)
-            warning('Comparing all columns of X using a two-tailed test...')
-            [x,y] = paircols(x);
-            arg.tail = 'both';
-            arg.mat = true;
-        else
-            error('The paired-sample test option only applies to X.')
-        end
-    otherwise
-        if isempty(y)
-            y = zeros(size(x));
-        end
+if isempty(y)
+    warning('Comparing all columns of X using two-tailed test...')
+    [x,y] = paircols(x);
+    arg.tail = 'both';
+    arg.mat = true;
 end
-if size(x)~=size(y)
-    error('X and Y must be the same size.')
+if size(x,2)~=size(y,2)
+    error('X and Y must have the same number of variables.')
 end
 
-% Compute difference between samples
-x = x-y;
-
-% Use only rows with no NaN values if specified
+% Use only rows with no NaNs if specified
 switch arg.rows
     case 'complete'
         x = x(~any(isnan(x),2),:);
+        y = y(~any(isnan(y),2),:);
 end
 
 % Get data dimensions, ignoring NaNs
-[maxnobs,nvar] = size(x);
-nobs = sum(~isnan(x));
+maxnobsx = size(x,1);
+nobsx = sum(~isnan(x));
+nobsy = sum(~isnan(y));
 
 % Compute degrees of freedom
-df = nobs-1;
-dfp = sqrt(nobs.*df);
-
-% Remove mean of null hypothesis from data
-if isscalar(arg.m)
-    x = x-arg.m;
-else
-    x = x-repmat(arg.m,maxnobs,1);
-end
+dfx = nobsx-1;
+dfy = nobsy-1;
 
 % For efficiency, only omit NaNs if necessary
-if any(isnan(x(:)))
+if any(isnan(x(:))) || any(isnan(y(:)))
     nanflag = 'omitmissing';
 else
     nanflag = 'includemissing';
 end
 
+% Compute sample variance
+smx = sum(x,nanflag);
+smy = sum(y,nanflag);
+varx = (sum(x.^2,nanflag)-(smx.^2)./nobsx)./dfx;
+vary = (sum(y.^2,nanflag)-(smy.^2)./nobsy)./dfy;
+
+% Concatenate samples
+x = [x;y];
+[maxnobs,nvar] = size(x);
+nobs = sum(~isnan(x));
+dfp = nobs./(nobsx.*nobsy);
+
 % Compute t-statistic
-sd = std(x,nanflag);
-mx = sum(x,nanflag)./nobs;
-se = sd./sqrt(nobs);
+switch arg.vartype
+    case 'equal'
+        df = nobs-2;
+        sd = sqrt((dfx.*varx+dfy.*vary)./df);
+        se = sd.*sqrt(dfp);
+    case 'unequal'
+        se2X = varx./nobsx;
+        se2Y = vary./nobsy;
+        df = (se2X+se2Y).^2./(se2X.^2./dfx+se2Y.^2./dfy);
+        sd = sqrt([varx;vary]);
+        se = sqrt(se2X+se2Y);
+end
+mx = smx./nobsx-smy./nobsy;
 t = mx./se;
 
 % Execute if user requests adjusted test statistics
 if nargout > 1
 
-    % Use all possible permutations if less than 14 observations
-    if min(nobs) < 14
-        warning('Computing all possible permutations due to small N.')
-        arg.nperm = 2^min(nobs);
-    end
-
     % Permute data and generate distribution of t-values
-    signx = sign(rand(maxnobs,arg.nperm)-0.5);
+    [~,idx] = sort(rand(maxnobs,arg.nperm));
     tp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        xp = x.*repmat(signx(:,i),1,nvar);
-        sm = sum(xp,nanflag);
-        tp(i,:) = sm./nobs./(sqrt(sum(xp.^2)-(sm.^2)./nobs)./dfp);
+        xp = x(idx(1:maxnobsx,i),:);
+        yp = x(idx(maxnobsx+1:maxnobs,i),:);
+        smx = sum(xp,nanflag);
+        smy = sum(yp,nanflag);
+        s2x = (sum(xp.^2,nanflag)-(smx.^2)./nobsx)./dfx;
+        s2y = (sum(yp.^2,nanflag)-(smy.^2)./nobsy)./dfy;
+        switch arg.vartype
+            case 'equal'
+                sep = sqrt((dfx.*s2x+dfy.*s2y)./df).*sqrt(dfp);
+            case 'unequal'
+                sep = sqrt(s2x./nobsx+s2y./nobsy);
+        end
+        tp(i,:) = (smx./nobsx-smy./nobsy)./sep;
     end
 
-    % Compute Tmax without sign and add negative values
-    tmax = max(abs(tp),[],2);
-    tmax(arg.nperm+1:2*arg.nperm) = -tmax;
+    % Compute tmax with sign
+    [~,idx] = max(abs(tp),[],2);
+    csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
+    tmax = tp';
+    tmax = tmax(idx+csvar);
 
-    % Compute adjusted test statistics using Tmax correction
+    % Compute adjusted test statistics using tmax correction
     switch arg.tail
         case 'both'
-            p = 2*(sum(abs(t)<=tmax)+1)/(arg.nperm+1);
-            tcrit = prctile(tmax,100*(1-arg.alpha/2));
+            tmax = abs(tmax);
+            p = (sum(abs(t)<=tmax)+1)/(arg.nperm+1);
+            tcrit = prctile(tmax,100*(1-(1/arg.nperm+arg.alpha)));
             ci = [mx-tcrit.*se;mx+tcrit.*se];
-            estal = mean(tcrit<tmax)*2;
+            estal = mean(tmax>=tcrit);
         case 'right'
             p = (sum(t<=tmax)+1)/(arg.nperm+1);
-            tcrit = prctile(tmax,100*(1-arg.alpha));
+            tcrit = prctile(tmax,100*(1-(1/arg.nperm+arg.alpha)));
             ci = [mx+tcrit.*se;Inf(1,nvar)];
-            estal = mean(tcrit<tmax);
+            estal = mean(tmax>=tcrit);
         case 'left'
             p = (sum(t>=tmax)+1)/(arg.nperm+1);
-            tcrit = prctile(tmax,100*arg.alpha);
+            tcrit = prctile(tmax,100*(1/arg.nperm+arg.alpha));
             ci = [-Inf(1,nvar);mx+tcrit.*se];
-            estal = mean(tcrit>tmax);
+            estal = mean(tmax<=tcrit);
     end
 
     % Determine if adjusted p-values exceed desired alpha level
     h = cast(p<arg.alpha,'like',p);
     h(isnan(tcrit)) = NaN;
     p(isnan(tcrit)) = NaN;
-    p(p>1) = 1;
 
     % Arrange test results in a matrix if specified
     if arg.mat
@@ -239,33 +254,30 @@ if nargout > 2
 
     clear h p ci tcrit estal ciLwr ciUpr
 
-    % Add negative values
-    tp(arg.nperm+1:2*arg.nperm,:) = -tp;
-
     % Compute unadjusted test statistics
     switch arg.tail
         case 'both'
-            p = 2*(sum(abs(t)<=tp)+1)/(arg.nperm+1);
-            tcrit = prctile(tp,100*(1-arg.alpha/2));
+            tp = abs(tp);
+            p = (sum(abs(t)<=tp)+1)/(arg.nperm+1);
+            tcrit = prctile(tp,100*(1-(1/arg.nperm+arg.alpha)));
             ci = [mx-tcrit.*se;mx+tcrit.*se];
-            estal = mean(tcrit<tp)*2;
+            estal = mean(tp>=tcrit);
         case 'right'
             p = (sum(t<=tp)+1)/(arg.nperm+1);
-            tcrit = prctile(tp,100*(1-arg.alpha));
+            tcrit = prctile(tp,100*(1-(1/arg.nperm+arg.alpha)));
             ci = [mx+tcrit.*se;Inf(1,nvar)];
-            estal = mean(tcrit<tp);
+            estal = mean(tp>=tcrit);
         case 'left'
             p = (sum(t>=tp)+1)/(arg.nperm+1);
-            tcrit = prctile(tp,100*arg.alpha);
+            tcrit = prctile(tp,100*(1/arg.nperm+arg.alpha));
             ci = [-Inf(1,nvar);mx+tcrit.*se];
-            estal = mean(tcrit>tp);
+            estal = mean(tp<=tcrit);
     end
 
     % Determine if unadjusted p-values exceed desired alpha level
     h = cast(p<arg.alpha,'like',p);
     h(isnan(tcrit(1,:))) = NaN;
     p(isnan(tcrit(1,:))) = NaN;
-    p(p>1) = 1;
 
     % Arrange test results in a matrix if specified
     if arg.mat
@@ -403,15 +415,10 @@ rowsOptions = {'all','complete'};
 validFcn = @(x) any(validatestring(x,rowsOptions));
 addParameter(p,'rows','all',validFcn);
 
-% Sample type
-sampleOptions = {'one','paired'};
-validFcn = @(x) any(validatestring(x,sampleOptions));
-addParameter(p,'sample','one',validFcn);
-
-% Null hypothesis mean
-errorMsg = 'It must be a scalar or row vector.';
-validFcn = @(x) assert(isnumeric(x),errorMsg);
-addParameter(p,'m',0,validFcn);
+% XY variance equivalence
+vartypeOptions = {'equal','unequal'};
+validFcn = @(x) any(validatestring(x,vartypeOptions));
+addParameter(p,'vartype','equal',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
@@ -425,4 +432,4 @@ arg = p.Results;
 % Redefine partially matched strings
 arg.tail = validatestring(arg.tail,tailOptions);
 arg.rows = validatestring(arg.rows,rowsOptions);
-arg.sample = validatestring(arg.sample,sampleOptions);
+arg.vartype = validatestring(arg.vartype,vartypeOptions);
