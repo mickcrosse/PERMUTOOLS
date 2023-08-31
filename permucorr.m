@@ -127,7 +127,7 @@ switch arg.rows
         y = y(~any(isnan(x),2),:);
         x = x(~any(isnan(x),2),:);
     case 'all'
-        if any(any(isnan(x))) || any(any(isnan(y)))
+        if any(isnan(x(:))) || any(isnan(y(:)))
             error('X or Y is missing values. Set ROWS to ''complete''.')
         end
 end
@@ -153,15 +153,15 @@ r = (sum(x.*y)-muxy)./sdxy;
 % Execute if user requests adjusted test statistics
 if nargout > 1
 
-	% Use all possible permutations if less than 8 observations
-	if nobs < 8
+    % Use all possible permutations if less than 8 observations
+    if nobs < 8
         warning('Computing all possible permutations due to small N.')
         arg.nperm = factorial(nobs);
         idx = perms(1:nobs)';
     else
         [~,idx] = sort(rand(nobs,arg.nperm));
     end
-	
+
     % Permute data and generate distribution of r-values
     rp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
@@ -173,8 +173,8 @@ if nargout > 1
         case 'both'
             [~,idx] = max(abs(rp),[],2);
             csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-            rmax = rp'; 
-			rmax = rmax(idx+csvar);
+            rmax = rp';
+            rmax = rmax(idx+csvar);
             p = zeros(1,nvar);
             rcrit = zeros(2,1);
             if any(r>0)
@@ -222,7 +222,7 @@ if nargout > 1
         ci = permute(ci,[3,1,2]);
     end
 
-    % Store values in structure
+    % Store values in a structure
     stats = struct('p',p,'ci',ci,'rcrit',rcrit,'estal',estal);
 
 end
@@ -282,7 +282,7 @@ if nargout > 2
         estal = vec2mat(estal);
     end
 
-    % Store values in structure
+    % Store values in a structure
     orig = struct('p',p,'ci',ci,'rcrit',rcrit,'estal',estal);
 
 end
