@@ -33,8 +33,6 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %
 %   [T,STATS,ORIG,PARAMS] = PERMUTTEST2(...) returns other parameters in a
 %   structure with the following fields:
-%       sd    	pooled estimate (equal variances) or unpooled estimates
-%               (unequal variances) of population standard deviation
 %       'df'        -- the degrees of freedom of each test
 %       'sd'    	-- the pooled estimate (equal variances) or unpooled
 %                      estimates (unequal variances) of population standard
@@ -60,7 +58,7 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
-%       'varxy'     A string specifying the variance equivalence of X and Y
+%       'vartype'   A string specifying the variance equivalence of X and Y
 %                   to determine the SD and t-statistic estimation method:
 %                       'equal'   	assume equal variances (default)
 %                       'unequal' 	assume unequal variances
@@ -168,7 +166,7 @@ nobs = sum(~isnan(x));
 dfp = nobs./(nobsx.*nobsy);
 
 % Compute t-statistic
-switch arg.varxy
+switch arg.vartype
     case 'equal'
         df = nobs-2;
         sd = sqrt((dfx.*varx+dfy.*vary)./df);
@@ -196,7 +194,7 @@ if nargout > 1
         smy = sum(yp,nanflag);
         s2x = (sum(xp.^2,nanflag)-(smx.^2)./nobsx)./dfx;
         s2y = (sum(yp.^2,nanflag)-(smy.^2)./nobsy)./dfy;
-        switch arg.varxy
+        switch arg.vartype
             case 'equal'
                 sep = sqrt((dfx.*s2x+dfy.*s2y)./df).*sqrt(dfp);
             case 'unequal'
@@ -418,9 +416,9 @@ validFcn = @(x) any(validatestring(x,rowsOptions));
 addParameter(p,'rows','all',validFcn);
 
 % XY variance equivalence
-varxyOptions = {'equal','unequal'};
-validFcn = @(x) any(validatestring(x,varxyOptions));
-addParameter(p,'varxy','equal',validFcn);
+vartypeOptions = {'equal','unequal'};
+validFcn = @(x) any(validatestring(x,vartypeOptions));
+addParameter(p,'vartype','equal',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
@@ -434,4 +432,4 @@ arg = p.Results;
 % Redefine partially matched strings
 arg.tail = validatestring(arg.tail,tailOptions);
 arg.rows = validatestring(arg.rows,rowsOptions);
-arg.varxy = validatestring(arg.varxy,varxyOptions);
+arg.vartype = validatestring(arg.vartype,vartypeOptions);
