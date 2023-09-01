@@ -26,9 +26,9 @@ For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Cros
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
-## Max Statistic Correction
+## Maximum Statistic Correction
 
-The maximum statistic method provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe et al., 2011a). For unpaired testing it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe et al., 2011b). For samples of unequal size or variance, Welch's t-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
+The maximum statistic correction method works by permuting the order of the data to generate a null distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, more conservative null distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe et al., 2011a). For unpaired testing it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe et al., 2011b). For samples of unequal size or variance, Welch's t-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
 
 ## Contents
 
