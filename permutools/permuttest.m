@@ -187,7 +187,7 @@ if nargout > 1
     for i = 1:arg.nperm
         xp = x.*repmat(signx(:,i),1,nvar);
         sm = sum(xp,nanflag);
-        tp(i,:) = sm./nobs./(sqrt(sum(xp.^2)-(sm.^2)./nobs)./dfp);
+        tp(i,:) = sm./nobs./(sqrt(sum(xp.^2,nanflag)-(sm.^2)./nobs)./dfp);
     end
 
     % Compute tmax without sign and add negative values
