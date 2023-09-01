@@ -75,7 +75,7 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %   observations and perform unpaired permutation tests between every
 %   sample (5 samples = 10 comparisons). Note that each column of X
 %   represents an independent sample and may contain NaNs for samples with
-%   a smaller number of observations.
+%   smaller number of observations.
 %       x = randn(30,5);
 %       x(:,3:5) = x(:,3:5)-1;
 %       [t,stats] = permuttest2(x)
@@ -163,20 +163,20 @@ vary = (sum(y.^2,nanflag)-(smy.^2)./nobsy)./dfy;
 x = [x;y];
 [maxnobs,nvar] = size(x);
 nobs = sum(~isnan(x));
-dfp = nobs./(nobsx.*nobsy);
+sqrtn = sqrt(nobs./(nobsx.*nobsy));
 
 % Compute t-statistic
 switch arg.vartype
     case 'equal'
         df = nobs-2;
         sd = sqrt((dfx.*varx+dfy.*vary)./df);
-        se = sd.*sqrt(dfp);
+        se = sd.*sqrtn;
     case 'unequal'
-        se2X = varx./nobsx;
-        se2Y = vary./nobsy;
-        df = (se2X+se2Y).^2./(se2X.^2./dfx+se2Y.^2./dfy);
+        se2x = varx./nobsx;
+        se2y = vary./nobsy;
+        df = (se2x+se2y).^2./(se2x.^2./dfx+se2y.^2./dfy);
         sd = sqrt([varx;vary]);
-        se = sqrt(se2X+se2Y);
+        se = sqrt(se2x+se2y);
 end
 mx = smx./nobsx-smy./nobsy;
 t = mx./se;
@@ -196,7 +196,7 @@ if nargout > 1
         s2y = (sum(yp.^2,nanflag)-(smy.^2)./nobsy)./dfy;
         switch arg.vartype
             case 'equal'
-                sep = sqrt((dfx.*s2x+dfy.*s2y)./df).*sqrt(dfp);
+                sep = sqrt((dfx.*s2x+dfy.*s2y)./df).*sqrtn;
             case 'unequal'
                 sep = sqrt(s2x./nobsx+s2y./nobsy);
         end
