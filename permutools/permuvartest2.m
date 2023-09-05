@@ -29,8 +29,8 @@ function [f,stats,orig,params] = permuvartest2(x,y,varargin)
 %
 %   [F,STATS,ORIG,PARAM] = PERMUVARTEST2(...) returns other parameters in a
 %   structure with the following fields:
-%       dfx     the numerator degrees of freedom of each test
-%       dfy     the denominator degrees of freedom of each test
+%       'dfx'       -- the numerator degrees of freedom of each test
+%       'dfy'    	-- the denominator degrees of freedom of each test
 %
 %   [...] = PERMUVARTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
