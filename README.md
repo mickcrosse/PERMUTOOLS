@@ -2,7 +2,11 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a statistical software package for multivariate permutation testing in MATLAB. Permutation tests based on the *t*-statistic can be performed on one-sample, paired-sample and independent two-sample datasets. For two-sample situations, a permutation test based on the *F*-statistic can be performed to determine variance equivalence. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using the maximum statistic method (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests. PERMUTOOLS offers a range of test statistics including the *t*-statistic (paired, unpaired), the *F*-statistic (unpaired), the correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*).
+PERMUTOOLS is a statistical software package for multivariate permutation testing in MATLAB. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using the maximum statistic method (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
+
+Permutation tests based on the *t*-statistic (i.e. *t*-tests) can be performed on one-sample, paired-sample and independent two-sample datasets. For two-sample situations, a permutation test based on the *F*-statistic can be performed to determine variance equivalence of the independent samples. For samples of unequal size or variance, Welch's *t*-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). Permutation-based hypothesis testing can also be performed for various correlation measures. For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
+
+PERMUTOOLS offers a range of test statistics including the *t*-statistic (paired, unpaired), the *F*-statistic (unpaired), the correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*).
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -28,13 +32,13 @@ For usage, please see [examples](#examples) and [example M-files](examples).
 
 ## Maximum Statistic Correction
 
-The maximum statistic correction method works by permuting the order of the data to generate a null distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, more conservative null distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b). For samples of unequal size or variance, Welch's t-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
+The maximum statistic correction method works by permuting the order of the data to generate a null distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, conservative null distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
 
 ## Contents
 
 * `permuttest()` - one-sample or paired-sample permutation test with tmax correction
 * `permuttest2()` - unpaired two-sample permutation test with tmax correction
-* `permuvartest2()` - permutation-based F-test with max statistic correction
+* `permuvartest2()` - permutation-based *F*-test with max statistic correction
 * `permucorr()` - permutation-based correlation with max statistic correction
 * `booteffectsize()` - effect size measure with bootstrapped confidence intervals
 
