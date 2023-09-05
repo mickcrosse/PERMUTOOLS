@@ -42,7 +42,7 @@ function [f,stats,orig,params] = permuvartest2(x,y,varargin)
 %                   along the rows. Applies to both X and Y.
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
-%       'nperm'     A scalar specifying the number of permutations
+%       'nperm'     A scalar integer specifying the number of permutations
 %                   (default=10,000).
 %       'tail'      A string specifying the alternative hypothesis:
 %                       'both'      means are not equal (default)
@@ -52,10 +52,15 @@ function [f,stats,orig,params] = permuvartest2(x,y,varargin)
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
+%       'seed'      A scalar integer specifying the seed used to initialise
+%                   the permutation generator. By default, the generator is
+%                   initialised based on the current time, resulting in a
+%                   different permutation each time.
 %
 %   Example 1: generate multivariate data for 2 samples, each with 20
 %   variables and 30 observations and perform unpaired permutation tests
 %   between the corresponding variables of each sample.
+%       rng(42);
 %       x = randn(30,20);
 %       y = randn(30,20);
 %       x(:,1:8) = x(:,1:8)-1;
@@ -66,11 +71,12 @@ function [f,stats,orig,params] = permuvartest2(x,y,varargin)
 %   sample (5 samples = 10 comparisons). Note that each column of X
 %   represents an independent sample and may contain NaNs for samples with
 %   a smaller number of observations.
+%       rng(42);
 %       x = randn(30,5);
 %       x(:,3:5) = x(:,3:5)-1;
 %       [f,stats] = permuvartest2(x)
 %
-%   See also PERMUTTEST PERMUTTEST2 PERMUCORR DEFFECTSIZE.
+%   See also PERMUTTEST PERMUTTEST2 PERMUCORR BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -151,6 +157,7 @@ if nargout > 1
     [maxnobs,nvar] = size(x);
 
     % Permute data and generate distribution of F-values
+    rng(arg.seed);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
     fp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
@@ -370,6 +377,11 @@ addParameter(p,'tail','both',validFcn);
 rowsOptions = {'all','complete'};
 validFcn = @(x) any(validatestring(x,rowsOptions));
 addParameter(p,'rows','all',validFcn);
+
+% Permutation generator seed
+errorMsg = 'It must be an integer scalar.';
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x),errorMsg);
+addParameter(p,'seed','shuffle',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';

@@ -36,7 +36,7 @@ function [r,stats,orig] = permucorr(x,y,varargin)
 %                   along the rows. Applies to both X and Y.
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
-%       'nperm'     A scalar specifying the number of permutations
+%       'nperm'     A scalar integer specifying the number of permutations
 %                   (default=10,000 or all possible permutations for less
 %                   than 14 observations).
 %       'tail'      A string specifying the alternative hypothesis:
@@ -51,10 +51,15 @@ function [r,stats,orig] = permucorr(x,y,varargin)
 %                       'Pearson'   Pearson's correlation coefficient (def)
 %                       'Spearman'  Spearman's rank correlation coefficient
 %                       'Rankit'    Bliss's rankit correlation coefficient
+%       'seed'      A scalar integer specifying the seed used to initialise
+%                   the permutation generator. By default, the generator is
+%                   initialised based on the current time, resulting in a
+%                   different permutation each time.
 %
 %   Example 1: generate multivariate data for 2 conditions, each with 20
 %   variables and 30 observations and calculate the correlation between the
 %   corresponding variables of each condition.
+%       rng(42);
 %       x = randn(30,20);
 %       y = randn(30,20);
 %       y(:,1:5) = y(:,1:5)+0.5*x(:,1:5);
@@ -64,11 +69,12 @@ function [r,stats,orig] = permucorr(x,y,varargin)
 %   Example 2: generate univariate data for 5 conditions, each with 1
 %   variable and 30 observations and calculate the correlation between
 %   every pair of conditions (5 conditions = 10 correlations).
+%       rng(42);
 %       x = randn(30,5);
 %       x(:,1:2) = x(:,1:2)-0.5*x(:,4:5);
 %       [r,stats] = permucorr(x)
 %
-%   See also PERMUTTEST PERMUTTEST2 PERMUVARTEST2 DEFFECTSIZE.
+%   See also PERMUTTEST PERMUTTEST2 PERMUVARTEST2 BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -159,6 +165,7 @@ if nargout > 1
         arg.nperm = factorial(nobs);
         idx = perms(1:nobs)';
     else
+        rng(arg.seed);
         [~,idx] = sort(rand(nobs,arg.nperm));
     end
 
@@ -401,6 +408,11 @@ addParameter(p,'rows','all',validFcn);
 typeOptions = {'Pearson','Spearman','Rankit'};
 validFcn = @(x) any(validatestring(x,typeOptions));
 addParameter(p,'type','Pearson',validFcn);
+
+% Permutation generator seed
+errorMsg = 'It must be an integer scalar.';
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x),errorMsg);
+addParameter(p,'seed','shuffle',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';

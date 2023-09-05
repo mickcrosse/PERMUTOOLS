@@ -48,7 +48,7 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %                   along the rows. Applies to both X and Y.
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
-%       'nperm'     A scalar specifying the number of permutations
+%       'nperm'     A scalar integer specifying the number of permutations
 %                   (default=10,000).
 %       'tail'      A string specifying the alternative hypothesis:
 %                       'both'      means are not equal (default)
@@ -62,10 +62,15 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %                   to determine the SD and t-statistic estimation method:
 %                       'equal'   	assume equal variances (default)
 %                       'unequal' 	assume unequal variances
+%       'seed'      A scalar integer specifying the seed used to initialise
+%                   the permutation generator. By default, the generator is
+%                   initialised based on the current time, resulting in a
+%                   different permutation each time.
 %
 %   Example 1: generate multivariate data for 2 samples, each with 20
 %   variables and 30 observations and perform unpaired permutation tests
 %   between the corresponding variables of each sample.
+%       rng(42);
 %       x = randn(30,20);
 %       y = randn(30,20);
 %       y(:,1:8) = y(:,1:8)-1;
@@ -76,11 +81,12 @@ function [t,stats,orig,params] = permuttest2(x,y,varargin)
 %   sample (5 samples = 10 comparisons). Note that each column of X
 %   represents an independent sample and may contain NaNs for samples with
 %   smaller number of observations.
+%       rng(42);
 %       x = randn(30,5);
 %       x(:,3:5) = x(:,3:5)-1;
 %       [t,stats] = permuttest2(x)
 %
-%   See also PERMUTTEST PERMUVARTEST2 PERMUCORR DEFFECTSIZE.
+%   See also PERMUTTEST PERMUVARTEST2 PERMUCORR BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -153,7 +159,7 @@ else
     nanflag = 'includemissing';
 end
 
-% Compute sample variance
+% Compute sample variance using fast algo
 smx = sum(x,nanflag);
 smy = sum(y,nanflag);
 varx = (sum(x.^2,nanflag)-(smx.^2)./nobsx)./dfx;
@@ -185,6 +191,7 @@ t = mx./se;
 if nargout > 1
 
     % Permute data and generate distribution of t-values
+    rng(arg.seed);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
     tp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
@@ -419,6 +426,11 @@ addParameter(p,'rows','all',validFcn);
 vartypeOptions = {'equal','unequal'};
 validFcn = @(x) any(validatestring(x,vartypeOptions));
 addParameter(p,'vartype','equal',validFcn);
+
+% Permutation generator seed
+errorMsg = 'It must be an integer scalar.';
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x),errorMsg);
+addParameter(p,'seed','shuffle',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';

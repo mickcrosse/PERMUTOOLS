@@ -42,7 +42,7 @@ function [t,stats,orig,params] = permuttest(x,y,varargin)
 %                   along the rows. Applies to both X and Y.
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
-%       'nperm'     A scalar specifying the number of permutations
+%       'nperm'     A scalar integer specifying the number of permutations
 %                   (default=10,000, or all possible permutations for less
 %                   than 14 observations).
 %       'tail'      A string specifying the alternative hypothesis:
@@ -61,10 +61,15 @@ function [t,stats,orig,params] = permuttest(x,y,varargin)
 %                                   store the results in a matrix
 %       'm'         A scalar or row vector specifying the mean of the null
 %                   hypothesis for each variable (default=0).
+%       'seed'      A scalar integer specifying the seed used to initialise
+%                   the permutation generator. By default, the generator is
+%                   initialised based on the current time, resulting in a
+%                   different permutation each time.
 %
 %   Example 1: generate multivariate data for 2 conditions, each with 20
 %   variables and 30 observations and perform paired permutation tests
 %   between the corresponding variables of each condition.
+%       rng(42);
 %       x = randn(30,20);
 %       y = randn(30,20);
 %       y(:,1:8) = y(:,1:8)-1;
@@ -75,11 +80,12 @@ function [t,stats,orig,params] = permuttest(x,y,varargin)
 %   Example 2: generate univariate data for 5 conditions, each with 30
 %   observations and perform paired permutation tests between every pair of
 %   conditions (5 conditions = 10 comparisons).
+%       rng(42);
 %       x = randn(30,5);
 %       x(:,3:5) = x(:,3:5)-1;
 %       [t,stats] = permuttest(x,[],'sample','paired') % paired-sample test
 %
-%   See also PERMUTTEST2 PERMUVARTEST2 PERMUCORR DEFFECTSIZE.
+%   See also PERMUTTEST2 PERMUVARTEST2 PERMUCORR BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -182,6 +188,7 @@ if nargout > 1
     end
 
     % Permute data and generate distribution of t-values
+    rng(arg.seed);
     signx = sign(rand(maxnobs,arg.nperm)-0.5);
     tp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
@@ -412,6 +419,11 @@ addParameter(p,'sample','one',validFcn);
 errorMsg = 'It must be a scalar or row vector.';
 validFcn = @(x) assert(isnumeric(x),errorMsg);
 addParameter(p,'m',0,validFcn);
+
+% Permutation generator seed
+errorMsg = 'It must be an integer scalar.';
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x),errorMsg);
+addParameter(p,'seed','shuffle',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
