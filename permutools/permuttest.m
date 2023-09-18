@@ -200,6 +200,7 @@ if nargout > 1
     % Compute tmax without sign and add negative values
     tmax = max(abs(tp),[],2);
     tmax(arg.nperm+1:2*arg.nperm) = -tmax;
+    arg.nperm = 2*arg.nperm;
 
     % Compute adjusted test statistics using tmax correction
     switch arg.tail
