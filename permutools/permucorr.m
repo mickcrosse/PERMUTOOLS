@@ -142,59 +142,73 @@ muxy = sum(x).*sum(y)/nobs;
 sdxy = sqrt((sum(x.^2)-(sum(x).^2)/nobs).*(sum(y.^2)-(sum(y).^2)/nobs));
 r = (sum(x.*y)-muxy)./sdxy;
 
-% Use all possible permutations if less than 8 observations
-if nobs < 8
-    warning('Computing all possible permutations due to small N.')
-    arg.nperm = factorial(nobs);
-    idx = perms(1:nobs)';
-else
-    rng(arg.seed);
-    [~,idx] = sort(rand(nobs,arg.nperm));
-end
+if nargout > 1
 
-% Generate permutation distribution
-pd = zeros(arg.nperm,nvar);
-for i = 1:arg.nperm
-    pd(i,:) = (sum(x(idx(:,i),:).*y)-muxy)./sdxy;
-end
+    % Use all possible permutations if less than 8 observations
+    if nobs < 8
+        warning('Computing all possible permutations due to small N.')
+        arg.nperm = factorial(nobs);
+        idx = perms(1:nobs)';
+    else
+        rng(arg.seed);
+        [~,idx] = sort(rand(nobs,arg.nperm));
+    end
 
-% Apply max correction if specified
-if arg.correct
+    % Generate permutation distribution
+    pd = zeros(arg.nperm,nvar);
+    for i = 1:arg.nperm
+        pd(i,:) = (sum(x(idx(:,i),:).*y)-muxy)./sdxy;
+    end
+
+    % Apply max correction if specified
+    if arg.correct
+        switch arg.tail
+            case 'both'
+                [~,idx] = max(abs(pd),[],2);
+                csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
+                pd = pd';
+                pd = pd(idx+csvar);
+            case 'right'
+                pd = max(pd,[],2);
+            case 'left'
+                pd = min(pd,[],2);
+        end
+    end
+
+    % Compute unadjusted test statistics
     switch arg.tail
         case 'both'
-            [~,idx] = max(abs(pd),[],2);
-            csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-            pd = pd';
-            pd = pd(idx+csvar);
+            p = 2*(min(sum(r<=pd),sum(r>=pd))+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pd,100*(1-arg.alpha/2));
+                ci = [max(-1,r-crit);min(1,r+crit)];
+            end
         case 'right'
-            pd = max(pd,[],2);
+            p = (sum(r<=pd)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pd,100*(1-arg.alpha));
+                ci = [max(-1,r-crit);Inf(1,nvar)];
+            end
         case 'left'
-            pd = min(pd,[],2);
+            p = (sum(r>=pd)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(-pd,100*(1-arg.alpha));
+                ci = [-Inf(1,nvar);min(1,r+crit)];
+            end
     end
-end
 
-% Compute unadjusted test statistics
-switch arg.tail
-    case 'both'
-        p = 2*(min(sum(r<=pd),sum(r>=pd))+1)/(arg.nperm+1);
-        crit = prctile(pd,100*(1-arg.alpha/2));
-        ci = [max(-1,r-crit);min(1,r+crit)];
-    case 'right'
-        p = (sum(r<=pd)+1)/(arg.nperm+1);
-        crit = prctile(pd,100*(1-arg.alpha));
-        ci = [max(-1,r-crit);Inf(1,nvar)];
-    case 'left'
-        p = (sum(r>=pd)+1)/(arg.nperm+1);
-        crit = prctile(-pd,100*(1-arg.alpha));
-        ci = [-Inf(1,nvar);min(1,r+crit)];
 end
 
 % Arrange test results in a matrix if specified
 if arg.mat
     r = ptvec2mat(r);
-    p = ptvec2mat(p);
-    ciLwr = ptvec2mat(ci(1,:));
-    ciUpr = ptvec2mat(ci(2,:));
-    ci = cat(3,ciLwr,ciUpr);
-    ci = permute(ci,[3,1,2]);
+    if nargout > 1
+        p = ptvec2mat(p);
+    end
+    if nargout > 2
+        ciLwr = ptvec2mat(ci(1,:));
+        ciUpr = ptvec2mat(ci(2,:));
+        ci = cat(3,ciLwr,ciUpr);
+        ci = permute(ci,[3,1,2]);
+    end
 end

@@ -207,16 +207,22 @@ switch arg.tail
     case 'both'
         pd = abs(pd);
         p = (sum(abs(tstat)<=pd)+1)/(arg.nperm+1);
-        crit = prctile(pd,100*(1-arg.alpha)).*se;
-        ci = [mx-crit;mx+crit];
+        if nargout > 2
+            crit = prctile(pd,100*(1-arg.alpha)).*se;
+            ci = [mx-crit;mx+crit];
+        end
     case 'right'
         p = (sum(tstat<=pd)+1)/(arg.nperm+1);
-        crit = prctile(pd,100*(1-arg.alpha)).*se;
-        ci = [mx-crit;Inf(1,nvar)];
+        if nargout > 2
+            crit = prctile(pd,100*(1-arg.alpha)).*se;
+            ci = [mx-crit;Inf(1,nvar)];
+        end
     case 'left'
         p = (sum(tstat>=pd)+1)/(arg.nperm+1);
-        crit = prctile(pd,100*(1-arg.alpha)).*se;
-        ci = [-Inf(1,nvar);mx+crit];
+        if nargout > 2
+            crit = prctile(pd,100*(1-arg.alpha)).*se;
+            ci = [-Inf(1,nvar);mx+crit];
+        end
 end
 
 % Determine if p-values exceed alpha level
@@ -226,15 +232,23 @@ h(isnan(p)) = NaN;
 % Arrange test results in a matrix if specified
 if arg.mat
     h = ptvec2mat(h);
-    p = ptvec2mat(p);
-    ciLwr = ptvec2mat(ci(1,:));
-    ciUpr = ptvec2mat(ci(2,:));
-    ci = cat(3,ciLwr,ciUpr);
-    ci = permute(ci,[3,1,2]);
-    tstat = ptvec2mat(tstat);
-    df = ptvec2mat(df);
-    sd = ptvec2mat(sd);
+    if nargout > 1
+        p = ptvec2mat(p);
+    end
+    if nargout > 2
+        ciLwr = ptvec2mat(ci(1,:));
+        ciUpr = ptvec2mat(ci(2,:));
+        ci = cat(3,ciLwr,ciUpr);
+        ci = permute(ci,[3,1,2]);
+    end
+    if nargout > 3
+        tstat = ptvec2mat(tstat);
+        df = ptvec2mat(df);
+        sd = ptvec2mat(sd);
+    end
 end
 
 % Store test statistics in a structure
-stats = struct('tstat',tstat,'df',df,'sd',sd);
+if nargout > 3
+    stats = struct('tstat',tstat,'df',df,'sd',sd);
+end

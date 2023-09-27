@@ -161,29 +161,34 @@ if arg.correct
     pd = pd';
     pdmax = pd(imax+csvar);
     pdmin = pd(imin+csvar);
-    factor = 1;
+    k = 1;
 else
     pdmax = pd;
     pdmin = pd;
-    factor = 2;
+    k = 2;
 end
 
 % Compute corrected test statistics using max statistic correction
 switch arg.tail
     case 'both'
-        p = factor*(min(sum(fstat<=pdmax),sum(fstat>=pdmin))+1)...
-            /(arg.nperm+1);
-        crit = [prctile(pdmin,100*arg.alpha/2);...
-            prctile(pdmax,100*(1-arg.alpha/2))];
-        ci = fstat./crit;
+        p = k*(min(sum(fstat<=pdmax),sum(fstat>=pdmin))+1)/(arg.nperm+1);
+        if nargout > 2
+            crit = [prctile(pdmin,100*arg.alpha/2);...
+                prctile(pdmax,100*(1-arg.alpha/2))];
+            ci = fstat./crit;
+        end
     case 'right'
         p = (sum(fstat<=pdmax)+1)/(arg.nperm+1);
-        crit = prctile(pdmax,100*(1-arg.alpha));
-        ci = [fstat./crit;Inf(1,nvar)];
+        if nargout > 2
+            crit = prctile(pdmax,100*(1-arg.alpha));
+            ci = [fstat./crit;Inf(1,nvar)];
+        end
     case 'left'
         p = (sum(fstat>=pdmin)+1)/(arg.nperm+1);
-        crit = prctile(pdmin,100*arg.alpha);
-        ci = [zeros(1,nvar);fstat./crit];
+        if nargout > 2
+            crit = prctile(pdmin,100*arg.alpha);
+            ci = [zeros(1,nvar);fstat./crit];
+        end
 end
 
 % Determine if p-values exceed alpha level
@@ -193,15 +198,23 @@ h(isnan(p)) = NaN;
 % Arrange test results in a matrix if specified
 if arg.mat
     h = ptvec2mat(h);
-    p = ptvec2mat(p);
-    ciLwr = ptvec2mat(ci(1,:));
-    ciUpr = ptvec2mat(ci(2,:));
-    ci = cat(3,ciLwr,ciUpr);
-    ci = permute(ci,[3,1,2]);
-    fstat = ptvec2mat(fstat);
-    df1 = ptvec2mat(df1);
-    df2 = ptvec2mat(df2);
+    if nargout > 1
+        p = ptvec2mat(p);
+    end
+    if nargout > 2
+        ciLwr = ptvec2mat(ci(1,:));
+        ciUpr = ptvec2mat(ci(2,:));
+        ci = cat(3,ciLwr,ciUpr);
+        ci = permute(ci,[3,1,2]);
+    end
+    if nargout > 3
+        fstat = ptvec2mat(fstat);
+        df1 = ptvec2mat(df1);
+        df2 = ptvec2mat(df2);
+    end
 end
 
 % Store test statistics in a structure
-stats = struct('fstat',fstat,'df1',df1,'df2',df2);
+if nargout > 3
+    stats = struct('fstat',fstat,'df1',df1,'df2',df2);
+end
