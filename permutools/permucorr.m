@@ -1,32 +1,34 @@
-function [r,p,ci] = permucorr(x,y,varargin)
+function [r,p,ci,stats] = permucorr(x,varargin)
 %PERMUCORR  Linear or rank permutation-based correlation.
-%   R = PERMUCORR(X,Y) returns the pairwise linear correlation coefficient
-%   based on Pearson's r. For nonlinear correlations, the raw data may be
-%   transformed to rank orders using the Spearman's or a rankit method via
-%   the 'TYPE' parameter (Bishara & Hittner, 2012). X and Y must have the
-%   same length.
+%   R = PERMUCORR(X) returns a matrix containing the pairwise linear
+%   correlation coefficients between each pair of columns in X based on
+%   Pearson's r. For nonlinear correlations, the raw data may be
+%   transformed to rank orders in order to compute a Spearman or rankit
+%   correlation by setting the TYPE parameter to 'Spearman' or 'Rankit'.
 %
-%   If X and Y are matrices, the correlation between each corresponding
-%   pair of columns in X and Y is calculated, and a vector of results is
+%   R = PERMUCORR(X,Y) returns the pairwise correlation coefficient between
+%   vectors X and Y. X and Y must have the same length. If X and Y are
+%   matrices, the correlation coefficients between each corresponding pair
+%   of columns in X and Y are calculated, and a vector of results is
 %   returned.
-%
-%   If Y is not entered, the correlation between each pair of columns in X
-%   is computed and a correlation matrix is returned.
 %
 %   [R,P] = PERMUCORR(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true.
 %   As the null distribution is generated empirically by permuting the
 %   data, no assumption is made about the shape of the distribution that
-%   the data come from. For multivariate data, Family-wise error rate
-%   (FWER) is controlled using the maximum statistic correction method
-%   (Blair et al., 1994). This method provides strong control of FWER, even
-%   for small sample sizes, and is much more powerful than traditional
-%   correction methods (Groppe et al., 2011).
+%   the data come from. For multivariate data, separate permutation tests
+%   are performed between each pair of columns, and a vector of results is
+%   returned. Family-wise error rate (FWER) is controlled for multiple
+%   tests using the max statistic correction method. This method provides
+%   strong control of FWER, even for small sample sizes, and is much more
+%   powerful than traditional correction methods.
 %
 %   [R,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence interval
-%   for each coefficient. For Pearson and rankit correlations, the Fisher
-%   z' method is used and for Spearman rank correlations, Fieller et al.'s
-%   estimate is used (Bishara & Hittner, 2017).
+%   for each coefficient.
+%
+%   [H,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
+%   fields:
+%       'df'        -- the degrees of freedom of each test
 %
 %   [...] = PERMUCORR(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -59,6 +61,9 @@ function [r,p,ci] = permucorr(x,y,varargin)
 %                   initialise the permutation generator. By default, the
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
+%       'verbose'   A numeric or logical specifying whether to execute in
+%                   verbose mode: pass in 1 for verbose mode (default), or
+%                   0 for non-verbose mode.
 %
 %   See also CORR CORRCOEF PARTIALCORR TIEDRANK.
 %
@@ -82,8 +87,11 @@ function [r,p,ci] = permucorr(x,y,varargin)
 %   © 2018 Mick Crosse <mickcrosse@gmail.com>
 %   CNL, Albert Einstein College of Medicine, NY.
 
-if nargin<2
+if nargin<2 || ischar(varargin{1})
     y = [];
+else
+    y = varargin{1};
+    varargin = varargin(2:end);
 end
 
 % Parse input arguments
@@ -127,79 +135,87 @@ end
 % Get data dimensions
 [nobs,nvar] = size(x);
 
+% Compute degrees of freedom
+if nargout > 3
+    df = nobs-2;
+end
+
 % Transform raw data to rank-orders if specified
 switch arg.type
-    case 'Rankit'
-        x = norminv((tiedrank(x)-0.5)/nobs);
-        y = norminv((tiedrank(y)-0.5)/nobs);
     case 'Spearman'
         x = tiedrank(x);
         y = tiedrank(y);
+    case 'Rankit'
+        x = norminv((tiedrank(x)-0.5)/nobs);
+        y = norminv((tiedrank(y)-0.5)/nobs);
 end
 
 % Compute test statistic
-muxy = sum(x).*sum(y)/nobs;
 sdxy = sqrt((sum(x.^2)-(sum(x).^2)/nobs).*(sum(y.^2)-(sum(y).^2)/nobs));
-r = (sum(x.*y)-muxy)./sdxy;
+mu = sum(x).*sum(y)/nobs;
+r = (sum(x.*y)-mu)./sdxy;
 
 if nargout > 1
 
-    % Use all possible permutations if less than 8 observations
+    % Generate random permutations
+    rng(arg.seed);
     if nobs < 8
-        warning('Computing all possible permutations due to small N.')
         arg.nperm = factorial(nobs);
         idx = perms(1:nobs)';
+        if arg.verbose
+            warning('Computing all possible permutations due to small N.')
+            fprintf('Number of permutations used: %d',arg.nperm)
+        end
     else
-        rng(arg.seed);
         [~,idx] = sort(rand(nobs,arg.nperm));
     end
 
-    % Generate permutation distribution
-    pd = zeros(arg.nperm,nvar);
+    % Estimate sampling distribution
+    rp = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        pd(i,:) = (sum(x(idx(:,i),:).*y)-muxy)./sdxy;
+        rp(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
     end
 
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
             case 'both'
-                [~,idx] = max(abs(pd),[],2);
+                [~,idx] = max(abs(rp),[],2);
                 csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-                pd = pd';
-                pd = pd(idx+csvar);
+                rp = rp';
+                rp = rp(idx+csvar);
             case 'right'
-                pd = max(pd,[],2);
+                rp = max(rp,[],2);
             case 'left'
-                pd = min(pd,[],2);
+                rp = min(rp,[],2);
         end
     end
 
-    % Compute unadjusted test statistics
+    % Compute p-value and CIs
     switch arg.tail
         case 'both'
-            p = 2*(min(sum(r<=pd),sum(r>=pd))+1)/(arg.nperm+1);
+            p = 2*(min(sum(r<=rp),sum(r>=rp))+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pd,100*(1-arg.alpha/2));
+                crit = prctile(rp,100*(1-arg.alpha/2));
                 ci = [max(-1,r-crit);min(1,r+crit)];
             end
         case 'right'
-            p = (sum(r<=pd)+1)/(arg.nperm+1);
+            p = (sum(r<=rp)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pd,100*(1-arg.alpha));
+                crit = prctile(rp,100*(1-arg.alpha));
                 ci = [max(-1,r-crit);Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(r>=pd)+1)/(arg.nperm+1);
+            p = (sum(r>=rp)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(-pd,100*(1-arg.alpha));
+                crit = prctile(-rp,100*(1-arg.alpha));
                 ci = [-Inf(1,nvar);min(1,r+crit)];
             end
     end
 
 end
 
-% Arrange test results in a matrix if specified
+% Arrange results in a matrix if specified
 if arg.mat
     r = ptvec2mat(r);
     if nargout > 1
@@ -211,4 +227,12 @@ if arg.mat
         ci = cat(3,ciLwr,ciUpr);
         ci = permute(ci,[3,1,2]);
     end
+    if nargout > 3
+        df = ptvec2mat(df);
+    end
+end
+
+% Store statistics in a structure
+if nargout > 3
+    stats = struct('df',df);
 end

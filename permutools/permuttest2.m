@@ -1,29 +1,27 @@
 function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %PERMUTTEST2  Unpaired two-sample permutation-based t-test.
 %   H = PERMUTTEST2(X,Y) returns the results of a two-sample permutation
-%   test between X and Y based on the t-statistic. H=0 indicates that the
-%   null hypothesis that X and Y have equal means cannot be rejected at the
-%   5% significance level, wheras H=1 indicates that the null hypothesis
-%   can be rejected at the 5% significance level. As the null distribution
-%   is generated empirically by permuting the data, no assumption is made
-%   about the shape of the distribution that the data come from, except
-%   that the variance is equal. X and Y can have different lengths.
-%
-%   If X and Y are matrices, multiple permutation tests are performed
-%   simultaneously between each corresponding pair of columns in X and Y,
-%   and a vector of results is returned. Family-wise error rate (FWER) is
-%   controlled for multiple permutation tests using the maximum statistic
-%   correction method (Blair et al., 1994). This method provides strong
-%   control of FWER, even for small sample sizes, and is much more powerful
-%   than traditional correction methods (Groppe et al., 2011). It is also
-%   rather insensitive to differences in population variance when samples
-%   of equal size are used (Groppe et al., 2011b). For samples of unequal
-%   size or variance, Welch's t-statistic may be used as it is less
+%   test between independent samples X and Y based on the t-statistic. H=0
+%   indicates that the null hypothesis (that the data in X and Y come from
+%   distributions with equal means) cannot be rejected at the 5%
+%   significance level, wheras H=1 indicates that the null hypothesis can
+%   be rejected. As the null distribution is generated empirically by
+%   permuting the data, no assumption is made about the shape of the
+%   distributions that the data come from, except that they have equal
+%   variances. For samples of unequal size or variance, Welch's t-statistic
+%   may be used by setting the VARTYPE parameter to 'UNEQUAL' as it is less
 %   sensitive to differences in variance (but also less sensitive to
-%   differences in means).
+%   differences in means). X and Y can have different lengths.
 %
-%   If Y is empty, permutation tests between every pair of columns in X are
-%   performed and a matrix of results is returned.
+%   If X and Y are matrices, separate permutation tests are performed
+%   between each corresponding pair of columns in X and Y, and a vector of
+%   results is returned. Family-wise error rate (FWER) is controlled for
+%   multiple tests using the max statistic correction method. This method
+%   provides strong control of FWER, even for small sample sizes, and is
+%   much more powerful than traditional correction methods.
+%
+%   If Y is empty, two-sample permutation tests between every pair of
+%   columns in X are performed, and a matrix of results is returned.
 %
 %   PERMUTTEST2 treats NaNs as missing values, and ignores them.
 %
@@ -31,7 +29,7 @@ function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %   observing the given result by chance if the null hypothesis is true.
 %
 %   [H,P,CI] = PERMUTTEST2(...) returns a 100*(1-ALPHA)% confidence
-%   interval for the true difference of population means (Groppe, 2016).
+%   interval for the true difference of population means.
 %
 %   [H,P,CI,STATS] = PERMUTTEST2(...) returns a structure with the
 %   following fields:
@@ -129,7 +127,7 @@ switch arg.rows
 end
 
 % Get data dimensions, ignoring NaNs
-maxnobsx = size(x,1);
+[maxnobsx,nvar] = size(x);
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
 
@@ -152,11 +150,10 @@ vary = (sum(y.^2,nanflag)-(smy.^2)./nobsy)./dfy;
 
 % Concatenate samples
 x = [x;y];
-[maxnobs,nvar] = size(x);
 nobs = sum(~isnan(x));
 sqrtn = sqrt(nobs./(nobsx.*nobsy));
 
-% Compute test statistic
+% Compute standard error
 switch arg.vartype
     case 'equal'
         df = nobs-2;
@@ -169,67 +166,74 @@ switch arg.vartype
         sd = sqrt([varx;vary]);
         se = sqrt(se2x+se2y);
 end
-mx = smx./nobsx-smy./nobsy;
-tstat = mx./se;
 
-% Generate permutation distribution
+% Compute mean difference
+mu = smx./nobsx-smy./nobsy;
+
+% Compute test statistic
+tstat = mu./se;
+
+% Generate random permutations
 rng(arg.seed);
+maxnobs = size(x,1);
 [~,idx] = sort(rand(maxnobs,arg.nperm));
-ix = idx(1:maxnobsx,:);
-iy = idx(maxnobsx+1:maxnobs,:);
-pd = zeros(arg.nperm,nvar);
+i1 = idx(1:maxnobsx,:);
+i2 = idx(maxnobsx+1:maxnobs,:);
+
+% Estimate sampling distribution
+tp = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
-    xp = x(ix(:,i),:);
-    yp = x(iy(:,i),:);
-    smx = sum(xp,nanflag);
-    smy = sum(yp,nanflag);
-    s2x = (sum(xp.^2,nanflag)-(smx.^2)./nobsx)./dfx;
-    s2y = (sum(yp.^2,nanflag)-(smy.^2)./nobsy)./dfy;
+    x1 = x(i1(:,i),:);
+    x2 = x(i2(:,i),:);
+    sm1 = sum(x1,nanflag);
+    sm2 = sum(x2,nanflag);
+    var1 = (sum(x1.^2,nanflag)-(sm1.^2)./nobsx)./dfx;
+    var2 = (sum(x2.^2,nanflag)-(sm2.^2)./nobsy)./dfy;
     switch arg.vartype
         case 'equal'
-            sep = sqrt((dfx.*s2x+dfy.*s2y)./df).*sqrtn;
+            sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
         case 'unequal'
-            sep = sqrt(s2x./nobsx+s2y./nobsy);
+            sep = sqrt(var1./nobsx+var2./nobsy);
     end
-    pd(i,:) = (smx./nobsx-smy./nobsy)./sep;
+    tp(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
 end
 
 % Apply max correction if specified
 if arg.correct
-    [~,idx] = max(abs(pd),[],2);
+    [~,idx] = max(abs(tp),[],2);
     csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-    pd = pd';
-    pd = pd(idx+csvar);
+    tp = tp';
+    tp = tp(idx+csvar);
 end
 
-% Compute test statistics
+% Compute p-value and CIs
 switch arg.tail
     case 'both'
-        pd = abs(pd);
-        p = (sum(abs(tstat)<=pd)+1)/(arg.nperm+1);
+        tp = abs(tp);
+        p = (sum(abs(tstat)<=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha)).*se;
-            ci = [mx-crit;mx+crit];
+            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;mu+crit];
         end
     case 'right'
-        p = (sum(tstat<=pd)+1)/(arg.nperm+1);
+        p = (sum(tstat<=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha)).*se;
-            ci = [mx-crit;Inf(1,nvar)];
+            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(tstat>=pd)+1)/(arg.nperm+1);
+        p = (sum(tstat>=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha)).*se;
-            ci = [-Inf(1,nvar);mx+crit];
+            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            ci = [-Inf(1,nvar);mu+crit];
         end
 end
 
-% Determine if p-values exceed alpha level
+% Determine if p-value exceeds alpha level
 h = cast(p<=arg.alpha,'like',p);
 h(isnan(p)) = NaN;
 
-% Arrange test results in a matrix if specified
+% Arrange results in a matrix if specified
 if arg.mat
     h = ptvec2mat(h);
     if nargout > 1
@@ -248,7 +252,7 @@ if arg.mat
     end
 end
 
-% Store test statistics in a structure
+% Store statistics in a structure
 if nargout > 3
     stats = struct('tstat',tstat,'df',df,'sd',sd);
 end

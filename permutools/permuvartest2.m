@@ -1,25 +1,24 @@
 function [h,p,ci,stats] = permuvartest2(x,y,varargin)
 %PERMUVARTEST2  Unpaired two-sample permutation-based F-test.
 %   H = PERMUVARTEST2(X,Y) returns the results of a two-sample permutation
-%   test between X and Y based on the F-statistic. H=0 indicates that the
-%   null hypothesis that X and Y have equal variances cannot be rejected at
-%   the 5% significance level, wheras H=1 indicates that the null
-%   hypothesis can be rejected at the 5% significance level. As the null
-%   distribution is generated empirically by permuting the data, no
-%   assumption is made about the shape of the distribution that the data
-%   come from, except that the variance is equal. X and Y can have
-%   different lengths.
+%   test between independent samples X and Y based on the F-statistic. H=0
+%   indicates that the null hypothesis (that the data in X and Y come from
+%   distributions with equal variances) cannot be rejected at the 5%
+%   significance level, wheras H=1 indicates that the null hypothesis can
+%   be rejected. As the null distribution is generated empirically by
+%   permuting the data, no assumption is made about the shape of the
+%   distributions that the data come from. X and Y can have different
+%   lengths.
 %
-%   If X and Y are matrices, multiple permutation tests are performed
-%   simultaneously between each corresponding pair of columns in X and Y,
-%   and a vector of results is returned. Family-wise error rate (FWER) is
-%   controlled for multiple permutation tests using the maximum statistic
-%   correction method (Blair et al., 1994). This method provides strong
-%   control of FWER, even for small sample sizes, and is much more powerful
-%   than traditional correction methods (Groppe et al., 2011).
+%   If X and Y are matrices, separate permutation tests are performed
+%   between each corresponding pair of columns in X and Y, and a vector of
+%   results is returned. Family-wise error rate (FWER) is controlled for
+%   multiple tests using the max statistic correction method. This method
+%   provides strong control of FWER, even for small sample sizes, and is
+%   much more powerful than traditional correction methods.
 %
 %   If Y is empty, permutation tests between every pair of columns in X are
-%   performed and a matrix of results is returned.
+%   performed, and a matrix of results is returned.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %
@@ -115,7 +114,7 @@ switch arg.rows
 end
 
 % Get data dimensions, ignoring NaNs
-maxnobsx = size(x,1);
+[maxnobsx,nvar] = size(x);
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
 
@@ -130,72 +129,76 @@ else
     nanflag = 'includemissing';
 end
 
-% Compute test statistic
+% Compute sample variance using fast algo
 varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
 vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
+
+% Compute test statistic
 fstat = varx./vary;
 
-% Concatenate data
+% Concatenate samples
 x = [x;y];
-[maxnobs,nvar] = size(x);
 
-% Generate permutation distribution
+% Generate random permutations
 rng(arg.seed);
+maxnobs = size(x,1);
 [~,idx] = sort(rand(maxnobs,arg.nperm));
-ix = idx(1:maxnobsx,:);
-iy = idx(maxnobsx+1:maxnobs,:);
-pd = zeros(arg.nperm,nvar);
+i1 = idx(1:maxnobsx,:);
+i2 = idx(maxnobsx+1:maxnobs,:);
+
+% Estimate sampling distribution
+fp = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
-    xp = x(ix(:,i),:);
-    yp = x(iy(:,i),:);
-    varx = (sum(xp.^2,nanflag)-(sum(xp,nanflag).^2)./nobsx)./df1;
-    vary = (sum(yp.^2,nanflag)-(sum(yp,nanflag).^2)./nobsy)./df2;
-    pd(i,:) = varx./vary;
+    x1 = x(i1(:,i),:);
+    x2 = x(i2(:,i),:);
+    var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
+    var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
+    fp(i,:) = var1./var2;
 end
 
 % Apply max correction if specified
 if arg.correct
-    [~,imax] = max(pd,[],2);
-    [~,imin] = min(pd,[],2);
+    [~,imax] = max(fp,[],2);
+    [~,imin] = min(fp,[],2);
     csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-    pd = pd';
-    pdmax = pd(imax+csvar);
-    pdmin = pd(imin+csvar);
+    fp = fp';
+    fmax = fp(imax+csvar);
+    fmin = fp(imin+csvar);
     k = 1;
 else
-    pdmax = pd;
-    pdmin = pd;
+    fmax = fp;
+    fmin = fp;
     k = 2;
 end
 
-% Compute corrected test statistics using max statistic correction
+% Compute p-value and CIs
 switch arg.tail
     case 'both'
-        p = k*(min(sum(fstat<=pdmax),sum(fstat>=pdmin))+1)/(arg.nperm+1);
+        p = k*(min(sum(fstat<=fmax),sum(fstat>=fmin))+1)/(arg.nperm+1);
         if nargout > 2
-            crit = [prctile(pdmin,100*arg.alpha/2);...
-                prctile(pdmax,100*(1-arg.alpha/2))];
+            crit = [prctile(fmin,100*arg.alpha/2);...
+                prctile(fmax,100*(1-arg.alpha/2))];
             ci = fstat./crit;
         end
     case 'right'
-        p = (sum(fstat<=pdmax)+1)/(arg.nperm+1);
+        p = (sum(fstat<=fmax)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pdmax,100*(1-arg.alpha));
+            crit = prctile(fmax,100*(1-arg.alpha));
             ci = [fstat./crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(fstat>=pdmin)+1)/(arg.nperm+1);
+        p = (sum(fstat>=fmin)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pdmin,100*arg.alpha);
+            crit = prctile(fmin,100*arg.alpha);
             ci = [zeros(1,nvar);fstat./crit];
         end
 end
 
-% Determine if p-values exceed alpha level
+% Determine if p-value exceeds alpha level
 h = cast(p<=arg.alpha,'like',p);
 h(isnan(p)) = NaN;
 
-% Arrange test results in a matrix if specified
+% Arrange results in a matrix if specified
 if arg.mat
     h = ptvec2mat(h);
     if nargout > 1
@@ -214,7 +217,7 @@ if arg.mat
     end
 end
 
-% Store test statistics in a structure
+% Store statistics in a structure
 if nargout > 3
     stats = struct('fstat',fstat,'df1',df1,'df2',df2);
 end

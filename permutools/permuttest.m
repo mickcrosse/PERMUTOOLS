@@ -1,26 +1,34 @@
-function [h,p,ci,stats] = permuttest(x,y,varargin)
+function [h,p,ci,stats] = permuttest(x,m,varargin)
 %PERMUTTEST  One-sample and paired-sample permutation-based t-test.
-%   H = PERMUTTEST(X,Y) returns the results of a paired-sample permutation
-%   test between X and Y based on the t-statistic. H=0 indicates that the
-%   null hypothesis that X and Y have equal means cannot be rejected at the
-%   5% significance level, wheras H=1 indicates that the null hypothesis
-%   can be rejected at the 5% significance level. As the null distribution
-%   is generated empirically by permuting the data, no assumption is made
-%   about the shape of the distribution that the data come from. X and Y
-%   must have the same length.
+%   H = PERMUTTEST(X) returns the results of a one-sample permutation test
+%   based on the t-statistic. H=0 indicates that the null hypothesis (that
+%   the data in X come from a distribution with mean zero) cannot be
+%   rejected at the 5% significance level, wheras H=1 indicates that the
+%   null hypothesis can be rejected. As the null distribution is generated
+%   empirically by permuting the data, no assumption is made about the
+%   shape of the distribution that the data come from.
 %
-%   If X and Y are matrices, multiple permutation tests are performed
-%   simultaneously between each corresponding pair of columns in X and Y,
-%   and a vector of results is returned. Family-wise error rate (FWER) is
-%   controlled for multiple permutation tests using the maximum statistic
-%   correction method (Blair et al., 1994). This method provides strong
-%   control of FWER, even for small sample sizes, and is much more powerful
-%   than traditional correction methods (Gondan, 2010; Groppe et al., 2011).
-%
-%   For one-sample permutation tests, enter the data column-wise in X and
-%   leave Y empty. Here, the null hypothesis is that X has a mean of zero.
+%   If X is a matrix, separate permutation tests are performed along each
+%   column of X, and a vector of results is returned. Family-wise error
+%   rate (FWER) is controlled for multiple tests using the max statistic
+%   correction method. This method provides strong control of FWER, even
+%   for small sample sizes, and is much more powerful than traditional
+%   correction methods. If the parameter TEST is set to 'PAIRWISE',
+%   permutation tests between every pair of columns in X are performed,
+%   and a matrix of results is returned.
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
+%
+%   H = PERMUTTEST(X,M) returns the results of a one-sample permutation
+%   test of the hypothesis that the data in X come from a distribution with
+%   mean M. M must be a scalar.
+%
+%   H = PERMUTTEST(X,Y) returns the results of a paired-sample permutation
+%   test between dependent samples X and Y of the hypothesis that the data
+%   in X and Y come from distributions with equal means. X and Y must have
+%   the same length. If X and Y are matrices, separate permutation tests
+%   are performed between each corresponding pair of columns in X and Y,
+%   and a vector of results is returned.
 %
 %   [H,P] = PERMUTTEST(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true.
@@ -49,14 +57,12 @@ function [h,p,ci,stats] = permuttest(x,y,varargin)
 %                       'both'      mean is not M (two-tailed, default)
 %                       'right'     mean is greater than M (right-tailed)
 %                       'left'      mean is less than M (left-tailed)
-%       'm'         A scalar or row vector specifying the mean of the null
-%                   hypothesis for each variable (default=0).
-%       'sample'    A string specifying whether to perform a one-sample
-%                   test or a paired-sample test when only X is entered:
+%       'test'      A string specifying whether to perform a one-sample
+%                   test or a pairwise test when only X is entered:
 %                       'one'       compare each column of X to zero and
-%                                   store the results in a vector (default)
-%                       'paired'    compare each pair of columns in X and
-%                                   store the results in a matrix
+%                                   return a vector of results (default)
+%                       'pairwise'  compare each pair of columns in X and
+%                                   return a matrix of results
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000, or all possible permutations for less
 %                   than 14 observations).
@@ -70,6 +76,9 @@ function [h,p,ci,stats] = permuttest(x,y,varargin)
 %                   initialise the permutation generator. By default, the
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
+%       'verbose'   A numeric or logical specifying whether to execute in
+%                   verbose mode: pass in 1 for verbose mode (default), or
+%                   0 for non-verbose mode.
 %
 %   See also TTEST PERMUTTEST2 BOOTEFFECTSIZE.
 %
@@ -89,8 +98,13 @@ function [h,p,ci,stats] = permuttest(x,y,varargin)
 %   © 2018 Mick Crosse <mickcrosse@gmail.com>
 %   CNL, Albert Einstein College of Medicine, NY.
 
-if nargin<2
+if nargin < 2 || isempty(m)
     y = [];
+elseif isscalar(m)
+    y = [];
+    x = x-m;
+elseif ismatrix(m)
+    y = m;
 end
 
 % Parse input arguments
@@ -108,20 +122,23 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
 end
 
 % Set up permutation test
-switch arg.sample
-    case 'paired'
-        if isempty(y)
+if isempty(y)
+    switch arg.test
+        case 'one'
+            y = zeros(size(x));
+        case 'pairwise'
             warning('Comparing all columns of X using two-tailed test...')
             [x,y] = ptpaircols(x);
             arg.tail = 'both';
             arg.mat = true;
-        else
-            error('The paired-sample test option only applies to X.')
-        end
+    end
+else
+    switch arg.test
+        case 'pairwise'
+            error('The PAIRWISE option can only be used with one sample.')
+    end
 end
-if isempty(y)
-    y = 0;
-elseif size(x)~=size(y)
+if size(x)~=size(y)
     error('X and Y must be the same size.')
 end
 
@@ -140,14 +157,6 @@ nobs = sum(~isnan(x));
 
 % Compute degrees of freedom
 df = nobs-1;
-dfp = sqrt(nobs.*df);
-
-% Remove mean of null hypothesis from data
-if isscalar(arg.m)
-    x = x-arg.m;
-else
-    x = x-repmat(arg.m,maxnobs,1);
-end
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
@@ -156,64 +165,69 @@ else
     nanflag = 'includemissing';
 end
 
-% Compute test statistic
+% Compute standard deviation
 sd = std(x,nanflag);
-mx = sum(x,nanflag)./nobs;
+
+% Compute mean difference
+mu = sum(x,nanflag)./nobs;
+
+% Compute test statistic
 se = sd./sqrt(nobs);
-tstat = mx./se;
+tstat = mu./se;
 
-% Use all possible permutations if less than 14 observations
-if min(nobs) < 14
-    warning('Computing all possible permutations due to small N.')
-    arg.nperm = 2^min(nobs);
-end
-
-% Generate permutation distribution
+% Generate random permutations
 rng(arg.seed);
 signx = sign(rand(maxnobs,arg.nperm)-0.5);
-pd = zeros(arg.nperm,nvar);
+
+% Estimate sampling distribution
+sqrtn = sqrt(nobs.*df);
+tp = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
     xp = x.*repmat(signx(:,i),1,nvar);
-    sm = sum(xp,nanflag);
-    pd(i,:) = sm./nobs./(sqrt(sum(xp.^2)-(sm.^2)./nobs)./dfp);
+    smx = sum(xp,nanflag);
+    tp(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
 end
 
 % Apply max correction if specified
 if arg.correct
-    pd = max(abs(pd),[],2);
+    tp = max(abs(tp),[],2);
 end
 
 % Add negative values
-pd(arg.nperm+1:2*arg.nperm,:) = -pd;
+tp(arg.nperm+1:2*arg.nperm,:) = -tp;
 arg.nperm = 2*arg.nperm;
+if arg.verbose
+    warning('Adding negative of all values to sampling distribution.')
+    fprintf('Number of permutations used: %d',arg.nperm)
+end
 
-% Compute test statistics
+% Compute p-value and CIs
 switch arg.tail
     case 'both'
-        p = 2*(sum(abs(tstat)<=pd)+1)/(arg.nperm+1);
+        p = 2*(sum(abs(tstat)<=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha/2)).*se;
-            ci = [mx-crit;mx+crit];
+            crit = prctile(tp,100*(1-arg.alpha/2)).*se;
+            ci = [mu-crit;mu+crit];
         end
     case 'right'
-        p = (sum(tstat<=pd)+1)/(arg.nperm+1);
+        p = (sum(tstat<=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha)).*se;
-            ci = [mx-crit;Inf(1,nvar)];
+            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(tstat>=pd)+1)/(arg.nperm+1);
+        p = (sum(tstat>=tp)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(pd,100*(1-arg.alpha)).*se;
-            ci = [-Inf(1,nvar);mx+crit];
+            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            ci = [-Inf(1,nvar);mu+crit];
         end
 end
 
-% Determine if p-values exceed alpha level
+% Determine if p-value exceeds alpha level
 h = cast(p<=arg.alpha,'like',p);
 h(isnan(p)) = NaN;
 
-% Arrange test results in a matrix if specified
+% Arrange results in a matrix if specified
 if arg.mat
     h = ptvec2mat(h);
     if nargout > 1
@@ -232,7 +246,7 @@ if arg.mat
     end
 end
 
-% Store test statistics in a structure
+% Store statistics in a structure
 if nargout > 3
     stats = struct('tstat',tstat,'df',df,'sd',sd);
 end

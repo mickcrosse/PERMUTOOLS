@@ -33,6 +33,11 @@ errorMsg = 'It must be a positive integer scalar.';
 validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
 addParameter(p,'nperm',1e4,validFcn);
 
+% Number of bootstraps
+errorMsg = 'It must be a positive integer scalar.';
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
+addParameter(p,'nboot',1e4,validFcn);
+
 % Rows to use if NaNs
 rowsOptions = {'all','complete'};
 validFcn = @(x) any(validatestring(x,rowsOptions));
@@ -48,10 +53,10 @@ errorMsg = 'It must be a numeric scalar or row vector.';
 validFcn = @(x) assert(isnumeric(x),errorMsg);
 addParameter(p,'m',0,validFcn);
 
-% Sample type
-sampleOptions = {'one','paired'};
-validFcn = @(x) any(validatestring(x,sampleOptions));
-addParameter(p,'sample','one',validFcn);
+% Test type
+testOptions = {'one','pairwise'};
+validFcn = @(x) any(validatestring(x,testOptions));
+addParameter(p,'test','one',validFcn);
 
 % Variance equivalence
 vartypeOptions = {'equal','unequal'};
@@ -63,11 +68,18 @@ typeOptions = {'Pearson','Spearman','Rankit'};
 validFcn = @(x) any(validatestring(x,typeOptions));
 addParameter(p,'type','Pearson',validFcn);
 
+% Effect size measure
+effectOptions = {'Cohen','Glass'};
+validFcn = @(x) any(validatestring(x,effectOptions));
+addParameter(p,'effect','Cohen',validFcn);
+
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
 validFcn = @(x) assert(x==0||x==1||islogical(x),errorMsg);
-addParameter(p,'correct',true,validFcn); % max stat correction
-addParameter(p,'mat',false,validFcn); % matrix flag
+addParameter(p,'mat',false,validFcn); % matrix conversion
+addParameter(p,'correct',true,validFcn); % correction
+addParameter(p,'paired',true,validFcn); % paired samples
+addParameter(p,'verbose',true,validFcn); % verbose mode
 
 % Parse input arguments
 parse(p,varargin{1,1}{:});
@@ -76,6 +88,7 @@ arg = p.Results;
 % Redefine partially matched strings
 arg.tail = validatestring(arg.tail,tailOptions);
 arg.rows = validatestring(arg.rows,rowsOptions);
-arg.sample = validatestring(arg.sample,sampleOptions);
+arg.test = validatestring(arg.test,testOptions);
 arg.vartype = validatestring(arg.vartype,vartypeOptions);
 arg.type = validatestring(arg.type,typeOptions);
+arg.effect = validatestring(arg.effect,effectOptions);
