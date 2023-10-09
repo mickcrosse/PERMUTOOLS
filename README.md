@@ -30,7 +30,7 @@ For usage, please see [examples](#examples) and [example M-files](examples).
 
 ## Max Statistic Correction
 
-The max statistic correction method (Blair *et al.*, 1994) works by permuting the order or pairing of the data to estimate the sampling distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, more-conservative sampling distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
+The max statistic correction method (Blair *et al.*, 1994) works by permuting the order or pairing of the data to estimate the sampling distribution for each variable. In the case that there are multiple variables, the maximum value is taken at every permutation across all variables in order to produce a single, more-conservative sampling distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
 
 ## Contents
 
@@ -161,30 +161,6 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 ```
 
 # <img src="docs/fig_effect_size.png">
-
-### Permutation tests for independent samples
-
-Here, we use the same randomly generated data as before but assume that they are "independent" samples. However, lets pretend that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or Welch's *t*-test. To test for equal variances, we compare the variances of each corresponding variable in X and Y via two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). As before, the permutations test are conducted with and without correction for multiple comparisons.
-
-
-### Correlation testing
-
-Here, we generate multivariate random data for 2 conditions, each with 20 variables and 30 observations and calculate the correlation between the corresponding variables of each condition.
-
-```matlab
-% Generate random data
-x = randn(30,20);
-y = randn(30,20);
-
-% Make certain variables more correlated
-y(:,1:5) = y(:,1:5)+0.5*x(:,1:5);
-y(:,15:20) = y(:,15:20)-x(:,15:20);
-
-% Compute correlation and adjusted test statistics
-[r,stats] = permucorr(x,y)
-```
-
-
 
 ## License
 
