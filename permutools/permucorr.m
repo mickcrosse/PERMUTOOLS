@@ -164,7 +164,7 @@ if nargout > 1
         idx = perms(1:nobs)';
         if arg.verbose
             warning('Computing all possible permutations due to small N.')
-            fprintf('Number of permutations used: %d',arg.nperm)
+            fprintf('Number of permutations used: %d\n',arg.nperm)
         end
     else
         [~,idx] = sort(rand(nobs,arg.nperm));
