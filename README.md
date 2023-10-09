@@ -2,11 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a statistical software package for multivariate permutation testing in MATLAB. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using the maximum statistic method (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
+PERMUTOOLS is a MATLAB-based statistical software package for multivariate permutation testing. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using the max statistic method (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
 
-Permutation tests based on the *t*-statistic (i.e. *t*-tests) can be performed on one-sample, paired-sample and independent two-sample datasets. For two-sample situations, a permutation test based on the *F*-statistic can be performed to determine variance equivalence of the independent samples. For samples of unequal size or variance, Welch's *t*-statistic may be used as it is less sensitive to differences in variance (but also less sensitive to differences in means). Permutation-based hypothesis testing can also be performed for various correlation measures. For nonlinear correlations, the raw data may be transformed to rank orders using a Spearman's or a rankit transformation (Bishara & Hittner, 2012).
-
-PERMUTOOLS offers a range of test statistics including the *t*-statistic (paired, unpaired), the *F*-statistic (unpaired), the correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*).
+PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired, two-sample), *F*-statistic (unpaired), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*).
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -30,80 +28,144 @@ For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Cros
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
-## Maximum Statistic Correction
+## Max Statistic Correction
 
-The maximum statistic correction method works by permuting the order of the data to generate a null distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, conservative null distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
+The max statistic correction method (Blair *et al.*, 1994) works by permuting the order or pairing of the data to estimate the sampling distribution for each variable. As there are multiple variables, the maximum value is taken across all variables in order to produce a single, more-conservative sampling distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
 
 ## Contents
 
 * `permuttest()` - one-sample or paired-sample permutation test with tmax correction
 * `permuttest2()` - unpaired two-sample permutation test with tmax correction
 * `permuvartest2()` - permutation-based *F*-test with max statistic correction
-* `permucorr()` - permutation-based correlation with max statistic correction
-* `booteffectsize()` - effect size measure with bootstrapped confidence intervals
+* `permucorr()` - permutation-based correlation test with max statistic correction
+* `booteffectsize()` - bias-corrected effect size measure with bootstrapped confidence intervals
 
 ## Examples
 
-### Paired and one-sample permutation testing
+### Permutation tests for dependent samples
 
-Here, we generate multivariate random data for 2 conditions, each with 20 variables and 30 observations and perform paired permutation tests between the corresponding variables of each condition.
+Here, we generate random multivariate data for 2 "dependent" samples X and Y. Each sample has 20 variables, each with a mean value of 0, except for the first 10 variables of Y which have a mean value of -1. Each variable has 30 observations.
 
 ```matlab
 % Generate random data
+rng(42);
 x = randn(30,20);
 y = randn(30,20);
 
-% Make certain variables have different means
-y(:,1:8) = y(:,1:8)-1;
-
-% Compute adjusted test statistics for paired-sample test
-[t,stats] = permuttest(x,y)
-
-% Compute adjusted test statistics for one-sample test
-[t,stats] = permuttest(x)
+% Make the first 10 variables of Y have a mean of -1
+y(:,1:10) = y(:,1:10)-1;
 ```
 
-Here, we generate univariate random data for 5 conditions, each with 30 observations and perform paired permutation tests between every pair of conditions (5 conditions = 10 comparisons).
+We compare the means of each corresponding variable in X and Y via two-tailed paired tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). The permutations test are conducted with and without correction for multiple comparisons.
 
 ```matlab
-% Generate random data
-x = randn(30,5);
+% Perform t-test
+[h,p,ci] = ttest(x,y);
 
-% Make certain variables have different means
-x(:,3:5) = x(:,3:5)-1;
+% Perform uncorrected permutation test
+[hu,pu,ciu] = permuttest(x,y,'correct',false);
 
-% Compute adjusted test statistics for paired-sample test
-[t,stats] = permuttest(x,[],'sample','paired')
+% Perform permutation test with tmax correction
+[hc,pc,cic] = permuttest(x,y,'correct',true);
 ```
 
-### Unpaired permutation testing
-
-Here, generate multivariate random data for 2 samples, each with 20 variables and 30 observations and perform unpaired permutation tests between the corresponding variables of each sample.
+Here, we plot the mean difference with the parametric and permutation CIs for each test. Variables that are found to be significantly different at the 5% alpha level are indicated by black circles (*t*-tests) and red x's (permutation tests).
 
 ```matlab
-% Generate random data
-x = randn(30,20);
-y = randn(30,20);
+% Compute the mean difference
+diffxy = mean(x-y);
+xaxis = 1:size(diffxy,2);
 
-% Make certain variables have different means
-y(:,1:8) = y(:,1:8)-1;
+% Plot mean difference with parametric and uncorrected permutation CIs
+subplot(2,2,1), hold on
+plot(xaxis,diffxy,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,ciu,'--r')
+plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),diffxy(logical(hu)),'xr','LineWidth',2)
+ylim([-3,3]), xlim([0,21])
+title('Uncorrected'), ylabel('X−Y')
+legend('mean(X−Y)','parametric CIs','','permutation CIs','Location','southwest')
 
-% Compute adjusted test statistics for unpaired test
-[t,stats] = permuttest2(x,y)
+% Plot mean difference with parametric and corrected permutation CIs
+subplot(2,2,2), hold on
+plot(xaxis,diffxy,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,cic,'--r')
+plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hc)),diffxy(logical(hc)),'xr','LineWidth',2)
+ylim([-3,3]), xlim([0,21])
+title('Corrected')
 ```
 
-Here, we generate univariate random data for 5 samples, each with 30 observations and perform unpaired permutation tests between every sample (5 samples = 10 comparisons). Note that each column of X represents an independent sample and may contain NaNs for samples with a smaller number of observations.
+Here, we plot the parametric and permutation *p*-values for each test with significant results indicated as before. We can see that not all of the variables found to be significantly different in the uncorrected tests survive the max statistic criterion.
 
 ```matlab
-% Generate random data
-x = randn(30,5);
+% Plot parametric and uncorrected permutation p-values
+subplot(2,2,3), hold on
+plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
+plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
+ylim([0,1]), xlim([0,21])
+xlabel('variable'), ylabel('probability')
+legend('parametric {\itp}-value','permutation {\itp}-value','Location','southwest')
 
-% Make certain variables have different means
-x(:,3:5) = x(:,3:5)-1;
-
-% Compute adjusted test statistics for unpaired test
-[t,stats] = permuttest2(x)
+% Plot parametric and corrected permutation p-values
+subplot(2,2,4), hold on
+plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
+plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),pc(logical(hu)),'xr','LineWidth',2)
+ylim([0,1]), xlim([0,21])
+xlabel('variable')
 ```
+
+# <img src="docs/fig_paired_test.png">
+
+### Effect size measure for dependent samples
+
+To measure the effect size of the results, we can compute a measure of Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*), as well as the corresponding bias-corrected CIs, estimated from an efficient bootrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootrapped). The bootrapped effect sizes and CIs are conducted with and without correction for sample size.
+
+```matlab
+% Compute effect size & parametric CIs
+d = zeros(1,20); ci = zeros(2,20);
+for j = 1:20
+    stats1 = meanEffectSize(x(:,j),y(:,j),'Effect','cohen','Paired',1);
+    d(j) = stats1.Effect;
+    ci(:,j) = stats1.ConfidenceIntervals';
+end
+
+% Compute effect size & bootstrapped CIs (uncorrected)
+[du,ciu] = booteffectsize(x,y,'correct',false);
+
+% Compute effect size & bootstrapped CIs (corrected)
+[dc,cic] = booteffectsize(x,y,'correct',true);
+```
+
+Here, we plot the resulting effect sizes measures along with their CIs.
+
+```matlab
+% Plot effect size & bootstrapped CIs (uncorrected)
+figure, set(gcf,'color','w')
+subplot(2,2,1), hold on
+plot(xaxis,du,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
+ylim([-2,6]), xlim([0,21]), box on, grid on
+title('Uncorrected'), xlabel('variable'), ylabel('effect size')
+legend('Cohen''s {\itd}','parametric CI','','boostrapped CI')
+
+% Plot effect size & bootstrapped CIs (corrected)
+subplot(2,2,2), hold on
+plot(xaxis,dc,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
+ylim([-2,6]), xlim([0,21]), box on, grid on
+title('Corrected'), xlabel('variable')
+legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
+```
+
+# <img src="docs/fig_effect_size.png">
+
+### Permutation tests for independent samples
+
+Here, we use the same randomly generated data as before but assume that they are "independent" samples. However, lets pretend that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or Welch's *t*-test. To test for equal variances, we compare the variances of each corresponding variable in X and Y via two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). As before, the permutations test are conducted with and without correction for multiple comparisons.
+
 
 ### Correlation testing
 
@@ -122,18 +184,7 @@ y(:,15:20) = y(:,15:20)-x(:,15:20);
 [r,stats] = permucorr(x,y)
 ```
 
-Here, we generate univariate random data for 5 conditions, each with 1 variable and 30 observations and calculate the correlation between every pair of conditions (5 conditions = 10 correlations).
 
-```matlab
-% Generate random data
-x = randn(30,5);
-
-% Make certain variables more correlated
-x(:,1:2) = x(:,1:2)-0.5*x(:,4:5);
-
-% Compute correlation and adjusted test statistics
-[r,stats] = permucorr(x)
-```
 
 ## License
 
