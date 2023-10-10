@@ -30,7 +30,7 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %   following fields:
 %       'df'        -- the degrees of freedom of each measure
 %       'sd'    	-- the pooled standard deviation, or of X for a one-
-%                      sample measure or Glass' delta
+%                      sample or Glass' delta measure
 %
 %   [...] = BOOTEFFECTSIZE(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -251,7 +251,15 @@ else
 
     % Compute standard deviation
     switch arg.effect
-        case 'Cohen'
+        case 'Glass'
+            switch arg.vartype
+                case 'equal'
+                    warning(['GLASS option should only be used for '...
+                        'samples with unequal variances.'])
+            end
+            df = dfx;
+            sd = sqrt(varx);
+        otherwise
             switch arg.vartype
                 case 'equal'
                     df = nobs-2;
@@ -261,14 +269,6 @@ else
                         dfx.*vary.^2);
                     sd = sqrt((varx+vary)/2);
             end
-        case 'Glass'
-            switch arg.vartype
-                case 'equal'
-                    warning(['GLASS option should only be used for '...
-                        'samples with unequal variances.'])
-            end
-            df = dfx;
-            sd = sqrt(varx);
     end
 
 end
@@ -354,6 +354,8 @@ if nargout > 1
 
             % Compute standard deviation
             switch arg.effect
+                case 'Glass'
+                    sdb = sqrt(varxb);
                 case 'Cohen'
                     switch arg.vartype
                         case 'equal'
@@ -361,8 +363,6 @@ if nargout > 1
                         case 'unequal'
                             sdb = sqrt((varxb+varyb)/2);
                     end
-                case 'Glass'
-                    sdb = sqrt(varxb);
             end
 
         end
@@ -382,12 +382,15 @@ if nargout > 1
 
 end
 
-% Bias-correct results for sample size
+% Bias-correct standardised results for sample size
 if arg.correct
-    factor = exp(gammaln(df/2)-log(sqrt(df/2))-gammaln((df-1)/2));
-    d = factor.*d;
-    if nargout > 1
-        ci = [factor;factor].*ci;
+    switch arg.effect
+        case {'Cohen','Glass'}
+            factor = exp(gammaln(df/2)-log(sqrt(df/2))-gammaln((df-1)/2));
+            d = factor.*d;
+            if nargout > 1
+                ci = [factor;factor].*ci;
+            end
     end
 end
 
