@@ -1,8 +1,9 @@
-function [d,ci,stats] = booteffectsize(x,varargin)
+function [d,ci,stats] = booteffectsize(x,m,varargin)
 %BOOTEFFECTSIZE  Effect size with bootstrapped confidence intervals.
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
-%   for sample size, also known as Hedges' g.
+%   for sample size, also known as Hedges' g. For ordinal data, Cliff's
+%   delta can be computed by setting the EFFECT parameter to 'CLIFF'.
 %
 %   If X is a matrix, separate effect sizes are measured along each column
 %   of X, and a vector of results is returned. If the parameter TEST is set
@@ -11,13 +12,16 @@ function [d,ci,stats] = booteffectsize(x,varargin)
 %
 %   BOOTEFFECTSIZE treats NaNs as missing values, and ignores them.
 %
+%   D = BOOTEFFECTSIZE(X,M) returns the effect size measure for a single
+%   sample X with a known mean M. M must be a scalar.
+%
 %   D = BOOTEFFECTSIZE(X,Y) returns the effect size between two dependent
 %   samples X and Y using the pooled standard deviation. X and Y can be
 %   treated as independent samples by setting the PAIRED parameter to 0. If
 %   X and Y are independent samples with significantly different variances,
-%   an estimate based on the control sample's variance (Glass' Δ) can be
-%   computed by setting the EFFECT parameter to 'GLASS'. For this measure,
-%   the control sample should be entered as X, and the test sample as Y.
+%   an estimate based on the control sample's variance (Glass' delta) can
+%   be computed by setting the EFFECT parameter to 'GLASS'. For this, the
+%   control sample should be entered as X, and the test sample as Y.
 %
 %   [D,CI] = BOOTEFFECTSIZE(...) returns the bootstrapped, bias-corrected
 %   confidence intervals using the percentile method.
@@ -25,7 +29,8 @@ function [d,ci,stats] = booteffectsize(x,varargin)
 %   [D,CI,STATS] = BOOTEFFECTSIZE(...) returns a structure with the
 %   following fields:
 %       'df'        -- the degrees of freedom of each measure
-%       'sd'    	-- the pooled standard deviation, or of X for Glass' Δ
+%       'sd'    	-- the pooled standard deviation, or of X for a one-
+%                      sample measure or Glass' delta
 %
 %   [...] = BOOTEFFECTSIZE(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -41,7 +46,8 @@ function [d,ci,stats] = booteffectsize(x,varargin)
 %                   estimate the confidence intervals (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
 %                   bias-correct the effect size and confidence intervals
-%                   according to sample size (default=true).
+%                   according to sample size (default=true). Note, this
+%                   only applies to standardised effect size measures.
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
@@ -54,10 +60,18 @@ function [d,ci,stats] = booteffectsize(x,varargin)
 %                       'equal'   	assume equal variances (default)
 %                       'unequal' 	assume unequal variances
 %       'effect'    A string specifying the effect size to compute:
-%                       'Cohen'     compute Cohen's d (default)
-%                       'Glass'     compute Glass' Δ when comparing
+%                       'Cohen'     compute the standardised mean
+%                                   difference, Cohen's d (default)
+%                       'Glass'     compute the standardised mean
+%                                   difference, Glass' delta when comparing
 %                                   independent samples with significantly
 %                                   different variances
+%                       'Cliff'     compute the unstandardised ordinal mean
+%                                   difference, Cliff's delta
+%                       'meandiff'  compute the unstandardised mean
+%                                   difference
+%                       'mediandiff'compute the unstandardised median
+%                                   difference
 %       'test'      A string specifying whether to compute a one-sample
 %                   measure or a pairwise measure when only X is entered:
 %                       'one'       compare each column of X to zero and
@@ -85,11 +99,13 @@ function [d,ci,stats] = booteffectsize(x,varargin)
 %   © 2018 Mick Crosse <mickcrosse@gmail.com>
 %   CNL, Albert Einstein College of Medicine, NY.
 
-if nargin>=2 && ~ischar(varargin{1})
-    y = varargin{1};
-    varargin = varargin(2:end);
-else
+if nargin < 2 || isempty(m)
     y = [];
+elseif isscalar(m)
+    y = [];
+    x = x-m;
+elseif ismatrix(m)
+    y = m;
 end
 
 % Parse input arguments
@@ -161,7 +177,17 @@ if arg.paired
     end
 
     % Compute difference between samples
-    diffxy = x-y;
+    switch arg.effect
+        case 'Cliff'
+            diffxy = zeros(max(nobsx)^2,nvar);
+            for i = 1:nvar
+                diffi = sign(x(:,i)-y(:,i)');
+                diffxy(:,i) = diffi(:);
+            end
+            diffxy(1:max(nobsx)+1:end,:) = 0;
+        otherwise
+            diffxy = x-y;
+    end
 
     % Use only rows with no NaN values if specified
     switch arg.rows
@@ -170,10 +196,20 @@ if arg.paired
     end
 
     % Get data dimensions, ignoring NaNs
-    nobs = sum(~isnan(diffxy));
+    switch arg.effect
+        case 'Cliff'
+            nobs = nobsx.*dfx;
+        otherwise
+            nobs = sum(~isnan(diffxy));
+    end
 
     % Compute mean difference
-    mu = sum(diffxy,nanflag)./nobs;
+    switch arg.effect
+        case 'mediandiff'
+            mu = median(diffxy,nanflag);
+        otherwise
+            mu = sum(diffxy,nanflag)./nobs;
+    end
 
     % Compute standard deviation
     df = nobs-1;
@@ -188,11 +224,30 @@ else
             y = y(~any(isnan(y),2),:);
     end
 
+    % Compute difference between samples
+    switch arg.effect
+        case 'Cliff'
+            diffxy = zeros(max(nobsx)*max(nobsy),nvar);
+            for i = 1:nvar
+                diffi = sign(x(:,i)-y(:,i)');
+                diffxy(:,i) = diffi(:);
+            end
+        otherwise
+            diffxy = [x;y];
+    end
+
     % Get data dimensions, ignoring NaNs
-    nobs = sum(~isnan([x;y]));
+    nobs = sum(~isnan(diffxy));
 
     % Compute mean difference
-    mu = smx./nobsx-smy./nobsy;
+    switch arg.effect
+        case 'Cliff'
+            mu = sum(diffxy,nanflag)./nobs;
+        case 'mediandiff'
+            mu = median(x,nanflag)-median(y,nanflag);
+        otherwise
+            mu = smx./nobsx-smy./nobsy;
+    end
 
     % Compute standard deviation
     switch arg.effect
@@ -219,7 +274,12 @@ else
 end
 
 % Compute effect size
-d = mu./sd;
+switch arg.effect
+    case {'Cliff','meandiff','mediandiff'}
+        d = mu;
+    otherwise
+        d = mu./sd;
+end
 
 if nargout > 1
 
@@ -246,16 +306,51 @@ if nargout > 1
 
         if arg.paired
 
+            % Compute difference between samples
+            switch arg.effect
+                case 'Cliff'
+                    diffxyb = zeros(max(nobsx)^2,arg.nboot);
+                    for j = 1:arg.nboot
+                        diffi = sign(xb(:,j)-yb(:,j)');
+                        diffxyb(:,j) = diffi(:);
+                    end
+                    diffxyb(1:max(nobsx)+1:end,:) = 0;
+                otherwise
+                    diffxyb = xb-yb;
+            end
+
             % Compute mean difference
-            mub = sum(xb-yb,nanflag)/nobs(i);
+            switch arg.effect
+                case 'mediandiff'
+                    mub = median(diffxyb,nanflag);
+                otherwise
+                    mub = sum(diffxyb,nanflag)/nobs(i);
+            end
 
             % Compute standard deviation
             sdb = sqrt((varxb+varyb)/2);
 
         else
 
+            % Compute difference between samples
+            switch arg.effect
+                case 'Cliff'
+                    diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
+                    for j = 1:arg.nboot
+                        diffi = sign(xb(:,j)-yb(:,j)');
+                        diffxyb(:,j) = diffi(:);
+                    end
+            end
+
             % Compute mean difference
-            mub = smxb/nobsx(i)-smyb/nobsy(i);
+            switch arg.effect
+                case 'Cliff'
+                    mub = sum(diffxyb,nanflag)/nobs(i);
+                case 'mediandiff'
+                    mub = median(xb,nanflag)-median(yb,nanflag);
+                otherwise
+                    mub = smxb/nobsx(i)-smyb/nobsy(i);
+            end
 
             % Compute standard deviation
             switch arg.effect
@@ -273,7 +368,12 @@ if nargout > 1
         end
 
         % Compute effect size
-        db = mub./sdb;
+        switch arg.effect
+            case {'Cliff','meandiff','mediandiff'}
+                db = mub;
+            otherwise
+                db = mub./sdb;
+        end
 
         % Compute confidence intervals
         ci(:,i) = prctile(db,100*[arg.alpha/2;1-arg.alpha/2]);

@@ -76,7 +76,7 @@ Here, we plot the mean difference with the parametric and permutation CIs for ea
 diffxy = mean(x-y);
 xaxis = 1:size(diffxy,2);
 
-% Plot mean difference with parametric and uncorrected permutation CIs
+% Plot parametric & uncorrected permutation CIs
 subplot(2,2,1), hold on
 plot(xaxis,diffxy,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r')
@@ -86,7 +86,7 @@ ylim([-3,3]), xlim([0,21])
 title('Uncorrected'), ylabel('X−Y')
 legend('mean(X−Y)','parametric CIs','','permutation CIs','Location','southwest')
 
-% Plot mean difference with parametric and corrected permutation CIs
+% Plot parametric & corrected permutation CIs
 subplot(2,2,2), hold on
 plot(xaxis,diffxy,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r')
@@ -99,7 +99,7 @@ title('Corrected')
 Here, we plot the parametric and permutation *p*-values for each test with significant results indicated as before. We can see that not all of the variables found to be significantly different in the uncorrected tests survive the max statistic criterion.
 
 ```matlab
-% Plot parametric and uncorrected permutation p-values
+% Plot parametric & uncorrected permutation p-values
 subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
 plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
@@ -108,7 +108,7 @@ ylim([0,1]), xlim([0,21])
 xlabel('variable'), ylabel('probability')
 legend('parametric {\itp}-value','permutation {\itp}-value','Location','southwest')
 
-% Plot parametric and corrected permutation p-values
+% Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
 plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
@@ -121,7 +121,7 @@ xlabel('variable')
 
 ### Effect size measure for dependent samples
 
-To measure the effect size of the results, we can compute a measure of Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*), as well as the corresponding bias-corrected CIs, estimated from an efficient bootrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootrapped). The bootrapped effect sizes and CIs are conducted with and without correction for sample size.
+To measure the effect size of the results, we can compute a measure of Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*), as well as the corresponding bias-corrected CIs, estimated using an efficient bootrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootrapping). The bootrapped effect sizes and CIs are computed with and without bias-correction.
 
 ```matlab
 % Compute effect size & parametric CIs
@@ -132,17 +132,17 @@ for j = 1:20
     ci(:,j) = stats1.ConfidenceIntervals';
 end
 
-% Compute effect size & bootstrapped CIs (uncorrected)
+% Compute uncorrected effect size & bootstrapped CIs
 [du,ciu] = booteffectsize(x,y,'correct',false);
 
-% Compute effect size & bootstrapped CIs (corrected)
+% Compute corrected effect size & bootstrapped CIs
 [dc,cic] = booteffectsize(x,y,'correct',true);
 ```
 
 Here, we plot the resulting effect sizes measures along with their CIs.
 
 ```matlab
-% Plot effect size & bootstrapped CIs (uncorrected)
+% Plot parametric & uncorrected bootstrapped measures
 figure, set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,du,'LineWidth',3)
@@ -151,7 +151,7 @@ ylim([-2,6]), xlim([0,21]), box on, grid on
 title('Uncorrected'), xlabel('variable'), ylabel('effect size')
 legend('Cohen''s {\itd}','parametric CI','','boostrapped CI')
 
-% Plot effect size & bootstrapped CIs (corrected)
+% Plot parametric & corrected bootstrapped measures
 subplot(2,2,2), hold on
 plot(xaxis,dc,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)

@@ -69,7 +69,7 @@ validFcn = @(x) any(validatestring(x,typeOptions));
 addParameter(p,'type','Pearson',validFcn);
 
 % Effect size measure
-effectOptions = {'Cohen','Glass'};
+effectOptions = {'Cohen','Glass','Cliff','meandiff','mediandiff'};
 validFcn = @(x) any(validatestring(x,effectOptions));
 addParameter(p,'effect','Cohen',validFcn);
 
