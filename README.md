@@ -37,14 +37,16 @@ The max statistic correction method (Blair *et al.*, 1994) works by permuting th
 * `permuttest()` - one-sample or paired-sample permutation test with tmax correction
 * `permuttest2()` - unpaired two-sample permutation test with tmax correction
 * `permuvartest2()` - permutation-based *F*-test with max statistic correction
-* `permucorr()` - permutation-based correlation test with max statistic correction
+* `permucorr()` - permutation-based correlation coefficient with max statistic correction
 * `booteffectsize()` - bias-corrected effect size measure with bootstrapped confidence intervals
 
 ## Examples
 
-### Permutation tests for dependent samples
+### Permutation tests for independent samples
 
-Here, we generate random multivariate data for 2 "dependent" samples X and Y. Each sample has 20 variables, each with a mean value of 0, except for the first 10 variables of Y which have a mean value of -1. Each variable has 30 observations.
+The following example demonstrates how to test whether two independent samples come from distributions with equal means in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
+
+First, we generate random multivariate data for 2 "independent" samples X and Y. Each sample has 20 variables, each with a mean value of approximately 0, except for the first 10 variables of Y which have a mean value of approximately -1. Each variable has 30 observations.
 
 ```matlab
 % Generate random data
@@ -56,47 +58,48 @@ y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
 ```
 
-We compare the means of each corresponding variable in X and Y via two-tailed paired tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). The permutations test are conducted with and without correction for multiple comparisons.
+Lets assume that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or a Welch's *t*-test. To establish this, compare the variances of each corresponding variable in X and Y using two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). For demonstration purposes, the permutation tests are conducted both with and without correction for multiple comparisons.
 
 ```matlab
-% Perform t-test
-[h,p,ci] = ttest(x,y);
+% Perform two-sample F-tests
+[h,p,ci,stats] = vartest2(x,y);
 
-% Perform uncorrected permutation test
-[hu,pu,ciu] = permuttest(x,y,'correct',false);
+% Perform uncorrected two-sample permutation F-tests
+[hu,pu,ciu,statsu] = permuvartest2(x,y,'correct',false);
 
-% Perform permutation test with tmax correction
-[hc,pc,cic] = permuttest(x,y,'correct',true);
+% Perform corrected two-sample permutation F-tests
+[hc,pc,cic,statsc] = permuvartest2(x,y,'correct',true);
 ```
 
-Here, we plot the mean difference with the parametric and permutation CIs for each test. Variables that are found to be significantly different at the 5% alpha level are indicated by black circles (*t*-tests) and red x's (permutation tests).
+To demonstrate the benefit of permutation tests with max statistic correction over traditional parametric tests, we plot the *F*-statistic along with the parametric and permutation CIs for each test. Variables that are found to be significantly different (*p* < 0.05) are indicated by black circles (*F*-tests) and red x's (permutation tests). We see that applying max statistic correction widens the CIs of the test statistic such that none of the spuriously significant results survive.
 
 ```matlab
-% Compute the mean difference
-diffxy = mean(x-y);
-xaxis = 1:size(diffxy,2);
+% Get F-statistic
+f = statsc.fstat;
+xaxis = 1:size(f,2);
 
 % Plot parametric & uncorrected permutation CIs
+figure, set(gcf,'color','w')
 subplot(2,2,1), hold on
-plot(xaxis,diffxy,'LineWidth',3)
-plot(xaxis,ci,'k',xaxis,ciu,'--r')
-plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),diffxy(logical(hu)),'xr','LineWidth',2)
-ylim([-3,3]), xlim([0,21])
-title('Uncorrected'), ylabel('X−Y')
-legend('mean(X−Y)','parametric CIs','','permutation CIs','Location','southwest')
+plot(xaxis,f,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
+plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),f(logical(hu)),'xr','LineWidth',2)
+ylim([0,6]), xlim([0,21]), box on, grid on
+title('Uncorrected'), ylabel('{\itF}-value')
+legend('{\itF}-statistic','parametric CI','','permutation CI','Location','northeast')
 
 % Plot parametric & corrected permutation CIs
 subplot(2,2,2), hold on
-plot(xaxis,diffxy,'LineWidth',3)
-plot(xaxis,ci,'k',xaxis,cic,'--r')
-plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),diffxy(logical(hc)),'xr','LineWidth',2)
-ylim([-3,3]), xlim([0,21])
+plot(xaxis,f,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
+plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hc)),f(logical(hc)),'xr','LineWidth',2)
+ylim([0,6]), xlim([0,21]), box on, grid on
 title('Corrected')
 ```
 
-Next, we plot the parametric and permutation *p*-values for each test with significant results indicated as before. We can see that not all of the variables found to be significantly different in the uncorrected tests survive the max statistic criterion.
+To demonstrate the effect of max statistic correction on the resulting *p*-values, we plot them for both the parametric and permutation tests, with significant results indicated as before.
 
 ```matlab
 % Plot parametric & uncorrected permutation p-values
@@ -104,42 +107,102 @@ subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
 plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
 plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21])
+ylim([0,1]), xlim([0,21]), box on, grid on
 xlabel('variable'), ylabel('probability')
-legend('parametric {\itp}-value','permutation {\itp}-value','Location','southwest')
+legend('parametric {\itp}','permutation {\itp}','Location','northeast')
 
 % Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
 plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
 plot(xaxis(logical(hu)),pc(logical(hu)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21])
+ylim([0,1]), xlim([0,21]), box on, grid on
 xlabel('variable')
 ```
 
-# <img src="docs/fig_paired_test.png">
+# <img src="docs/fig_ftest.png">
 
-### Effect size measures for dependent samples
+Now that we have established that the data in X and Y come from distributions with equal variances, we can proceed to test whether they have equal means using an estimate of the *t*-statistic that uses their pooled standard deviation. We compare the means of each corresponding variable in X and Y using two-tailed (unpaired) tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without correction.
 
-To measure the effect size of the results, we can compute a measure of Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*), as well as the corresponding bias-corrected CIs, estimated using an efficient bootrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootrapping). The bootrapped effect sizes and CIs are computed with and without bias-correction.
+```matlab
+% Perform two-sample t-tests
+[h,p,ci,stats] = ttest2(x,y);
+
+% Perform uncorrected two-sample permutation tests
+[hu,pu,ciu,statsu] = permuttest2(x,y,'correct',false);
+
+% Perform corrected two-sample permutation tests
+[hc,pc,cic,statsc] = permuttest2(x,y,'correct',true);
+```
+
+Here, we plot the mean difference along with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
+
+```matlab
+% Compute the mean difference
+diffxy = mean(x)-mean(y);
+xaxis = 1:size(diffxy,2);
+
+% Plot parametric & uncorrected permutation CIs
+figure, set(gcf,'color','w')
+subplot(2,2,1), hold on
+plot(xaxis,diffxy,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
+plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),diffxy(logical(hu)),'xr','LineWidth',2)
+ylim([-3,3]), xlim([0,21]), box on, grid on
+title('Uncorrected'), ylabel('X−Y')
+legend('mean(X−Y)','parametric CI','','permutation CI','Location','southwest')
+
+% Plot parametric & corrected permutation CIs
+subplot(2,2,2), hold on
+plot(xaxis,diffxy,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
+plot(xaxis(logical(h)),diffxy(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hc)),diffxy(logical(hc)),'xr','LineWidth',2)
+ylim([-3,3]), xlim([0,21]), box on, grid on
+title('Corrected')
+
+% Plot parametric & uncorrected permutation p-values
+subplot(2,2,3), hold on
+plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
+plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
+ylim([0,1]), xlim([0,21]), box on, grid on
+xlabel('variable'), ylabel('probability')
+legend('parametric {\itp}','permutation {\itp}','Location','southwest')
+
+% Plot parametric & corrected permutation p-values
+subplot(2,2,4), hold on
+plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
+plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
+plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
+ylim([0,1]), xlim([0,21]), box on, grid on
+xlabel('variable')
+```
+
+# <img src="docs/fig_ttest.png">
+
+### Effect size measures for independent samples
+
+To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction for sample size.
 
 ```matlab
 % Compute effect size & parametric CIs
 d = zeros(1,20); ci = zeros(2,20);
 for j = 1:20
-    stats1 = meanEffectSize(x(:,j),y(:,j),'Effect','cohen','Paired',1);
+    stats1 = meanEffectSize(x(:,j),y(:,j),'Effect','cohen','Paired',0);
     d(j) = stats1.Effect;
     ci(:,j) = stats1.ConfidenceIntervals';
 end
 
 % Compute uncorrected effect size & bootstrapped CIs
-[du,ciu] = booteffectsize(x,y,'correct',false);
+[du,ciu] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',false);
 
 % Compute corrected effect size & bootstrapped CIs
-[dc,cic] = booteffectsize(x,y,'correct',true);
+[dc,cic] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',true);
 ```
 
-Here, we plot the resulting effect sizes measures along with their CIs.
+Here, we plot the resulting effect sizes measures along with their CIs. We see that bias-correcting the effect size and CIs according to sample size slightly reduces the overal measures, resulting in a more conservative estimate.
 
 ```matlab
 % Plot parametric & uncorrected bootstrapped measures
@@ -162,9 +225,12 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
 # <img src="docs/fig_effect_size.png">
 
-From the above analysis, we can report the frequentist statistics (adjusted for mutiple tests and sample size) for any of the pairwise comparison between X and Y. For example, the mean of the first variable was found to be significantly greater in X than in Y (*t*(29) = 4.19, *p* = 0.0052, Hedge's *g* = 1.13, 95CI [0.63, 1.72]).
+From the above analysis, we can report the frequentist statistics (adjusted for multiple  tests and sample size) for any of the pairwise comparisons  between X and Y. For example, the mean of the first variable was found to be significantly greater in X than in Y (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
 
 ## Citation
+
+If you use this code or results in your paper, please cite our work as:
+
 ```
 @article{crosse2018permutools,
   title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
