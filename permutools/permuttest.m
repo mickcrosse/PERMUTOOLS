@@ -13,9 +13,9 @@ function [h,p,ci,stats] = permuttest(x,m,varargin)
 %   rate (FWER) is controlled for multiple tests using the max statistic
 %   correction method. This method provides strong control of FWER, even
 %   for small sample sizes, and is much more powerful than traditional
-%   correction methods. If the parameter TEST is set to 'PAIRWISE',
-%   permutation tests between every pair of columns in X are performed,
-%   and a matrix of results is returned.
+%   correction methods. If the 'test' parameter is set to 'pairwise',
+%   two-tailed permutation tests between every pair of columns in X are
+%   performed, and a matrix of results is returned.
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
@@ -61,8 +61,9 @@ function [h,p,ci,stats] = permuttest(x,m,varargin)
 %                   test or a pairwise test when only X is entered:
 %                       'one'       compare each column of X to zero and
 %                                   return a vector of results (default)
-%                       'pairwise'  compare each pair of columns in X and
-%                                   return a matrix of results
+%                       'pairwise'  compare every pair of columns in X
+%                                   using two-tailed tests and return a
+%                                   matrix of results
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000, or all possible permutations for less
 %                   than 14 observations).

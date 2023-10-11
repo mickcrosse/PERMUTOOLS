@@ -4,7 +4,7 @@ function [r,p,ci,stats] = permucorr(x,varargin)
 %   correlation coefficients between each pair of columns in X based on
 %   Pearson's r. For nonlinear correlations, the raw data may be
 %   transformed to rank orders in order to compute a Spearman or rankit
-%   correlation by setting the TYPE parameter to 'Spearman' or 'Rankit'.
+%   correlation by setting the 'type' parameter to 'spearman' or 'rankit'.
 %
 %   R = PERMUCORR(X,Y) returns the pairwise correlation coefficient between
 %   vectors X and Y. X and Y must have the same length. If X and Y are
@@ -18,10 +18,12 @@ function [r,p,ci,stats] = permucorr(x,varargin)
 %   data, no assumption is made about the shape of the distribution that
 %   the data come from. For multivariate data, separate permutation tests
 %   are performed between each pair of columns, and a vector of results is
-%   returned. Family-wise error rate (FWER) is controlled for multiple
-%   tests using the max statistic correction method. This method provides
-%   strong control of FWER, even for small sample sizes, and is much more
-%   powerful than traditional correction methods.
+%   returned. When only one sample is entered in X, two-tailed permutation
+%   tests are automatically used. Family-wise error rate (FWER) is
+%   controlled for multiple tests using the max statistic correction
+%   method. This method provides strong control of FWER, even for small
+%   sample sizes, and is much more powerful than traditional correction
+%   methods.
 %
 %   [R,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence interval
 %   for each coefficient.
@@ -45,9 +47,10 @@ function [r,p,ci,stats] = permucorr(x,varargin)
 %                       'right'     correlation is greater than zero
 %                       'left'      correlation is less than zero
 %       'type'      A string specifying the type of correlation measure:
-%                       'Pearson'   Pearson's correlation coefficient (def)
-%                       'Spearman'  Spearman's rank correlation coefficient
-%                       'Rankit'    Bliss's rankit correlation coefficient
+%                       'pearson'   linear correlation coefficient based on 
+%                                   Pearson's r (default)
+%                       'spearman'  Spearman's rank correlation coefficient
+%                       'rankit'    Bliss' rankit correlation coefficient
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000 or all possible permutations for less
 %                   than 14 observations).
@@ -142,10 +145,10 @@ end
 
 % Transform raw data to rank-orders if specified
 switch arg.type
-    case 'Spearman'
+    case 'spearman'
         x = tiedrank(x);
         y = tiedrank(y);
-    case 'Rankit'
+    case 'rankit'
         x = norminv((tiedrank(x)-0.5)/nobs);
         y = norminv((tiedrank(y)-0.5)/nobs);
 end

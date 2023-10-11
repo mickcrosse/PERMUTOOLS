@@ -3,12 +3,12 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
 %   for sample size, also known as Hedges' g. For ordinal data, Cliff's
-%   delta can be computed by setting the EFFECT parameter to 'CLIFF'.
+%   delta can be computed by setting the 'effect' parameter to 'cliff'.
 %
 %   If X is a matrix, separate effect sizes are measured along each column
-%   of X, and a vector of results is returned. If the parameter TEST is set
-%   to 'PAIRWISE', the effect sizes between every pair of columns in X are
-%   measured, and a matrix of results is returned.
+%   of X, and a vector of results is returned. If the 'test' parameter is
+%   set to 'pairwise', the effect sizes between every pair of columns in X
+%   are measured, and a matrix of results is returned.
 %
 %   BOOTEFFECTSIZE treats NaNs as missing values, and ignores them.
 %
@@ -17,11 +17,12 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %
 %   D = BOOTEFFECTSIZE(X,Y) returns the effect size between two dependent
 %   samples X and Y using the pooled standard deviation. X and Y can be
-%   treated as independent samples by setting the PAIRED parameter to 0. If
-%   X and Y are independent samples with significantly different variances,
-%   an estimate based on the control sample's variance (Glass' delta) can
-%   be computed by setting the EFFECT parameter to 'GLASS'. For this, the
-%   control sample should be entered as X, and the test sample as Y.
+%   treated as independent samples by setting the 'paired' parameter to 0.
+%   If X and Y are independent samples with significantly different
+%   variances, an estimate based on the control sample's variance (Glass'
+%   delta) can be computed by setting the 'effect' parameter to 'glass'.
+%   For this, the control sample should be entered as X, and the test
+%   sample as Y.
 %
 %   [D,CI] = BOOTEFFECTSIZE(...) returns the bootstrapped, bias-corrected
 %   confidence intervals using the percentile method.
@@ -59,25 +60,25 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %                   to determine the SD and degrees of freedom:
 %                       'equal'   	assume equal variances (default)
 %                       'unequal' 	assume unequal variances
-%       'effect'    A string specifying the effect size to compute:
-%                       'Cohen'     compute the standardised mean
-%                                   difference, Cohen's d (default)
-%                       'Glass'     compute the standardised mean
-%                                   difference, Glass' delta when comparing
-%                                   independent samples with significantly
-%                                   different variances
-%                       'Cliff'     compute the unstandardised ordinal mean
-%                                   difference, Cliff's delta
-%                       'meandiff'  compute the unstandardised mean
-%                                   difference
-%                       'mediandiff'compute the unstandardised median
-%                                   difference
+%       'effect'    A string specifying the effect size to measure:
+%                       'cohen'      standardised mean difference based on
+%                                    Cohen's d (default)
+%                       'glass'      standardised mean difference based on
+%                                    Glass' delta for comparing independent
+%                                    samples with significantly different
+%                                    variances
+%                       'cliff'      unstandardised mean difference based
+%                                    on Cliff's delta for comparing ordinal
+%                                    data
+%                       'meandiff'   unstandardised mean difference
+%                       'mediandiff' unstandardised median difference
 %       'test'      A string specifying whether to compute a one-sample
 %                   measure or a pairwise measure when only X is entered:
 %                       'one'       compare each column of X to zero and
 %                                   return a vector of results (default)
-%                       'pairwise'  compare each pair of columns in X and
-%                                   return a matrix of results
+%                       'pairwise'  compare every pair of columns in X
+%                                   using two-tailed tests and return a
+%                                   matrix of results
 %       'seed'      A scalar integer specifying the seed used to initialise
 %                   the bootstrap generator. By default, the generator is
 %                   initialised based on the current time, resulting in a
@@ -168,7 +169,7 @@ if arg.paired
 
     % Check input parameters
     switch arg.effect
-        case 'Glass'
+        case 'glass'
             error('GLASS can only be used for independent samples.')
     end
     switch arg.vartype
@@ -178,7 +179,7 @@ if arg.paired
 
     % Compute difference between samples
     switch arg.effect
-        case 'Cliff'
+        case 'cliff'
             diffxy = zeros(max(nobsx)^2,nvar);
             for i = 1:nvar
                 diffi = sign(x(:,i)-y(:,i)');
@@ -197,7 +198,7 @@ if arg.paired
 
     % Get data dimensions, ignoring NaNs
     switch arg.effect
-        case 'Cliff'
+        case 'cliff'
             nobs = nobsx.*dfx;
         otherwise
             nobs = sum(~isnan(diffxy));
@@ -226,7 +227,7 @@ else
 
     % Compute difference between samples
     switch arg.effect
-        case 'Cliff'
+        case 'cliff'
             diffxy = zeros(max(nobsx)*max(nobsy),nvar);
             for i = 1:nvar
                 diffi = sign(x(:,i)-y(:,i)');
@@ -241,7 +242,7 @@ else
 
     % Compute mean difference
     switch arg.effect
-        case 'Cliff'
+        case 'cliff'
             mu = sum(diffxy,nanflag)./nobs;
         case 'mediandiff'
             mu = median(x,nanflag)-median(y,nanflag);
@@ -251,7 +252,7 @@ else
 
     % Compute standard deviation
     switch arg.effect
-        case 'Glass'
+        case 'glass'
             switch arg.vartype
                 case 'equal'
                     warning(['GLASS option should only be used for '...
@@ -275,7 +276,7 @@ end
 
 % Compute effect size
 switch arg.effect
-    case {'Cliff','meandiff','mediandiff'}
+    case {'cliff','meandiff','mediandiff'}
         d = mu;
     otherwise
         d = mu./sd;
@@ -308,7 +309,7 @@ if nargout > 1
 
             % Compute difference between samples
             switch arg.effect
-                case 'Cliff'
+                case 'cliff'
                     diffxyb = zeros(max(nobsx)^2,arg.nboot);
                     for j = 1:arg.nboot
                         diffi = sign(xb(:,j)-yb(:,j)');
@@ -334,7 +335,7 @@ if nargout > 1
 
             % Compute difference between samples
             switch arg.effect
-                case 'Cliff'
+                case 'cliff'
                     diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
                     for j = 1:arg.nboot
                         diffi = sign(xb(:,j)-yb(:,j)');
@@ -344,7 +345,7 @@ if nargout > 1
 
             % Compute mean difference
             switch arg.effect
-                case 'Cliff'
+                case 'cliff'
                     mub = sum(diffxyb,nanflag)/nobs(i);
                 case 'mediandiff'
                     mub = median(xb,nanflag)-median(yb,nanflag);
@@ -354,9 +355,9 @@ if nargout > 1
 
             % Compute standard deviation
             switch arg.effect
-                case 'Glass'
+                case 'glass'
                     sdb = sqrt(varxb);
-                case 'Cohen'
+                case 'cohen'
                     switch arg.vartype
                         case 'equal'
                             sdb = sqrt((dfx(i)*varxb+dfy(i)*varyb)/df(i));
@@ -369,7 +370,7 @@ if nargout > 1
 
         % Compute effect size
         switch arg.effect
-            case {'Cliff','meandiff','mediandiff'}
+            case {'cliff','meandiff','mediandiff'}
                 db = mub;
             otherwise
                 db = mub./sdb;
@@ -382,10 +383,10 @@ if nargout > 1
 
 end
 
-% Bias-correct standardised results for sample size
+% Bias-correct standardised measures
 if arg.correct
     switch arg.effect
-        case {'Cohen','Glass'}
+        case {'cohen','glass'}
             factor = exp(gammaln(df/2)-log(sqrt(df/2))-gammaln((df-1)/2));
             d = factor.*d;
             if nargout > 1

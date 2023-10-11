@@ -64,14 +64,14 @@ validFcn = @(x) any(validatestring(x,vartypeOptions));
 addParameter(p,'vartype','equal',validFcn);
 
 % Correlation type
-typeOptions = {'Pearson','Spearman','Rankit'};
+typeOptions = {'pearson','spearman','rankit'};
 validFcn = @(x) any(validatestring(x,typeOptions));
-addParameter(p,'type','Pearson',validFcn);
+addParameter(p,'type','pearson',validFcn);
 
 % Effect size measure
-effectOptions = {'Cohen','Glass','Cliff','meandiff','mediandiff'};
+effectOptions = {'cohen','glass','cliff','meandiff','mediandiff'};
 validFcn = @(x) any(validatestring(x,effectOptions));
-addParameter(p,'effect','Cohen',validFcn);
+addParameter(p,'effect','cohen',validFcn);
 
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';

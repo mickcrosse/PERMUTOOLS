@@ -17,8 +17,8 @@ function [h,p,ci,stats] = permuvartest2(x,y,varargin)
 %   provides strong control of FWER, even for small sample sizes, and is
 %   much more powerful than traditional correction methods.
 %
-%   If Y is empty, permutation tests between every pair of columns in X are
-%   performed, and a matrix of results is returned.
+%   If Y is empty, two-tailed permutation tests between every pair of 
+%   columns in X are performed, and a matrix of results is returned.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %

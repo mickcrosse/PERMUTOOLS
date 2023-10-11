@@ -9,8 +9,8 @@ function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %   permuting the data, no assumption is made about the shape of the
 %   distributions that the data come from, except that they have equal
 %   variances. For samples of unequal size or variance, Welch's t-statistic
-%   may be used by setting the VARTYPE parameter to 'UNEQUAL' as it is less
-%   sensitive to differences in variance (but also less sensitive to
+%   may be used by setting the 'vartype' parameter to 'unequal' as it is
+%   less sensitive to differences in variance (but also less sensitive to
 %   differences in means). X and Y can have different lengths.
 %
 %   If X and Y are matrices, separate permutation tests are performed
@@ -20,7 +20,7 @@ function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %   provides strong control of FWER, even for small sample sizes, and is
 %   much more powerful than traditional correction methods.
 %
-%   If Y is empty, two-sample permutation tests between every pair of
+%   If Y is empty, two-tailed permutation tests between every pair of
 %   columns in X are performed, and a matrix of results is returned.
 %
 %   PERMUTTEST2 treats NaNs as missing values, and ignores them.
