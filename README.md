@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a MATLAB-based statistical software package for multivariate permutation testing. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using the max statistic method (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
+PERMUTOOLS is a MATLAB-based statistical software package for multivariate permutation testing. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using max statistic correction (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
 
-PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired, two-sample), *F*-statistic (unpaired), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*).
+PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-, paired-, and two-sample tests), *F*-statistic (unpaired), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *Δ*, unstandardised mean and median difference).
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -96,7 +96,7 @@ ylim([-3,3]), xlim([0,21])
 title('Corrected')
 ```
 
-Here, we plot the parametric and permutation *p*-values for each test with significant results indicated as before. We can see that not all of the variables found to be significantly different in the uncorrected tests survive the max statistic criterion.
+Next, we plot the parametric and permutation *p*-values for each test with significant results indicated as before. We can see that not all of the variables found to be significantly different in the uncorrected tests survive the max statistic criterion.
 
 ```matlab
 % Plot parametric & uncorrected permutation p-values
@@ -119,7 +119,7 @@ xlabel('variable')
 
 # <img src="docs/fig_paired_test.png">
 
-### Effect size measure for dependent samples
+### Effect size measures for dependent samples
 
 To measure the effect size of the results, we can compute a measure of Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*), as well as the corresponding bias-corrected CIs, estimated using an efficient bootrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootrapping). The bootrapped effect sizes and CIs are computed with and without bias-correction.
 
@@ -161,6 +161,21 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 ```
 
 # <img src="docs/fig_effect_size.png">
+
+From the above analysis, we can report the frequentist statistics (adjusted for mutiple tests and sample size) for any of the pairwise comparison between X and Y. For example, the mean of the first variable was found to be significantly greater in X than in Y (*t*(29) = 4.19, *p* = 0.0052, Hedge's *g* = 1.13, 95CI [0.63, 1.72]).
+
+## Citation
+```
+@article{crosse2018permutools,
+  title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
+  author={Crosse, Michael J and Foxe, John J and Molholm, Sophie},
+  journal={In Prep},
+  volume={},
+  pages={},
+  year={2018},
+  publisher={}
+}
+```
 
 ## License
 
