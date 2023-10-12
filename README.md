@@ -85,7 +85,7 @@ f = statsc.fstat;
 xaxis = 1:size(f,2);
 
 % Plot parametric & uncorrected permutation CIs
-figure('Name','Unpaired Tests: F-statistic & CIs','NumberTitle','off')
+figure('Name','Unpaired tests based on the F-statistic','NumberTitle','off')
 set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,f,'LineWidth',3)
@@ -129,7 +129,7 @@ xlabel('variable')
 
 # <img src="docs/fig_ftest.png">
 
-Now that we have established that the data in X and Y come from distributions with equal variances, we can proceed to test whether they have equal means using an estimate of the *t*-statistic that uses their pooled standard deviation. We compare the means of each corresponding variable in X and Y using two-tailed (unpaired) tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without correction.
+Now that we have established that the data in X and Y come from distributions with equal variances, we can proceed to test whether they have equal means using an estimate of the *t*-statistic that uses their pooled standard deviation. We compare the means of each corresponding variable in X and Y using two-tailed (unpaired) tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without max-correction.
 
 ```matlab
 % Run MATLAB's two-sample t-test
@@ -150,7 +150,8 @@ md = mean(x)-mean(y);
 xaxis = 1:size(md,2);
 
 % Plot parametric & uncorrected permutation CIs
-figure, set(gcf,'color','w')
+figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
+set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,md,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
@@ -191,7 +192,7 @@ xlabel('variable')
 
 ### Effect size measures for independent samples
 
-To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction for sample size.
+To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction.
 
 ```matlab
 % Run MATLAB's effect size measure
@@ -213,7 +214,8 @@ Here, we plot the resulting effect sizes measures along with their CIs. We see t
 
 ```matlab
 % Plot parametric & uncorrected bootstrapped measures
-figure, set(gcf,'color','w')
+figure('Name','Effect size measures based on Cohen''s d','NumberTitle','off')
+set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,du,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
@@ -232,7 +234,91 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
 # <img src="docs/fig_effect_size.png">
 
-From the above analysis, we can report the frequentist statistics (adjusted for multiple  tests and sample size) for any of the pairwise comparisons  between X and Y. For example, the mean of the first variable was found to be significantly greater in X than in Y (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
+From the above analysis, we can report the test statistics (adjusted for multiple comparisons and sample size) for any of the pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correction for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
+
+### Correlation measures for two samples
+
+The following example demonstrates how to measure the correlation between two multivariate samples in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
+
+First, we generate random multivariate data for 2 multivariate samples X and Y. Each sample has 20 variables, each pair with a correlation of 0, except for the first 5 variables which have a positive correlation, and the second 5 variables which have a negative correlation. Each variable has 30 observations.
+
+```matlab
+% Generate random data
+rng(42);
+x = randn(30,20);
+y = randn(30,20);
+
+% Make the some variables positively and negatively correlated
+y(:,1:5) = y(:,1:5)+x(:,1:5)/2;
+y(:,6:10) = y(:,6:10)-x(:,6:10);
+xaxis = 1:20; alpha = 0.05;
+```
+
+We measure the correlation (Pearson's *r*) between each corresponding variable in X and Y using two-tailed tests, first using the standard parametric approach (i.e. Student's *t*-distribution), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without max-correction.
+
+```matlab
+% Run MATLAB's correlation measure
+[r,p] = corr(x,y);
+r = diag(r);
+p = diag(p);
+ci = zeros(2,20);
+for j = 1:20
+    [~,~,clwr,cupr] = corrcoef(x(:,j),y(:,j));
+    ci(:,j) = [clwr(2);cupr(2)];
+end
+
+% Run PERMUTOOLS' correlation measure (uncorrected)
+[ru,pu,ciu,statsu] = permucorr(x,y,'correct',0);
+
+% Run PERMUTOOLS' correlation measure (max-corrected)
+[rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
+```
+
+Here, we plot the correlation coefficients along with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
+
+```matlab
+% Plot parametric & uncorrected permutation CIs
+figure('Name','Correlation measures based on Pearson''s r','NumberTitle','off')
+set(gcf,'color','w')
+subplot(2,2,1), hold on
+plot(xaxis,ru,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,ciu,'--r')
+plot(xaxis(p<=alpha),r(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),ru(pu<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([-1,1]), box on, grid on
+title('Uncorrected'), ylabel('correlation')
+legend('Pearson''s {\itr}','parametric CI','','permutation CI')
+
+% Plot parametric & corrected permutation CIs
+subplot(2,2,2), hold on
+plot(xaxis,rc,'LineWidth',3)
+plot(xaxis,ci,'k',xaxis,cic,'--r')
+plot(xaxis(p<=alpha),r(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),rc(pc<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([-1,1]), box on, grid on
+title('Max-corrected')
+
+% Plot parametric & uncorrected permutation p-values
+subplot(2,2,3), hold on
+plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),pu(pu<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
+xlabel('variable'), ylabel('probability')
+legend('parametric {\itp}','permutation {\itp}')
+
+% Plot parametric & corrected permutation p-values
+subplot(2,2,4), hold on
+plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),pc(pc<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
+xlabel('variable')
+```
+
+# <img src="docs/fig_correlation.png">
+
+From the above analysis, we can report the correlation coefficient and statistics (adjusted for multiple comparisons) for any of the pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correction for multiple comparisons (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
 
 ## Citation
 
