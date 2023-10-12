@@ -36,7 +36,7 @@ The max statistic correction method, also referred to as *tmax* correction in th
 
 ### Bias-correction for Sample Size
 
-A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To counteract this bias, we chan apply a simple numerical correction to the effect size and confidence intervals which can be approximated as $`1−3/(4*n*−9)`$ (Hedges, 1985). It is thus common to report such corrected effect size measures as Hedges' *g*. Note, this bias-correction can also be applied to effect size measures based on Glass' *Δ* but not Cliff's *d*.
+A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To counteract this bias, we chan apply a simple numerical correction to the effect size and confidence intervals which can be approximated as $`1−3/(4n−9)`$ (Hedges, 1985). It is thus common to report such corrected effect size measures as Hedges' *g*. Note, this bias-correction can also be applied to effect size measures based on Glass' *Δ* but not Cliff's *d*.
 
 # <img src="docs/fig_max_correction.png">
 
