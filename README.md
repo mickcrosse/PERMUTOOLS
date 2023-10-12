@@ -28,13 +28,13 @@ For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Cros
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
-## Correction Methods
+## Correction Methods used in PERMUTOOLS
 
 ### Max Statistic Correction for Multiple Tests
 
 The max statistic correction method, also referred to as *Tmax* correction in the case of the *t*-statistic (Blair *et al.*, 1994), works by permuting the order or pairing of the data to estimate the sampling distribution for each variable. In the case that there are multiple variables, the maximum value is taken at every permutation across all variables in order to produce a single, more-conservative sampling distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
 
-### Bias-correction of Effect Size Measures for Sample Size
+### Bias-correction for Sample Size
 
 A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To counteract this bias, we chan apply a simple numerical correction to the effect size and confidence intervals which can be approximated as 1 − 3/(4*n*−9) (Hedges, 1985). It is thus common to report such corrected effect size measures as Hedges' *g*. Note, this bias-correction can also be applied to effect size measures based on Glass' *Δ* but not Cliff's *d*.
 
@@ -48,7 +48,7 @@ A common measure of effect size is the standardised mean differnce, known as Coh
 
 ## Examples
 
-### Permutation tests for independent samples
+### Permutation tests for multivariate independent samples
 
 The following example demonstrates how to test whether two independent samples come from distributions with equal means in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
 
@@ -190,7 +190,7 @@ xlabel('variable')
 
 # <img src="docs/fig_ttest.png">
 
-### Effect size measures for independent samples
+### Effect size measures for for multivariate independent samples
 
 To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction.
 
@@ -236,7 +236,7 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
 From the above analysis, we can report the test statistics (adjusted for multiple comparisons and sample size) for any of the pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correction for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
 
-### Correlation measures for two samples
+### Correlation measures for multivariate data
 
 The following example demonstrates how to measure the correlation between two multivariate samples in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
 
