@@ -32,11 +32,13 @@ For usage, please see [examples](#examples) and [example M-files](examples).
 
 ### Max Statistic Correction for Multiple Tests
 
-The max statistic correction method, also referred to as *Tmax* correction in the case of the *t*-statistic (Blair *et al.*, 1994), works by permuting the order or pairing of the data to estimate the sampling distribution for each variable. In the case that there are multiple variables, the maximum value is taken at every permutation across all variables in order to produce a single, more-conservative sampling distribution. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
+The max statistic correction method, also referred to as *tmax* correction in the case of the *t*-statistic (Blair *et al.*, 1994), works by permuting the data in order to estimate the sampling distribution for each variable. In the case that there are multiple variables, the maximum value is taken across variables in order to produce a single, more-conservative sampling distribution (see figure below). This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). For unpaired testing, it is also rather insensitive to differences in population variance when samples of equal size are used (Groppe *et al.*, 2011b).
 
 ### Bias-correction for Sample Size
 
-A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To counteract this bias, we chan apply a simple numerical correction to the effect size and confidence intervals which can be approximated as 1 − 3/(4*n*−9) (Hedges, 1985). It is thus common to report such corrected effect size measures as Hedges' *g*. Note, this bias-correction can also be applied to effect size measures based on Glass' *Δ* but not Cliff's *d*.
+A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To counteract this bias, we chan apply a simple numerical correction to the effect size and confidence intervals which can be approximated as $1−3/(4*n*−9) (Hedges, 1985). It is thus common to report such corrected effect size measures as Hedges' *g*. Note, this bias-correction can also be applied to effect size measures based on Glass' *Δ* but not Cliff's *d*.
+
+# <img src="docs/fig_correlation.png">
 
 ## Contents
 
