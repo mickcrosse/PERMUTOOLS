@@ -21,83 +21,74 @@ rng(42);
 x = randn(30,20);
 y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
-diffxy = mean(x-y);
+md = mean(x-y);
 xaxis = 1:20;
 tail = {'both','right','left'};
+label = {'two','right','left'};
 
 % Plot parametric & permutation CIs
-figure
+figure('Name','Paired Test: mean difference & CIs','NumberTitle','off')
+set(gcf,'color','w')
 for i = 1:numel(tail)
     [h1,~,ci1] = ttest(x,y,'tail',tail{i});
-    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',false);
-    subplot(3,2,i+i-1)
-    hold on
-    plot(xaxis,diffxy,'LineWidth',3)
+    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+    subplot(3,2,i+i-1), hold on
+    plot(xaxis,md,'LineWidth',3)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(logical(h1)),diffxy(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),diffxy(logical(h2)),'xr','LineWidth',2)
-    hold off
-    ylim([-3,3])
-    xlim([0,21])
+    plot(xaxis(logical(h1)),md(logical(h1)),'ok','LineWidth',2)
+    plot(xaxis(logical(h2)),md(logical(h2)),'xr','LineWidth',2)
+    xlim([0,21]), ylim([-3,3]), box on, grid on
     if i == 1
         title('Uncorrected')
     elseif i == 3
         xlabel('variable')
     end
-    ylabel([tail{i},'-tailed'])
+    ylabel([label{i},'-tailed'])
     if i == 2
-        legend('mean(X−Y)','parametric CIs','','permutation CIs')
+        legend('mean difference','parametric CI','','permutation CI')
     end
-    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',true);
-    subplot(3,2,i+i)
-    hold on
-    plot(xaxis,diffxy,'LineWidth',3)
+    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+    subplot(3,2,i+i), hold on
+    plot(xaxis,md,'LineWidth',3)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(logical(h1)),diffxy(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),diffxy(logical(h2)),'xr','LineWidth',2)
-    hold off
-    ylim([-3,3])
-    xlim([0,21])
+    plot(xaxis(logical(h1)),md(logical(h1)),'ok','LineWidth',2)
+    plot(xaxis(logical(h2)),md(logical(h2)),'xr','LineWidth',2)
+    xlim([0,21]), ylim([-3,3]), box on, grid on
     if i == 1
-        title('Corrected')
+        title('Max-corrected')
     elseif i == 3
         xlabel('variable')
     end
 end
 
 % Plot parametric & permutation p-values
-figure
+figure('Name','Paired Test: p-values','NumberTitle','off')
+set(gcf,'color','w')
 for i = 1:numel(tail)
     [h1,p1] = ttest(x,y,'tail',tail{i});
-    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',false);
-    subplot(3,2,i+i-1)
-    hold on
+    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+    subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
     plot(xaxis(logical(h1)),p1(logical(h1)),'ok','LineWidth',2)
     plot(xaxis(logical(h2)),p2(logical(h2)),'xr','LineWidth',2)
-    hold off
-    ylim([0,1])
-    xlim([0,21])
+    xlim([0,21]), ylim([0,1]), box on, grid on
     if i == 1
         title('Uncorrected')
     elseif i == 3
         xlabel('variable')
     end
-    ylabel([tail{i},'-tailed'])
+    ylabel([label{i},'-tailed'])
     if i == 2
-        legend('parametric p-value','permutation p-value')
+        legend('parametric {\itp}','permutation {\itp}')
     end
-    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',true);
-    subplot(3,2,i+i)
-    hold on
+    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+    subplot(3,2,i+i), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
     plot(xaxis(logical(h1)),p1(logical(h1)),'ok','LineWidth',2)
     plot(xaxis(logical(h2)),p2(logical(h2)),'xr','LineWidth',2)
-    hold off
-    ylim([0,1])
-    xlim([0,21])
+    xlim([0,21]), ylim([0,1]), box on, grid on
     if i == 1
-        title('Corrected')
+        title('Max-corrected')
     elseif i == 3
         xlabel('variable')
     end

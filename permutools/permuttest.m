@@ -198,7 +198,7 @@ end
 tp(arg.nperm+1:2*arg.nperm,:) = -tp;
 arg.nperm = 2*arg.nperm;
 if arg.verbose
-    warning('Adding negative of all values to sampling distribution.')
+    fprintf('Adding negative of all values to sampling distribution.\n')
     fprintf('Number of permutations used: %d\n',arg.nperm)
 end
 
