@@ -236,7 +236,7 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
 # <img src="docs/fig_effect_size.png">
 
-From the above analysis, we can report the test statistics (adjusted for multiple comparisons and sample size) for any of the pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correction for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
+From the output of the above analyses, we can report the test statistics and effect size measures (adjusted for multiple comparisons and sample size) for any of the pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correction for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
 
 ### Correlation measures for multivariate data
 
@@ -320,7 +320,7 @@ xlabel('variable')
 
 # <img src="docs/fig_correlation.png">
 
-From the above analysis, we can report the correlation coefficient and statistics (adjusted for multiple comparisons) for any of the pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correction for multiple comparisons (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
+From the output of the above analysis, we can report the correlation coefficient and test statistics (adjusted for multiple comparisons) for any of the pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correction for multiple comparisons (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
 
 ## Citation
 
