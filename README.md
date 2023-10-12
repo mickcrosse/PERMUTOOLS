@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a MATLAB-based statistical software package for multivariate permutation testing. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using max statistic correction (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
+PERMUTOOLS is a statistical software package for multivariate permutation testing in MATLAB. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate (FWER) is controlled using max statistic correction (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
 
-PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-, paired-, and two-sample tests), *F*-statistic (unpaired), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean and median difference).
+PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean and median difference).
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -28,7 +28,7 @@ For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Cros
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
-## Correction Methods used in PERMUTOOLS
+## Correction Methods in PERMUTOOLS
 
 ### Max Statistic Correction for Multiple Tests
 
@@ -36,17 +36,17 @@ Max statistic correction, also referred to as *tmax* correction in the case of t
 
 ### Bias-correction for Sample Size
 
-A common measure of effect size is the standardised mean differnce, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To correct for this bias, we chan apply a simple numerical scaling to the effect size and confidence intervals, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). It is common to report such corrected effect size measures as Hedges' *g*. Note, the same correction can also be applied to effect size measures based on Glass' *Δ*, but not Cliff's *d*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
+A common measure of effect size is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To correct for this bias, we can apply a simple numerical scaling to the effect size and confidence intervals, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). It is common to report such corrected effect size measures as Hedges' *g*. Note, the same correction can also be applied to effect size measures based on Glass' *Δ*, but not Cliff's *d*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
 
 # <img src="docs/fig_max_correction.png">
 
 ## Contents
 
-* `permuttest()` - one-sample or paired-sample permutation test with tmax correction
-* `permuttest2()` - unpaired two-sample permutation test with tmax correction
-* `permuvartest2()` - permutation-based *F*-test with max statistic correction
-* `permucorr()` - permutation-based correlation coefficient with max statistic correction
-* `booteffectsize()` - bias-corrected effect size measure with bootstrapped confidence intervals
+* `permuttest()` - one-sample or paired-sample permutation tests with *tmax* correction
+* `permuttest2()` - unpaired two-sample permutation tests with *tmax* correction
+* `permuvartest2()` - permutation-based *F*-tests with max statistic correction
+* `permucorr()` - permutation-based correlation measures with max statistic correction
+* `booteffectsize()` - bias-corrected effect size measures with bootstrapped confidence intervals
 
 ## Examples
 
@@ -212,7 +212,7 @@ end
 [dc,cic] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',1);
 ```
 
-Here, we plot the resulting effect sizes measures along with their CIs. We see that bias-correcting the effect size and CIs according to sample size slightly reduces the overal measures, resulting in a more conservative estimate.
+Here, we plot the resulting effect sizes measures along with their CIs. We see that bias-correcting the effect size and CIs according to sample size slightly reduces the overall measures, resulting in a more conservative estimate.
 
 ```matlab
 % Plot parametric & uncorrected bootstrapped measures
