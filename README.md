@@ -70,6 +70,8 @@ y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
 ```
 
+#### Testing for equal variances 
+
 Let's assume that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or a Welch's *t*-test. To establish this, compare the variances of each corresponding variable in X and Y using two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). For demonstration purposes, the permutation tests are conducted both with and without correction for multiple comparisons.
 
 ```matlab
@@ -134,6 +136,8 @@ xlabel('variable')
 ```
 
 # <img src="docs/fig_ftest.png">
+
+#### Testing for equal means
 
 Now that we have established that the data in X and Y come from distributions with equal variances, we can proceed to test whether they have equal means using an estimate of the *t*-statistic that uses their pooled standard deviation. We compare the means of each corresponding variable in X and Y using two-tailed (unpaired) tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without max-correction.
 
