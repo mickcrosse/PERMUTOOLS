@@ -1,4 +1,4 @@
-function [r,p,ci,stats] = permucorr(x,varargin)
+function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %PERMUCORR  Linear or rank permutation-based correlation.
 %   R = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
@@ -28,9 +28,12 @@ function [r,p,ci,stats] = permucorr(x,varargin)
 %   [R,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence interval
 %   for each coefficient.
 %
-%   [H,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
+%   [R,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
 %   fields:
 %       'df'        -- the degrees of freedom of each test
+%
+%   [R,P,CI,STATS,PDIST] = PERMUCORR(...) returns the permutation
+%   distribution of the test statistic.
 %
 %   [...] = PERMUCORR(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -47,7 +50,7 @@ function [r,p,ci,stats] = permucorr(x,varargin)
 %                       'right'     correlation is greater than zero
 %                       'left'      correlation is less than zero
 %       'type'      A string specifying the type of correlation measure:
-%                       'pearson'   linear correlation coefficient based on 
+%                       'pearson'   linear correlation coefficient based on
 %                                   Pearson's r (default)
 %                       'spearman'  Spearman's rank correlation coefficient
 %                       'rankit'    Bliss' rankit correlation coefficient
@@ -111,7 +114,7 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
     y = y';
 end
 
-% Set up permutation test
+% Set up comparison
 if isempty(y)
     warning('Comparing all columns of X in a correlation matrix...')
     [x,y] = ptpaircols(x);
@@ -173,45 +176,45 @@ if nargout > 1
         [~,idx] = sort(rand(nobs,arg.nperm));
     end
 
-    % Estimate sampling distribution
-    rp = zeros(arg.nperm,nvar);
+    % Estimate permutation distribution
+    pdist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        rp(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
+        pdist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
     end
 
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
             case 'both'
-                [~,idx] = max(abs(rp),[],2);
+                [~,idx] = max(abs(pdist),[],2);
                 csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-                rp = rp';
-                rp = rp(idx+csvar);
+                pdist = pdist';
+                pdist = pdist(idx+csvar);
             case 'right'
-                rp = max(rp,[],2);
+                pdist = max(pdist,[],2);
             case 'left'
-                rp = min(rp,[],2);
+                pdist = min(pdist,[],2);
         end
     end
 
     % Compute p-value and CIs
     switch arg.tail
         case 'both'
-            p = 2*(min(sum(r<=rp),sum(r>=rp))+1)/(arg.nperm+1);
+            p = 2*(min(sum(r<=pdist),sum(r>=pdist))+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(rp,100*(1-arg.alpha/2));
+                crit = prctile(pdist,100*(1-arg.alpha/2));
                 ci = [max(-1,r-crit);min(1,r+crit)];
             end
         case 'right'
-            p = (sum(r<=rp)+1)/(arg.nperm+1);
+            p = (sum(r<=pdist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(rp,100*(1-arg.alpha));
+                crit = prctile(pdist,100*(1-arg.alpha));
                 ci = [max(-1,r-crit);Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(r>=rp)+1)/(arg.nperm+1);
+            p = (sum(r>=pdist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(-rp,100*(1-arg.alpha));
+                crit = prctile(-pdist,100*(1-arg.alpha));
                 ci = [-Inf(1,nvar);min(1,r+crit)];
             end
     end

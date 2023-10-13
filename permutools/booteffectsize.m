@@ -1,4 +1,4 @@
-function [d,ci,stats] = booteffectsize(x,m,varargin)
+function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %BOOTEFFECTSIZE  Effect size with bootstrapped confidence intervals.
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
@@ -6,9 +6,9 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %   delta can be computed by setting the 'effect' parameter to 'cliff'.
 %
 %   If X is a matrix, separate effect sizes are measured along each column
-%   of X, and a vector of results is returned. If the 'test' parameter is
-%   set to 'pairwise', the effect sizes between every pair of columns in X
-%   are measured, and a matrix of results is returned.
+%   of X, and a vector of results is returned. If the 'compare' parameter
+%   is set to 'pairwise', the effect sizes between every pair of columns in
+%   X are measured, and a matrix of results is returned.
 %
 %   BOOTEFFECTSIZE treats NaNs as missing values, and ignores them.
 %
@@ -33,33 +33,23 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %       'sd'    	-- the pooled standard deviation, or of X for a one-
 %                      sample or Glass' delta measure
 %
+%   [D,CI,STATS,BDIST] = BOOTEFFECTSIZE(...) returns the bootstrap
+%   distribution of the effect size measure.
+%
 %   [...] = BOOTEFFECTSIZE(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %       Parameter   Value
+%       'alpha'     A scalar between 0 and 1 specifying the confidence
+%                   level as 100*(1-ALPHA)% (default=0.05 for 95%
+%                   confidence).
 %       'dim'       A scalar specifying the dimension to work along: pass
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
-%       'alpha'     A scalar between 0 and 1 specifying the significance
-%                   level as 100*ALPHA% (default=0.05).
-%       'nboot'     A scalar specifying the number of bootstraps used to
-%                   estimate the confidence intervals (default=10,000).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether to
-%                   bias-correct the effect size and confidence intervals
-%                   according to sample size (default=true). Note, this
-%                   only applies to standardised effect size measures.
-%       'rows'      A string specifying the rows to use in the case of any
-%                   missing values (NaNs):
-%                       'all'       use all rows, even with NaNs (default)
-%                       'complete'  use only rows with no NaNs
 %       'paired'    A numeric scalar (0,1) or logical indicating whether
 %                   the data in X and Y are paired: pass in 1 for paired
 %                   samples (default), or 0 for unpaired samples.
-%       'vartype'   A string specifying the variance equivalence of X and Y
-%                   to determine the SD and degrees of freedom:
-%                       'equal'   	assume equal variances (default)
-%                       'unequal' 	assume unequal variances
 %       'effect'    A string specifying the effect size to measure:
 %                       'cohen'      standardised mean difference based on
 %                                    Cohen's d (default)
@@ -72,13 +62,27 @@ function [d,ci,stats] = booteffectsize(x,m,varargin)
 %                                    data
 %                       'meandiff'   unstandardised mean difference
 %                       'mediandiff' unstandardised median difference
-%       'test'      A string specifying whether to compute a one-sample
+%       'vartype'   A string specifying the variance equivalence of X and Y
+%                   to determine the SD and degrees of freedom:
+%                       'equal'   	assume equal variances (default)
+%                       'unequal' 	assume unequal variances
+%       'compare'   A string specifying whether to compute a one-sample
 %                   measure or a pairwise measure when only X is entered:
 %                       'one'       compare each column of X to zero and
 %                                   return a vector of results (default)
-%                       'pairwise'  compare every pair of columns in X
-%                                   using two-tailed tests and return a
-%                                   matrix of results
+%                       'pairwise'  compare every pair of columns in X to
+%                                   each other and return a matrix of
+%                                   results
+%       'nboot'     A scalar specifying the number of bootstraps used to
+%                   estimate the confidence intervals (default=10,000).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   bias-correct the effect size and confidence intervals
+%                   according to sample size (default=true). Note, this
+%                   only applies to standardised effect size measures.
+%       'rows'      A string specifying the rows to use in the case of any
+%                   missing values (NaNs):
+%                       'all'       use all rows, even with NaNs (default)
+%                       'complete'  use only rows with no NaNs
 %       'seed'      A scalar integer specifying the seed used to initialise
 %                   the bootstrap generator. By default, the generator is
 %                   initialised based on the current time, resulting in a
@@ -123,10 +127,10 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
     y = y';
 end
 
-% Set up permutation test
+% Set up comparison
 if isempty(y)
-    switch arg.test
-        case 'one'
+    switch arg.compare
+        case 'zero'
             y = zeros(size(x));
         case 'pairwise'
             warning('Comparing all columns of X...')
@@ -134,7 +138,7 @@ if isempty(y)
             arg.mat = true;
     end
 else
-    switch arg.test
+    switch arg.compare
         case 'pairwise'
             error('The PAIRWISE option can only be used with one sample.')
     end
@@ -284,9 +288,10 @@ end
 
 if nargout > 1
 
-    % Estimate sampling distribution
+    % Estimate bootstrap distribution & CIs
     rng(arg.seed);
     ci = zeros(2,nvar);
+
     for i = 1:nvar
 
         % Bootstrap samples
@@ -371,13 +376,13 @@ if nargout > 1
         % Compute effect size
         switch arg.effect
             case {'cliff','meandiff','mediandiff'}
-                db = mub;
+                bdist = mub;
             otherwise
-                db = mub./sdb;
+                bdist = mub./sdb;
         end
 
         % Compute confidence intervals
-        ci(:,i) = prctile(db,100*[arg.alpha/2;1-arg.alpha/2]);
+        ci(:,i) = prctile(bdist,100*[arg.alpha/2;1-arg.alpha/2]);
 
     end
 

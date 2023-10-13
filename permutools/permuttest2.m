@@ -1,4 +1,4 @@
-function [h,p,ci,stats] = permuttest2(x,y,varargin)
+function [h,p,ci,stats,pdist] = permuttest2(x,y,varargin)
 %PERMUTTEST2  Unpaired two-sample permutation-based t-test.
 %   H = PERMUTTEST2(X,Y) returns the results of a two-sample permutation
 %   test between independent samples X and Y based on the t-statistic. H=0
@@ -37,6 +37,9 @@ function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %       'df'        -- the degrees of freedom of each test
 %       'sd'    	-- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test
+%
+%   [H,P,CI,STATS,PDIST] = PERMUTTEST2(...) returns the permutation
+%   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -82,8 +85,8 @@ function [h,p,ci,stats] = permuttest2(x,y,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 %       [3] Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis
-%           of event-related brain potentials/fields II: Simulation studies
-%           Psychophysiology, 48(12):1726-1737.
+%           of event-related brain potentials/fields II: Simulation
+%           studies. Psychophysiology, 48(12):1726-1737.
 %       [4] Groppe DM (2016) Combating the scientific decline effect with
 %           confidence (intervals). Psychophysiology, 54(1):139-145.
 
@@ -108,7 +111,7 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
     y = y';
 end
 
-% Set up permutation test
+% Set up comparison
 if isempty(y)
     warning('Comparing all columns of X using two-tailed test...')
     [x,y] = ptpaircols(x);
@@ -180,8 +183,8 @@ maxnobs = size(x,1);
 i1 = idx(1:maxnobsx,:);
 i2 = idx(maxnobsx+1:maxnobs,:);
 
-% Estimate sampling distribution
-tp = zeros(arg.nperm,nvar);
+% Estimate permutation distribution
+pdist = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
     x1 = x(i1(:,i),:);
     x2 = x(i2(:,i),:);
@@ -195,36 +198,36 @@ for i = 1:arg.nperm
         case 'unequal'
             sep = sqrt(var1./nobsx+var2./nobsy);
     end
-    tp(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
+    pdist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
 end
 
 % Apply max correction if specified
 if arg.correct
-    [~,idx] = max(abs(tp),[],2);
+    [~,idx] = max(abs(pdist),[],2);
     csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-    tp = tp';
-    tp = tp(idx+csvar);
+    pdist = pdist';
+    pdist = pdist(idx+csvar);
 end
 
 % Compute p-value and CIs
 switch arg.tail
     case 'both'
-        tp = abs(tp);
-        p = (sum(abs(tstat)<=tp)+1)/(arg.nperm+1);
+        pdabs = abs(pdist);
+        p = (sum(abs(tstat)<=pdabs)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            crit = prctile(pdabs,100*(1-arg.alpha)).*se;
             ci = [mu-crit;mu+crit];
         end
     case 'right'
-        p = (sum(tstat<=tp)+1)/(arg.nperm+1);
+        p = (sum(tstat<=pdist)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            crit = prctile(pdist,100*(1-arg.alpha)).*se;
             ci = [mu-crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(tstat>=tp)+1)/(arg.nperm+1);
+        p = (sum(tstat>=pdist)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            crit = prctile(pdist,100*(1-arg.alpha)).*se;
             ci = [-Inf(1,nvar);mu+crit];
         end
 end

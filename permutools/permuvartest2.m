@@ -1,4 +1,4 @@
-function [h,p,ci,stats] = permuvartest2(x,y,varargin)
+function [h,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %PERMUVARTEST2  Unpaired two-sample permutation-based F-test.
 %   H = PERMUVARTEST2(X,Y) returns the results of a two-sample permutation
 %   test between independent samples X and Y based on the F-statistic. H=0
@@ -17,7 +17,7 @@ function [h,p,ci,stats] = permuvartest2(x,y,varargin)
 %   provides strong control of FWER, even for small sample sizes, and is
 %   much more powerful than traditional correction methods.
 %
-%   If Y is empty, two-tailed permutation tests between every pair of 
+%   If Y is empty, two-tailed permutation tests between every pair of
 %   columns in X are performed, and a matrix of results is returned.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
@@ -33,6 +33,9 @@ function [h,p,ci,stats] = permuvartest2(x,y,varargin)
 %       'fstat'     -- the value of the test statistic
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'    	-- the denominator degrees of freedom of each test
+%
+%   [H,P,CI,STATS,PDIST] = PERMUVARTEST2(...) returns the permutation
+%   distribution of the test statistic.
 %
 %   [...] = PERMUVARTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -95,7 +98,7 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
     y = y';
 end
 
-% Set up permutation test
+% Set up comparison
 if isempty(y)
     warning('Comparing all columns of X using two-tailed test...')
     [x,y] = ptpaircols(x);
@@ -146,50 +149,50 @@ maxnobs = size(x,1);
 i1 = idx(1:maxnobsx,:);
 i2 = idx(maxnobsx+1:maxnobs,:);
 
-% Estimate sampling distribution
-fp = zeros(arg.nperm,nvar);
+% Estimate permutation distribution
+pdist = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
     x1 = x(i1(:,i),:);
     x2 = x(i2(:,i),:);
     var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
     var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
-    fp(i,:) = var1./var2;
+    pdist(i,:) = var1./var2;
 end
 
 % Apply max correction if specified
 if arg.correct
-    [~,imax] = max(fp,[],2);
-    [~,imin] = min(fp,[],2);
+    [~,imax] = max(pdist,[],2);
+    [~,imin] = min(pdist,[],2);
     csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-    fp = fp';
-    fmax = fp(imax+csvar);
-    fmin = fp(imin+csvar);
+    pdist = pdist';
+    pdmax = pdist(imax+csvar);
+    pdmin = pdist(imin+csvar);
     k = 1;
 else
-    fmax = fp;
-    fmin = fp;
+    pdmax = pdist;
+    pdmin = pdist;
     k = 2;
 end
 
 % Compute p-value and CIs
 switch arg.tail
     case 'both'
-        p = k*(min(sum(fstat<=fmax),sum(fstat>=fmin))+1)/(arg.nperm+1);
+        p = k*(min(sum(fstat<=pdmax),sum(fstat>=pdmin))+1)/(arg.nperm+1);
         if nargout > 2
-            crit = [prctile(fmin,100*arg.alpha/2);...
-                prctile(fmax,100*(1-arg.alpha/2))];
+            crit = [prctile(pdmin,100*arg.alpha/2);...
+                prctile(pdmax,100*(1-arg.alpha/2))];
             ci = fstat./crit;
         end
     case 'right'
-        p = (sum(fstat<=fmax)+1)/(arg.nperm+1);
+        p = (sum(fstat<=pdmax)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(fmax,100*(1-arg.alpha));
+            crit = prctile(pdmax,100*(1-arg.alpha));
             ci = [fstat./crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(fstat>=fmin)+1)/(arg.nperm+1);
+        p = (sum(fstat>=pdmin)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(fmin,100*arg.alpha);
+            crit = prctile(pdmin,100*arg.alpha);
             ci = [zeros(1,nvar);fstat./crit];
         end
 end

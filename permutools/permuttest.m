@@ -1,4 +1,4 @@
-function [h,p,ci,stats] = permuttest(x,m,varargin)
+function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %PERMUTTEST  One-sample and paired-sample permutation-based t-test.
 %   H = PERMUTTEST(X) returns the results of a one-sample permutation test
 %   based on the t-statistic. H=0 indicates that the null hypothesis (that
@@ -13,7 +13,7 @@ function [h,p,ci,stats] = permuttest(x,m,varargin)
 %   rate (FWER) is controlled for multiple tests using the max statistic
 %   correction method. This method provides strong control of FWER, even
 %   for small sample sizes, and is much more powerful than traditional
-%   correction methods. If the 'test' parameter is set to 'pairwise',
+%   correction methods. If the 'compare' parameter is set to 'pairwise',
 %   two-tailed permutation tests between every pair of columns in X are
 %   performed, and a matrix of results is returned.
 %
@@ -43,6 +43,9 @@ function [h,p,ci,stats] = permuttest(x,m,varargin)
 %       'sd'    	-- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test
 %
+%   [H,P,CI,STATS,PDIST] = PERMUTTEST(...) returns the permutation
+%   distribution of the test statistic.
+%
 %   [...] = PERMUTTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
@@ -57,13 +60,13 @@ function [h,p,ci,stats] = permuttest(x,m,varargin)
 %                       'both'      mean is not M (two-tailed, default)
 %                       'right'     mean is greater than M (right-tailed)
 %                       'left'      mean is less than M (left-tailed)
-%       'test'      A string specifying whether to perform a one-sample
-%                   test or a pairwise test when only X is entered:
-%                       'one'       compare each column of X to zero and
+%       'compare'   A string specifying what to compare each variable to
+%                   when only X is entered:
+%                       'zero'      compare each column of X to zero and
 %                                   return a vector of results (default)
-%                       'pairwise'  compare every pair of columns in X
-%                                   using two-tailed tests and return a
-%                                   matrix of results
+%                       'pairwise'  compare every pair of columns in X to
+%                                   each other using two-tailed tests and
+%                                   return a matrix of results
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000, or all possible permutations for less
 %                   than 14 observations).
@@ -122,10 +125,10 @@ if ~isempty(y) && (arg.dim==2 || isrow(y))
     y = y';
 end
 
-% Set up permutation test
+% Set up comparison
 if isempty(y)
-    switch arg.test
-        case 'one'
+    switch arg.compare
+        case 'zero'
             y = zeros(size(x));
         case 'pairwise'
             warning('Comparing all columns of X using two-tailed test...')
@@ -134,7 +137,7 @@ if isempty(y)
             arg.mat = true;
     end
 else
-    switch arg.test
+    switch arg.compare
         case 'pairwise'
             error('The PAIRWISE option can only be used with one sample.')
     end
@@ -180,22 +183,22 @@ tstat = mu./se;
 rng(arg.seed);
 signx = sign(rand(maxnobs,arg.nperm)-0.5);
 
-% Estimate sampling distribution
+% Estimate permutation distribution
 sqrtn = sqrt(nobs.*df);
-tp = zeros(arg.nperm,nvar);
+pdist = zeros(arg.nperm,nvar);
 for i = 1:arg.nperm
     xp = x.*repmat(signx(:,i),1,nvar);
     smx = sum(xp,nanflag);
-    tp(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
+    pdist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
 end
 
 % Apply max correction if specified
 if arg.correct
-    tp = max(abs(tp),[],2);
+    pdist = max(abs(pdist),[],2);
 end
 
 % Add negative values
-tp(arg.nperm+1:2*arg.nperm,:) = -tp;
+pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
 arg.nperm = 2*arg.nperm;
 if arg.verbose
     fprintf('Adding negative of all values to sampling distribution.\n')
@@ -205,21 +208,21 @@ end
 % Compute p-value and CIs
 switch arg.tail
     case 'both'
-        p = 2*(sum(abs(tstat)<=tp)+1)/(arg.nperm+1);
+        p = 2*(sum(abs(tstat)<=pdist)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha/2)).*se;
+            crit = prctile(pdist,100*(1-arg.alpha/2)).*se;
             ci = [mu-crit;mu+crit];
         end
     case 'right'
-        p = (sum(tstat<=tp)+1)/(arg.nperm+1);
+        p = (sum(tstat<=pdist)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            crit = prctile(pdist,100*(1-arg.alpha)).*se;
             ci = [mu-crit;Inf(1,nvar)];
         end
     case 'left'
-        p = (sum(tstat>=tp)+1)/(arg.nperm+1);
+        p = (sum(tstat>=pdist)+1)/(arg.nperm+1);
         if nargout > 2
-            crit = prctile(tp,100*(1-arg.alpha)).*se;
+            crit = prctile(pdist,100*(1-arg.alpha)).*se;
             ci = [-Inf(1,nvar);mu+crit];
         end
 end
