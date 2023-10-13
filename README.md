@@ -39,6 +39,7 @@ Max statistic correction, also referred to as *tmax* correction in the case of t
 A common measure of effect size is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To correct for this bias, we can apply a simple numerical scaling to the effect size and confidence intervals, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). It is common to report such corrected effect size measures as Hedges' *g*. Note, the same correction can also be applied to effect size measures based on Glass' *Δ*, but not Cliff's *d*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
 
 # <img src="docs/fig_permutation_distribution.png">
+
 *The above figure shows two permutation distributions based on the t-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected across 20 tests).*
 
 ## Contents
@@ -51,7 +52,9 @@ A common measure of effect size is the standardised mean difference, known as Co
 
 ## Examples
 
-### Permutation tests for multivariate independent samples
+All examples shown below can be found in a single M-file called `run_github_examples.m` in the [examples folder](examples), as well as additional M-files with more extensive examples.
+
+### Permutation tests for multivariate data
 
 The following example demonstrates how to test whether two independent samples come from distributions with equal means in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
 
@@ -193,7 +196,7 @@ xlabel('variable')
 
 # <img src="docs/fig_ttest.png">
 
-### Effect size measures for for multivariate independent samples
+### Effect size measures for multivariate data
 
 To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction.
 
