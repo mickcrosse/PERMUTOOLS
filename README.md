@@ -39,7 +39,6 @@ Max statistic correction, also referred to as *tmax* correction in the case of t
 A common measure of effect size is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4%, particularly for sample sizes of less than 20. To correct for this bias, we can apply a simple numerical scaling to the effect size and confidence intervals, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). It is common to report such corrected effect size measures as Hedges' *g*. Note, the same correction can also be applied to effect size measures based on Glass' *Δ*, but not Cliff's *d*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
 
 # <img src="docs/fig_permutation_distribution.png">
-
 *The above figure shows two permutation distributions based on the t-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected across 20 tests).*
 
 ## Contents
@@ -324,9 +323,11 @@ xlabel('variable')
 
 From the output of the above analysis, we can report the correlation coefficient and test statistics (adjusted for multiple tests) for any of the pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correction for multiple tests (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
 
-## Citation
+## Citing PERMUTOOLS
 
 If you publish any work using PERMUTOOLS, please it cite as:
+
+Crosse MJ, Foxe JJ, Molholm S (*In Prep*) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.
 
 ```
 @article{crosse2018permutools,
@@ -340,10 +341,6 @@ If you publish any work using PERMUTOOLS, please it cite as:
 }
 ```
 
-## License
-
-[BSD 3-Clause License](LICENSE)
-
 ## References
 
 1. Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of Multivariate Permutation Tests Which May Replace Hotelling's T2 Test in Prescribed Circumstances. *Multivariate Behav Res*, 29(2):141-163.
@@ -356,3 +353,7 @@ If you publish any work using PERMUTOOLS, please it cite as:
 8. Hentschke H, Stuttgen MC (2011) Computation of measures of effect size for neuroscience data sets. *Eur J Neurosci*, 34:1887–1894.
 9. Cohen J (1969) Statistical power for the behavioural sciences. London: *Academic Press*.
 10. Hedges LV, Olkin I (1985) Statistical methods for meta- analysis. San Diego, CA: *Academic Press*.
+
+## License
+
+[BSD 3-Clause License](LICENSE)
