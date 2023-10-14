@@ -40,7 +40,7 @@ A common measure of effect size is the standardised mean difference, known as Co
 
 # <img src="docs/fig_permutation_distribution.png">
 
-*The above figure shows two permutation distributions based on the t-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected across 20 tests).*
+*The above figure shows two permutation distributions based on the t-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 tests).*
 
 ## Contents
 
@@ -70,7 +70,7 @@ y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
 ```
 
-Let's assume that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or a Welch's *t*-test. To establish this, compare the variances of each corresponding variable in X and Y using two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). For demonstration purposes, the permutation tests are conducted both with and without correction for multiple comparisons.
+Let's assume that we do not know whether the data in X and Y come from distributions with equal variances and thus whether we should use a two-sample Student's *t*-test or a Welch's *t*-test. To establish this, we compare the variances of each corresponding variable in X and Y using two-tailed tests based on the *F*-statistic, first using the standard parametric approach (i.e. *F*-tests), and then using the equivalent non-parametric approach (i.e. permutation tests). For demonstration purposes, the permutation tests are conducted both with and without correction for multiple comparisons.
 
 ```matlab
 % Run MATLAB's two-sample parametric variance test (F-test)
@@ -148,7 +148,7 @@ Now that we have established that the data in X and Y come from distributions wi
 [hc,pc,cic,statsc] = permuttest2(x,y,'correct',1);
 ```
 
-Here, we plot the mean difference along with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
+Here, we plot the mean difference with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
 
 ```matlab
 % Compute the mean difference
@@ -216,7 +216,7 @@ end
 [dc,cic] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',1);
 ```
 
-Here, we plot the resulting effect sizes measures along with their CIs. We see that bias-correcting the effect size and CIs according to sample size slightly reduces the overall measures, resulting in a more conservative estimate.
+Here, we plot the resulting effect sizes measures with their CIs. We see that bias-correcting the effect size and CIs according to sample size slightly reduces the overall measures, resulting in a more conservative estimate.
 
 ```matlab
 % Plot parametric & uncorrected bootstrapped measures
@@ -280,7 +280,7 @@ end
 [rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
 ```
 
-Here, we plot the correlation coefficients along with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
+Here, we plot the correlation coefficients with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
 
 ```matlab
 % Plot parametric & uncorrected permutation CIs
