@@ -8,9 +8,11 @@ PERMUTOOLS offers permutation testing for a range of test statistics including t
 
 - [Installation](#installation)
 - [Documentation](#documentation)
-- [Max Statistic Correction](#max-statistic-correction)
+- [Correction Methods in PERMUTOOLS](#correction-methods-in-permutools)
 - [Contents](#contents)
 - [Examples](#examples)
+- [Citing PERMUTOOLS](#citing-permutools)
+- [References](#references)
 - [License](#license)
 
 ## Installation
