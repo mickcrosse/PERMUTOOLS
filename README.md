@@ -26,7 +26,7 @@ savepath
 
 ## Documentation
 
-For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Crosse_etal_2018.pdf).
+For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Crosse_etal_2023.pdf).
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
