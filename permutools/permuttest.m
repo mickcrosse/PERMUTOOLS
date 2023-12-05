@@ -68,8 +68,7 @@ function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %                                   each other using two-tailed tests and
 %                                   return a matrix of results
 %       'nperm'     An integer scalar specifying the number of permutations
-%                   (default=10,000, or all possible permutations for less
-%                   than 14 observations).
+%                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
 %                   to control FWER using max correction (default=true).
 %       'rows'      A string specifying the rows to use in the case of any
@@ -201,7 +200,7 @@ end
 pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
 arg.nperm = 2*arg.nperm;
 if arg.verbose
-    fprintf('Adding negative of all values to sampling distribution.\n')
+    fprintf('Adding negative of all values to permutation distribution.\n')
     fprintf('Number of permutations used: %d\n',arg.nperm)
 end
 
