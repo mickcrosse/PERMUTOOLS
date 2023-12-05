@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a statistical software package for multivariate permutation testing in MATLAB. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate is controlled using max statistic correction (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
+PERMUTOOLS is a statistical software package for conducting multivariate permutation tests and effect size measurements in MATLAB. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate is controlled using max statistic correction (Blair *et al.*, 1994), making it suitable for multivariate or multiple permutation tests.
 
-PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean and median difference).
+PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit), as well as measures of effect size with bootstrapped confidence intervals (Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean and median difference).
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -42,14 +42,15 @@ A common measure of effect size is the standardised mean difference, known as Co
 
 # <img src="docs/fig_permutation_distribution.png">
 
-*The above figure shows two permutation distributions based on the t-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 tests).*
+The above figure shows two permutation distributions based on the *t*-statistic – one with max statistic correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 tests).
 
 ## Contents
 
-* `permuttest()` - one-sample or paired-sample permutation tests with *tmax* correction
-* `permuttest2()` - unpaired two-sample permutation tests with *tmax* correction
-* `permuvartest2()` - permutation-based *F*-tests with max statistic correction
-* `permucorr()` - permutation-based correlation measures with max statistic correction
+* `permuttest()` - one-sample or paired-sample permutation test (*t*-statistic) with max correction
+* `permuttest2()` - unpaired two-sample permutation test (*t*-statistic) with max correction
+* `permuvartest2()` - unpaired two-sample permutation test (*F*-statistic) with max correction
+* `permuztest()` - one-sample permutation test (*Z*-statistic) with max correction
+* `permucorr()` - permutation-based correlation measures with max correction
 * `booteffectsize()` - bias-corrected effect size measures with bootstrapped confidence intervals
 
 ## Examples
@@ -200,7 +201,7 @@ xlabel('variable')
 
 ### Effect size measures for multivariate data
 
-To measure the effect size of the above results, we can compute a standardised measure of mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped  effect sizes and CIs are computed with and without bias-correction.
+To measure the effect sizes of the above comparisons, we can compute a measure of the standardised mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped effect sizes and CIs are computed with and without bias-correction.
 
 ```matlab
 % Run MATLAB's parametric effect size measure
@@ -242,7 +243,7 @@ legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
 # <img src="docs/fig_effect_size.png">
 
-From the output of the above analyses, we can report the test statistics and effect size measures (adjusted for multiple tests and sample size) for any of the pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correction for multiple tests (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
+We can report the test statistics and effect size measures (adjusted for multiple comparisons and sample size) for any of the above pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correcting for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
 
 ### Correlation measures for multivariate data
 
@@ -262,7 +263,7 @@ y(:,6:10) = y(:,6:10)-x(:,6:10);
 xaxis = 1:20; alpha = 0.05;
 ```
 
-We measure the correlation (Pearson's *r*) between each corresponding variable in X and Y using two-tailed tests, first using the standard parametric approach (i.e. Student's *t*-distribution), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without max-correction.
+We measure the correlation (Pearson's *r*) between each corresponding variable in X and Y using two-tailed tests, first using the standard parametric approach (i.e. Student's *t*-distribution), and then using the equivalent non-parametric approach (i.e. permutation tests), with and without max correction.
 
 ```matlab
 % Run MATLAB's parametric correlation measure
@@ -282,7 +283,7 @@ end
 [rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
 ```
 
-Here, we plot the correlation coefficients with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the max statistic criterion.
+Here, we plot the correlation coefficients with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the maximal statistic criterion.
 
 ```matlab
 % Plot parametric & uncorrected permutation CIs
@@ -326,7 +327,7 @@ xlabel('variable')
 
 # <img src="docs/fig_correlation.png">
 
-From the output of the above analysis, we can report the correlation coefficient and test statistics (adjusted for multiple tests) for any of the pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correction for multiple tests (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
+We can report the correlation coefficient and test statistics (adjusted for multiple comparisons) for any of the above pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correcting for multiple comparisons (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
 
 ## Citation
 
@@ -338,10 +339,10 @@ Crosse MJ, Foxe JJ, Molholm S (*In Prep*) PERMUTOOLS: A MATLAB Package for Multi
 @article{crosse2018permutools,
   title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
   author={Crosse, Michael J and Foxe, John J and Molholm, Sophie},
-  journal={In Prep},
+  journal={},
   volume={},
   pages={},
-  year={2018},
+  year={In Prep},
   publisher={}
 }
 ```
