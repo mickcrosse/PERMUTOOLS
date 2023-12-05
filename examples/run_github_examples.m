@@ -8,9 +8,33 @@ y = randn(30,20);
 % Make the first 10 variables of Y have a mean of -1
 y(:,1:10) = y(:,1:10)-1;
 
+%% Permutation Distribution Example
+
+% Run PERMUTOOLS' permutation correlation measure (uncorrected)
+[hu,pu,ciu,statsu,pdistu] = permuttest2(x,y,'correct',0,'seed',7);
+
+% Run PERMUTOOLS' permutation correlation measure (max-corrected)
+[hc,pc,cic,statsc,pdistc] = permuttest2(x,y,'correct',1,'seed',7);
+
+% Get test statistic for third variable
+t = statsc.tstat(3);
+
+% Plot parametric & uncorrected permutation CIs
+figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
+set(gcf,'color','w'), hold on
+histogram(pdistu(:,3),100,'FaceAlpha',0.5)
+histogram(pdistc,100,'FaceAlpha',0.5)
+plot([t,t],[0,500],'--k','LineWidth',2)
+xlim([-5,5]), ylim([0,500]), box on, grid on
+title('Permutation Distribution'), xlabel('{\itt}-statistic'), ylabel('frequency')
+legend(['uncorrected ({\itp} = ',num2str(round(pu(3),3)),')'],...
+    ['max-corrected ({\itp} = ',num2str(round(pc(3),2)),')'],...
+    ['test statistic ({\itt} = ',num2str(round(t,2)),')'],...
+    'Location','northwest')
+
 %% F-test Example
 
-% Run MATLAB's two-sample variance test (F-test)
+% Run MATLAB's two-sample parametric variance test (F-test)
 [h,p,ci,stats] = vartest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation variance test (uncorrected)
@@ -63,7 +87,7 @@ xlabel('variable')
 
 %% t-test Example
 
-% Run MATLAB's two-sample t-test
+% Run MATLAB's two-sample parametric t-test
 [h,p,ci,stats] = ttest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation test (uncorrected)
@@ -116,7 +140,7 @@ xlabel('variable')
 
 %% Effect Size Example
 
-% Run MATLAB's effect size measure
+% Run MATLAB's parametric effect size measure
 d = zeros(1,20); ci = zeros(2,20);
 for j = 1:20
     stats1 = meanEffectSize(x(:,j),y(:,j),'effect','cohen','paired',0);
@@ -124,10 +148,10 @@ for j = 1:20
     ci(:,j) = stats1.ConfidenceIntervals';
 end
 
-% Run PERMUTOOLS' effect size measure (uncorrected)
+% Run PERMUTOOLS' bootstrapped effect size measure (uncorrected)
 [du,ciu] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',0);
 
-% Run PERMUTOOLS' effect size measure (bias-corrected)
+% Run PERMUTOOLS' bootstrapped effect size measure (bias-corrected)
 [dc,cic] = booteffectsize(x,y,'effect','cohen','paired',0,'correct',1);
 
 % Plot parametric & uncorrected bootstrapped measures
@@ -160,7 +184,7 @@ y(:,1:5) = y(:,1:5)+x(:,1:5)/2;
 y(:,6:10) = y(:,6:10)-x(:,6:10);
 xaxis = 1:20; alpha = 0.05;
 
-% Run MATLAB's correlation measure
+% Run MATLAB's parametric correlation measure
 [r,p] = corr(x,y);
 r = diag(r);
 p = diag(p);
@@ -170,10 +194,10 @@ for j = 1:20
     ci(:,j) = [clwr(2);cupr(2)];
 end
 
-% Run PERMUTOOLS' correlation measure (uncorrected)
+% Run PERMUTOOLS' permutation correlation measure (uncorrected)
 [ru,pu,ciu,statsu] = permucorr(x,y,'correct',0);
 
-% Run PERMUTOOLS' correlation measure (max-corrected)
+% Run PERMUTOOLS' permutation correlation measure (max-corrected)
 [rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
 
 % Plot parametric & uncorrected permutation CIs
