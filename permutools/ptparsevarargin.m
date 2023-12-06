@@ -1,14 +1,15 @@
 function arg = ptparsevarargin(varargin)
 %PTPARSEVARARGIN  Parse input arguments of PERMUTOOLS functions.
 %   [PARAM1,PARAM2,...] = PTPARSEVARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
-%   parses the input arguments of the main PERMUTOOLS function.
+%   parses the input arguments of the main PERMUTOOLS functions.
 %
 %   See also PTVALIDATEPARAMIN.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 % Create parser object
 p = inputParser;

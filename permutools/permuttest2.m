@@ -35,7 +35,7 @@ function [h,p,ci,stats,pdist] = permuttest2(x,y,varargin)
 %   following fields:
 %       'tstat'     -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
-%       'sd'    	-- the estimated population standard deviation of X, or
+%       'sd'        -- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test
 %
 %   [H,P,CI,STATS,PDIST] = PERMUTTEST2(...) returns the permutation
@@ -81,17 +81,18 @@ function [h,p,ci,stats,pdist] = permuttest2(x,y,varargin)
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011a) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis
+%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields II: Simulation
 %           studies. Psychophysiology, 48(12):1726-1737.
 %       [4] Groppe DM (2016) Combating the scientific decline effect with
 %           confidence (intervals). Psychophysiology, 54(1):139-145.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 if nargin<2
     y = [];

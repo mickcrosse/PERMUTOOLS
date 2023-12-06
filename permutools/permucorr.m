@@ -76,22 +76,23 @@ function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Bishara AJ, Hittner JB, (2012) Testing the Significance of a
-%           Correlation With Nonnormal Data: Comparison of Pearson,
-%           Spearman, Transformation, and Resampling Approaches. Psychol
-%           Methods, 17(3):399-417.
-%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
+%       [3] Bishara AJ, Hittner JB, (2012) Testing the Significance of a
+%           Correlation With Nonnormal Data: Comparison of Pearson,
+%           Spearman, Transformation, and Resampling Approaches. Psychol
+%           Methods, 17(3):399-417.
 %       [4] Bishara AJ, Hittner JB, (2017) Confidence intervals for
 %           correlations when data are not normal. Behav Res, 49:294-309.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 if nargin<2 || ischar(varargin{1})
     y = [];

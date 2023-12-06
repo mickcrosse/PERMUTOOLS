@@ -32,7 +32,7 @@ function [h,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %   following fields:
 %       'fstat'     -- the value of the test statistic
 %       'df1'       -- the numerator degrees of freedom of each test
-%       'df2'    	-- the denominator degrees of freedom of each test
+%       'df2'       -- the denominator degrees of freedom of each test
 %
 %   [H,P,CI,STATS,PDIST] = PERMUVARTEST2(...) returns the permutation
 %   distribution of the test statistic.
@@ -77,8 +77,9 @@ function [h,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 if nargin<2
     y = [];

@@ -30,7 +30,7 @@ function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %   [D,CI,STATS] = BOOTEFFECTSIZE(...) returns a structure with the
 %   following fields:
 %       'df'        -- the degrees of freedom of each measure
-%       'sd'    	-- the pooled standard deviation, or of X for a one-
+%       'sd'        -- the pooled standard deviation, or of X for a one-
 %                      sample or Glass' delta measure
 %
 %   [D,CI,STATS,BDIST] = BOOTEFFECTSIZE(...) returns the bootstrap
@@ -101,8 +101,9 @@ function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %       [3] Hedges LV, Olkin I (1985) Statistical methods for meta-
 %           analysis. San Diego, CA: Academic Press.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 if nargin < 2 || isempty(m)
     y = [];

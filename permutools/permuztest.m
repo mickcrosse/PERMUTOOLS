@@ -69,27 +69,19 @@ function [h,p,ci,zval,pdist] = permuztest(x,m,sigma,varargin)
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Gondan M (2010) A permutation test for the race model
-%           inequality. Behav Res Methods, 42(1):23-28.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
-
-if nargin < 2 || isempty(m)
-    m = 0;
-end
-if nargin < 3 || isempty(sigma)
-    sigma = 1;
-end
+%   TCBE, Trinity College Dublin, Ireland.
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 
 % Validate input parameters
-ptvalidateparamin(x,x,arg)
+ptvalidateparamin(x,m,arg)
 
 % Orient data column-wise
 if arg.dim==2 || isrow(x)

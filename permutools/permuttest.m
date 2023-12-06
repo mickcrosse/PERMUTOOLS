@@ -40,7 +40,7 @@ function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %   fields:
 %       'tstat'     -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
-%       'sd'    	-- the estimated population standard deviation of X, or
+%       'sd'        -- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test
 %
 %   [H,P,CI,STATS,PDIST] = PERMUTTEST(...) returns the permutation
@@ -98,8 +98,9 @@ function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018 Mick Crosse <mickcrosse@gmail.com>
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 if nargin < 2 || isempty(m)
     y = [];
