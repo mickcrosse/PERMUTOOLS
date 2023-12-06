@@ -1,4 +1,20 @@
 function run_github_examples
+%RUN_GITHUB_EXAMPLES  Run GitHub examples.
+%   Generates random multivariate data for 2 samples X and Y and runs the
+%   following examples for GitHub README:
+%       1. Plots the permutation distribution and test statistic
+%       2. Tests for differences in sample variances (F-test)
+%       3. Tests for differences in sample means (t-test)
+%       4. Computes the effect size of differences in sample means
+%       5. Measures the correlation between samples
+%
+%   See also PERMUVARTEST2 PERMUTTEST2 BOOTEFFECTSIZE PERMUCORR.
+%
+%   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
+
+%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
 
 % Generate random data
 rng(42);
@@ -8,7 +24,7 @@ y = randn(30,20);
 % Make the first 10 variables of Y have a mean of -1
 y(:,1:10) = y(:,1:10)-1;
 
-%% Permutation Distribution Example
+%% 1. Permutation Distribution Example
 
 % Run PERMUTOOLS' permutation correlation measure (uncorrected)
 [hu,pu,ciu,statsu,pdistu] = permuttest2(x,y,'correct',0,'seed',7);
@@ -32,7 +48,7 @@ legend(['uncorrected ({\itp} = ',num2str(round(pu(3),3)),')'],...
     ['test statistic ({\itt} = ',num2str(round(t,2)),')'],...
     'Location','northwest')
 
-%% F-test Example
+%% 2. F-test Example
 
 % Run MATLAB's two-sample parametric variance test (F-test)
 [h,p,ci,stats] = vartest2(x,y);
@@ -85,7 +101,7 @@ plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 
-%% t-test Example
+%% 3. t-test Example
 
 % Run MATLAB's two-sample parametric t-test
 [h,p,ci,stats] = ttest2(x,y);
@@ -138,7 +154,7 @@ plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 
-%% Effect Size Example
+%% 4. Effect Size Example
 
 % Run MATLAB's parametric effect size measure
 d = zeros(1,20); ci = zeros(2,20);
@@ -172,7 +188,7 @@ xlim([0,21]), ylim([-2,6]), box on, grid on
 title('Bias-corrected'), xlabel('variable')
 legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 
-%% Correlation Example
+%% 5. Correlation Example
 
 % Generate random data
 rng(42);
