@@ -105,8 +105,7 @@ function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 if nargin < 2 || isempty(m)
     y = [];
 elseif isscalar(m)
-    y = [];
-    x = x-m;
+    y = repmat(m,size(x));
 elseif ismatrix(m)
     y = m;
 end

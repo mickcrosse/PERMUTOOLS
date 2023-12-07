@@ -77,11 +77,13 @@ function [h,p,ci,zval,pdist] = permuztest(x,m,sigma,varargin)
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+narginchk(3,Inf);
+
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 
 % Validate input parameters
-ptvalidateparamin(x,m,arg)
+ptvalidateparamin(x,[],arg)
 
 % Orient data column-wise
 if arg.dim==2 || isrow(x)
