@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. By comparing the magnitude of the test statistic of interest with those obtained using permutations of the data, it provides powerful, distribution-free hypothesis testing. Family-wise error rate is controlled using max correction — which is superior to traditonal correction methods for controlling type II errors — making it suitable for multivariate testing.
+PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. By estimating the null distribution empirically via permutations of the observed data, it provides distribution-free, non-parametric hypothesis testing. Multiple comparison correction is implemented using the powerful max correction method, which is less prone to type II errors than conventional methods. Confidence intervals for the various test statistics are derived empirically from the permutation distribution. PERMUTOOLS offers permutation-based hypothesis testing for a range of test statistics, including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit). 
 
-PERMUTOOLS offers permutation testing for a range of test statistics including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit), and can derive confidence intervals for all the above from the permutation distribution. PERMUTOOLS can also be used to compute measures of effect size with bootstrapped confidence intervals, including Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean difference and unstandardised median difference.
+PERMUTOOLS can also compute different measures of effect size. Confidence intervals for the various effect size measures are derived empirically using a bootstrapping procedure that estimates the sampling distribution. Inflation of effect sizes for small samples is controlled using a combination of the pooled weighted standard deviation and applying a bias correction factor. PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean difference and unstandardised median difference.
 
 - [Installation](#installation)
 - [Documentation](#documentation)
@@ -20,9 +20,11 @@ PERMUTOOLS offers permutation testing for a range of test statistics including t
 Download and unzip PERMUTOOLS to a local directory, then in the MATLAB/GNU Octave command window enter:
 
 ```matlab
-addpath 'directory/PERMUTOOLS'
+addpath('directory/PERMUTOOLS')
 savepath
 ```
+
+Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the top-level folder.
 
 ## Documentation
 
@@ -30,28 +32,28 @@ For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Cros
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
-## Correction Methods
+## Correction Framework
 
 ### Max Correction for Multiple Comparisons
 
-Max correction, also referred to as *tmax* or joint correction, is a simple way of controlling family-wise error rate (FWER) when comparing multivariate data using permutation tests (Blair *et al.*, 1993). It works by taking the maximum value over the multiple tests on each permutation of the data to produce a single, more-conservative permutation distribution (see figure below). The more tests there are, the more conservative the permutation distribution naturally becomes. This approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a). PERMUTOOLS automatically applies max correction to multivariate tests, unless specified otherwise.
+Max correction, also referred to as *t*<sub>max</sub> or joint correction, is an effective way of controlling family-wise error rate (FWER) when conducting multivariate permutation tests (Blair *et al.*, 1993, 1994; Westfall and Young, 1993). It works as follows: on each permutation of the data, the test statistics is computed for each variable and the maximum absolute value (or most extreme positive or negative value) is taken. Repeating this procedure thousands of times produces a single, more-conservative permutation distribution, against which the actual test statistic is compared (see figure below). Thus, the more tests there are to take the maximum across, the more conservative the permutation distribution naturally becomes. This highly intuitive approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a,b; Rousselet, 2023). PERMUTOOLS automatically applies max correction to multivariate tests, unless specified otherwise.
 
 ### Bias Correction for Sample Size
 
-A common measure of effect size is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Cohen's *d* has been shown to have an upwards bias of up to about 4% for sample sizes of less than 50. To correct for this, we can apply a bias correction factor to the effect size and confidence intervals, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). It is common to report corrected effect size measures as Hedges' *g*. The same correction can also be applied to effect size measures based on Glass' *Δ*, but not Cliff's *d*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
+A common effect size measure is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Standardised effect sizes have the advantage of being metric-free, meaning that they can be directly compared across different studies (Hentschke & Stuttgen, 2011). However, Cohen's *d* has been shown to have an upwards bias of up to about 4% for sample sizes of less than 50. This bias is somewhat reduced by using the pooled weighted standard deviation of the samples, instead of that of either sample. In addition, a bias correction factor can be applied to the effect size estimate, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). When this correction factor is applied, it is usual to refer to the resulting estimate as Hedges' *g*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
 
 # <img src="docs/fig_permutation_distribution.png">
 
-The above figure shows two permutation distributions based on the *t*-statistic – one with max correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 tests).
+The above figure shows two permutation distributions based on the *t*-statistic – one with max correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 comparisons).
 
 ## Contents
 
-* `permuttest()` - one-sample or paired-sample permutation test (*t*-statistic) with max correction
-* `permuttest2()` - unpaired two-sample permutation test (*t*-statistic) with max correction
-* `permuvartest2()` - unpaired two-sample permutation test (*F*-statistic) with max correction
-* `permuztest()` - one-sample permutation test (*Z*-statistic) with max correction
-* `permucorr()` - permutation-based correlation measures with max correction
-* `booteffectsize()` - bias-corrected effect size measures with bootstrapped confidence intervals
+* `permuttest()`	one-sample or paired-sample permutation test (*t*-statistic) with max correction
+* `permuttest2()`	unpaired two-sample permutation test (*t*-statistic) with max correction
+* `permuvartest2()` 	unpaired two-sample permutation test (*F*-statistic) with max correction
+* `permuztest()`	one-sample permutation test (*Z*-statistic) with max correction
+* `permucorr()`		permutation-based correlation measures with max correction
+* `booteffectsize()`	bias-corrected effect size measures with bootstrapped confidence intervals
 
 ## Examples
 
@@ -86,7 +88,7 @@ Let's assume that we do not know whether the data in X and Y come from distribut
 [hc,pc,cic,statsc] = permuvartest2(x,y,'correct',1);
 ```
 
-To demonstrate the benefit of permutation tests with max correction over traditional parametric tests, we plot the *F*-statistic along with the parametric and permutation CIs for each test. Variables that are found to be significantly different (*p* < 0.05) are indicated by black circles (*F*-tests) and red x's (permutation tests). We see that applying max correction widens the CIs of the test statistic such that none of the spuriously significant results survive.
+To demonstrate the benefit of permutation tests with max correction over traditional parametric tests, we plot the *F*-statistic along with the parametric and permutation CIs for each test. Variables that are found to be significantly different (*p* < 0.05) are indicated by black o's (parametric tests) and red x's (permutation tests). We see that applying max correction widens the CIs of the test statistic such that none of the spuriously significant results survive.
 
 ```matlab
 % Get F-statistic
@@ -201,7 +203,7 @@ xlabel('variable')
 
 ### Effect size measures for multivariate data
 
-To measure the effect sizes of the above comparisons, we can compute a measure of the standardised mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping  procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped effect sizes and CIs are computed with and without bias-correction.
+To measure the effect sizes of the above comparisons, we can compute a measure of the standardised mean difference known as Cohen's *d* that is bias-corrected for sample size (also known as Hedges' *g*). We can also calculate the corresponding bias-corrected CIs, estimated using an efficient bootstrapping procedure. As before, we first compute the exact confidence intervals using the standard parametric approach (Student's *t*-distribution), as well as the equivalent non-parametric approach (bootstrapping). For demonstration purposes, the bootstrapped effect sizes and CIs are computed with and without bias-correction.
 
 ```matlab
 % Run MATLAB's parametric effect size measure
@@ -349,16 +351,18 @@ Crosse MJ, Foxe JJ, Molholm S (*In Prep*) PERMUTOOLS: A MATLAB Package for Multi
 
 ## References
 
-1. Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of Multivariate Permutation Tests Which May Replace Hotelling's T2 Test in Prescribed Circumstances. *Multivariate Behav Res*, 29(2):141-163.
-2. Gondan M (2010) A permutation test for the race model inequality. *Behav Res Methods*, 42(1):23-28.
-3. Groppe DM, Urbach TP, Kutas M (2011a) Mass univariate analysis of event-related brain potentials/fields I: A critical tutorial review. *Psychophysiology*, 48(12):1711-1725.
-4. Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis of event-related brain potentials/fields II: Simulation studies. *Psychophysiology*, 48(12):1726-1737.
-5. Groppe DM (2016) Combating the scientific decline effect with confidence (intervals). *Psychophysiology*, 54(1):139-145.
-6. Bishara AJ, Hittner JB, (2012) Testing the Significance of a Correlation With Nonnormal Data: Comparison of Pearson, Spearman, Transformation, and Resampling Approaches. *Psychol Methods*, 17(3):399-417.
-7. Bishara AJ, Hittner JB, (2017) Confidence intervals for correlations when data are not normal. *Behav Res*, 49:294-309.
-8. Hentschke H, Stuttgen MC (2011) Computation of measures of effect size for neuroscience data sets. *Eur J Neurosci*, 34:1887–1894.
-9. Cohen J (1969) Statistical power for the behavioural sciences. London: *Academic Press*.
-10. Hedges LV, Olkin I (1985) Statistical methods for meta-analysis. San Diego, CA: *Academic Press*.
+1. Blair RC, Karniski W (1993) An alternative method for significance testing of waveform difference potentials. *Psychophysiology*, 30(5):518–524.
+2. Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of Multivariate Permutation Tests Which May Replace Hotelling's T2 Test in Prescribed Circumstances. *Multivariate Behav Res*, 29(2):141–163.
+3. Westfall PH, Young SS (1993) Resampling-based multiple testing: Examples and methods for p-value adjustment. New York, NY: *John Wiley & Sons*.
+4. Gondan M (2010) A permutation test for the race model inequality. *Behav Res Methods*, 42(1):23–28.
+5. Groppe DM, Urbach TP, Kutas M (2011a) Mass univariate analysis of event-related brain potentials/fields I: A critical tutorial review. *Psychophysiology*, 48(12):1711–1725.
+6. Groppe DM, Urbach TP, Kutas M (2011b) Mass univariate analysis of event-related brain potentials/fields II: Simulation studies. *Psychophysiology*, 48(12):1726–1737.
+7. Groppe DM (2016) Combating the scientific decline effect with confidence (intervals). *Psychophysiology*, 54(1):139–145.
+8. Bishara AJ, Hittner JB, (2012) Testing the Significance of a Correlation With Nonnormal Data: Comparison of Pearson, Spearman, Transformation, and Resampling Approaches. *Psychol Methods*, 17(3):399–417.
+8. Bishara AJ, Hittner JB, (2017) Confidence intervals for correlations when data are not normal. *Behav Res*, 49:294–309.
+10. Hentschke H, Stuttgen MC (2011) Computation of measures of effect size for neuroscience data sets. *Eur J Neurosci*, 34:1887–1894.
+11. Cohen J (1969) Statistical power for the behavioural sciences. London: *Academic Press*.
+12. Hedges LV, Olkin I (1985) Statistical methods for meta-analysis. San Diego, CA: *Academic Press*.
 
 ## License
 
