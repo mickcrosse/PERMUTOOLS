@@ -2,9 +2,11 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. By estimating the null distribution empirically via permutations of the observed data, it provides distribution-free, non-parametric hypothesis testing. Multiple comparison correction is implemented using the powerful max correction method, which is less prone to type II errors than conventional methods. Confidence intervals for the various test statistics are derived empirically from the permutation distribution. PERMUTOOLS offers permutation-based hypothesis testing for a range of test statistics, including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit). 
+PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. It uses efficient resampling procedures to generate the null distribution empirically, providing distribution-free, non-parametric hypothesis testing.
 
-PERMUTOOLS can also compute different measures of effect size. Confidence intervals for the various effect size measures are derived empirically using a bootstrapping procedure that estimates the sampling distribution. Inflation of effect sizes for small samples is controlled using a combination of the pooled weighted standard deviation and applying a bias correction factor. PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean difference and unstandardised median difference.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of test statistics, including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
+
+PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean difference and unstandardised median difference. Inflation of effect size measures due to small sample sizes is controlled by applying a bias correction factor. 
 
 - [Installation](#installation)
 - [Documentation](#documentation)
