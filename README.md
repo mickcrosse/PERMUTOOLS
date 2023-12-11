@@ -4,9 +4,9 @@
 
 PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. It uses efficient resampling procedures to generate the null distribution empirically, providing distribution-free, non-parametric hypothesis testing.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of test statistics, including the *t*-statistic (one-sample, paired-sample, two-sample) *F*-statistic (two-sample), *Z*-statistic (one-sample), and correlation coefficient (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of test statistics, including the ***t*-statistic** (one-sample, paired-sample, two-sample) ***F*-statistic** (two-sample), ***Z*-statistic** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
 
-PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including Cohen's *d*, Hedges' *g*, Glass' *Δ*, Cliff's *d*, unstandardised mean difference and unstandardised median difference. Inflation of effect size measures due to small sample sizes is controlled by applying a bias correction factor. 
+PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of effect size measures due to small sample sizes is controlled by applying a bias correction factor. 
 
 - [Installation](#installation)
 - [Documentation](#documentation)
