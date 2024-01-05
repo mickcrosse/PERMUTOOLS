@@ -340,7 +340,7 @@ If you publish any work using PERMUTOOLS, please it cite as:
 Crosse MJ, Foxe JJ, Molholm S (*In Prep*) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.
 
 ```
-@article{crosse2023permutools,
+@article{crosse2024permutools,
   title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
   author={Crosse, Michael J and Foxe, John J and Molholm, Sophie},
   journal={},
