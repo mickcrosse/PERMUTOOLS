@@ -54,10 +54,10 @@ errorMsg = 'It must be a numeric scalar or row vector.';
 validFcn = @(x) assert(isnumeric(x),errorMsg);
 addParameter(p,'m',0,validFcn);
 
-% Test type
-testOptions = {'one','pairwise'};
-validFcn = @(x) any(validatestring(x,testOptions));
-addParameter(p,'test','one',validFcn);
+% Comparison type
+compareOptions = {'one','pairwise'};
+validFcn = @(x) any(validatestring(x,compareOptions));
+addParameter(p,'compare','one',validFcn);
 
 % Variance equivalence
 vartypeOptions = {'equal','unequal'};
@@ -89,7 +89,7 @@ arg = p.Results;
 % Redefine partially matched strings
 arg.tail = validatestring(arg.tail,tailOptions);
 arg.rows = validatestring(arg.rows,rowsOptions);
-arg.test = validatestring(arg.test,testOptions);
+arg.compare = validatestring(arg.compare,compareOptions);
 arg.vartype = validatestring(arg.vartype,vartypeOptions);
 arg.type = validatestring(arg.type,typeOptions);
 arg.effect = validatestring(arg.effect,effectOptions);

@@ -66,9 +66,9 @@ function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %                   to determine the SD and degrees of freedom:
 %                       'equal'   	assume equal variances (default)
 %                       'unequal' 	assume unequal variances
-%       'compare'   A string specifying whether to compute a one-sample
-%                   measure or a pairwise measure when only X is entered:
-%                       'one'       compare each column of X to zero and
+%       'compare'   A string specifying what to compare each variable to
+%                   when only X is entered:
+%                       'zero'      compare each column of X to zero and
 %                                   return a vector of results (default)
 %                       'pairwise'  compare every pair of columns in X to
 %                                   each other and return a matrix of

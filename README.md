@@ -1,4 +1,4 @@
-# <img src="docs/permutools_logo.png">
+# <img src="img/permutools_logo.png">
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -30,7 +30,7 @@ Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home ta
 
 ## Documentation
 
-For documentation and citation, please refer to the [PERMUTOOLS paper](docs/Crosse_etal_2023.pdf).
+For documentation and citation, please refer to the [PERMUTOOLS paper](doc/Crosse_etal_2024.pdf).
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
@@ -44,7 +44,7 @@ Max correction, also referred to as *t*<sub>max</sub> or joint correction, is an
 
 A common effect size measure is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Standardised effect sizes have the advantage of being metric-free, meaning that they can be directly compared across different studies (Hentschke & Stuttgen, 2011). However, Cohen's *d* has been shown to have an upwards bias of up to about 4% for sample sizes of less than 50. This bias is somewhat reduced by using the pooled weighted standard deviation of the samples, instead of that of either sample. In addition, a bias correction factor can be applied to the effect size estimate, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). When this correction factor is applied, it is usual to refer to the resulting estimate as Hedges' *g*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
 
-# <img src="docs/fig_permutation_distribution.png">
+# <img src="img/fig_permutation_distribution.png">
 
 The above figure shows two permutation distributions based on the *t*-statistic – one with max correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 comparisons).
 
@@ -140,7 +140,7 @@ ylim([0,1]), xlim([0,21]), box on, grid on
 xlabel('variable')
 ```
 
-# <img src="docs/fig_ftest.png">
+# <img src="img/fig_ftest.png">
 
 Now that we have established that the data in X and Y come from distributions with equal variances, we can proceed to test whether they have equal means using an estimate of the *t*-statistic that uses their pooled standard deviation. We compare the means of each corresponding variable in X and Y using two-tailed (unpaired) tests, first using the standard parametric approach (i.e. *t*-tests), and then using the equivalent nonparametric approach (i.e. permutation tests), with and without max-correction.
 
@@ -201,7 +201,7 @@ ylim([0,1]), xlim([0,21]), box on, grid on
 xlabel('variable')
 ```
 
-# <img src="docs/fig_ttest.png">
+# <img src="img/fig_ttest.png">
 
 ### Effect size measures for multivariate data
 
@@ -245,9 +245,9 @@ title('Corrected'), xlabel('variable')
 legend('Hedges'' {\itg}','parametric CI','','boostrapped CI')
 ```
 
-# <img src="docs/fig_effect_size.png">
+# <img src="img/fig_effect_size.png">
 
-We can report the test statistics and effect size measures (adjusted for multiple comparisons and sample size) for any of the above pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correcting for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedge's *g* = 1.14, 95CI [0.68, 1.72]).
+We can report the test statistics and effect size measures (adjusted for multiple comparisons and sample size) for any of the above pairwise comparisons between X and Y. For example, the mean of the first variable of X was found to be significantly greater than that of Y, even after correcting for multiple comparisons (*t*(58) = 4.49, *p* = 0.0008, Hedges' *g* = 1.14, 95CI [0.68, 1.72]).
 
 ### Correlation measures for multivariate data
 
@@ -329,7 +329,7 @@ xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 ```
 
-# <img src="docs/fig_correlation.png">
+# <img src="img/fig_correlation.png">
 
 We can report the correlation coefficient and test statistics (adjusted for multiple comparisons) for any of the above pairwise comparisons between X and Y. For example, the correlation between the second variable of X and Y was found to be significant, even after correcting for multiple comparisons (*r*(28) = 0.74, 95CI [0.21, 1.0], *p* = 0.0002).
 
