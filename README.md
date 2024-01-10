@@ -1,5 +1,6 @@
 # <img src="img/permutools_logo.png">
 
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/mickcrosse/PERMUTOOLS/graphs/commit-activity)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. It uses efficient resampling procedures to generate the null distribution empirically, providing distribution-free, nonparametric hypothesis testing.
