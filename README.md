@@ -82,31 +82,31 @@ Let's assume that we do not know whether the data in X and Y come from distribut
 
 ```matlab
 % Run MATLAB's two-sample parametric variance test (F-test)
-[h,p,ci,stats] = vartest2(x,y);
+[~,p,ci] = vartest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation variance test (uncorrected)
-[hu,pu,ciu,statsu] = permuvartest2(x,y,'correct',0);
+[f,pu,ciu] = permuvartest2(x,y,'correct',0);
 
 % Run PERMUTOOLS' two-sample permutation variance test (max-corrected)
-[hc,pc,cic,statsc] = permuvartest2(x,y,'correct',1);
+[~,pc,cic] = permuvartest2(x,y,'correct',1);
 ```
 
 To demonstrate the benefit of permutation tests with max correction over traditional parametric tests, we plot the *F*-statistic along with the parametric and permutation CIs for each test. Variables that are found to be significantly different (*p* < 0.05) are indicated by black o's (parametric tests) and red x's (permutation tests). We see that applying max correction widens the CIs of the test statistic such that none of the spuriously significant results survive.
 
 ```matlab
-% Get F-statistic
-f = statsc.fstat;
+% Set up figure
+figure('Name','Two-sample permutation F-test','NumberTitle','off')
+set(gcf,'color','w')
 xaxis = 1:size(f,2);
+alpha = 0.05;
 
 % Plot parametric & uncorrected permutation CIs
-figure('Name','Unpaired tests based on the F-statistic','NumberTitle','off')
-set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,f,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
-plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),f(logical(hu)),'xr','LineWidth',2)
-ylim([0,6]), xlim([0,21]), box on, grid on
+plot(xaxis(p<=alpha),f(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),f(pu<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,6]), box on, grid on
 title('Uncorrected'), ylabel('{\itF}-value')
 legend('{\itF}-statistic','parametric CI','','permutation CI','Location','northeast')
 
@@ -114,30 +114,26 @@ legend('{\itF}-statistic','parametric CI','','permutation CI','Location','northe
 subplot(2,2,2), hold on
 plot(xaxis,f,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
-plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),f(logical(hc)),'xr','LineWidth',2)
-ylim([0,6]), xlim([0,21]), box on, grid on
-title('Corrected')
-```
+plot(xaxis(p<=alpha),f(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),f(pc<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,6]), box on, grid on
+title('Max-corrected')
 
-To demonstrate the effect of max correction on the resulting *p*-values, we plot them for both the parametric and permutation tests, with significant results indicated as before.
-
-```matlab
 % Plot parametric & uncorrected permutation p-values
 subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21]), box on, grid on
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),pu(pu<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable'), ylabel('probability')
 legend('parametric {\itp}','permutation {\itp}','Location','northeast')
 
 % Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),pc(logical(hu)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21]), box on, grid on
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),pc(pc<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 ```
 
@@ -147,58 +143,58 @@ Now that we have established that the data in X and Y come from distributions wi
 
 ```matlab
 % Run MATLAB's two-sample parametric t-test
-[h,p,ci,stats] = ttest2(x,y);
+[~,p,ci] = ttest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation test (uncorrected)
-[hu,pu,ciu,statsu] = permuttest2(x,y,'correct',0);
+[~,pu,ciu,stats] = permuttest2(x,y,'correct',0);
 
 % Run PERMUTOOLS' two-sample permutation test (max-corrected)
-[hc,pc,cic,statsc] = permuttest2(x,y,'correct',1);
+[~,pc,cic] = permuttest2(x,y,'correct',1);
 ```
 
 Here, we plot the mean difference with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the maximal statistic criterion.
 
 ```matlab
-% Compute the mean difference
-md = mean(x)-mean(y);
-xaxis = 1:size(md,2);
+% Set up figure
+figure('Name','Two-sample permutation t-test','NumberTitle','off')
+set(gcf,'color','w')
+xaxis = 1:size(f,2);
+alpha = 0.05;
 
 % Plot parametric & uncorrected permutation CIs
-figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
-set(gcf,'color','w')
 subplot(2,2,1), hold on
-plot(xaxis,md,'LineWidth',3)
+plot(xaxis,stats.mu,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
-plot(xaxis(logical(h)),md(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),md(logical(hu)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),stats.mu(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
 title('Uncorrected'), ylabel('X−Y')
 legend('mean difference','parametric CI','','permutation CI','Location','southwest')
 
 % Plot parametric & corrected permutation CIs
 subplot(2,2,2), hold on
-plot(xaxis,md,'LineWidth',3)
+plot(xaxis,stats.mu,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
-plot(xaxis(logical(h)),md(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),md(logical(hc)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),stats.mu(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
-title('Corrected')
+title('Max-corrected')
 
 % Plot parametric & uncorrected permutation p-values
 subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21]), box on, grid on
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),pu(pu<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable'), ylabel('probability')
 legend('parametric {\itp}','permutation {\itp}','Location','southwest')
 
 % Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
-ylim([0,1]), xlim([0,21]), box on, grid on
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),pc(pc<=alpha),'xr','LineWidth',2)
+xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 ```
 
@@ -282,10 +278,10 @@ for j = 1:20
 end
 
 % Run PERMUTOOLS' permutation correlation measure (uncorrected)
-[ru,pu,ciu,statsu] = permucorr(x,y,'correct',0);
+[ru,pu,ciu] = permucorr(x,y,'correct',0);
 
 % Run PERMUTOOLS' permutation correlation measure (max-corrected)
-[rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
+[rc,pc,cic] = permucorr(x,y,'correct',1);
 ```
 
 Here, we plot the correlation coefficients with the parametric and permutation CIs for each test (top panels), as well as the parametric and permutation *p*-values (bottom panels). Once again, we see that spuriously significant results in the uncorrected tests did not survive the maximal statistic criterion.
