@@ -7,7 +7,7 @@ function arg = ptparsevarargin(varargin)
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
