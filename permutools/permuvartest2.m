@@ -1,40 +1,33 @@
-function [h,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
+function [f,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %PERMUVARTEST2  Unpaired two-sample permutation-based F-test.
-%   H = PERMUVARTEST2(X,Y) returns the results of a two-sample permutation
-%   test between independent samples X and Y based on the F-statistic. H=0
-%   indicates that the null hypothesis (that the data in X and Y come from
-%   distributions with equal variances) cannot be rejected at the 5%
-%   significance level, wheras H=1 indicates that the null hypothesis can
-%   be rejected. As the null distribution is generated empirically by
-%   permuting the data, no assumption is made about the shape of the
-%   distributions that the data come from. X and Y can have different
-%   lengths.
-%
-%   If X and Y are matrices, separate permutation tests are performed
-%   between each corresponding pair of columns in X and Y, and a vector of
-%   results is returned. Family-wise error rate (FWER) is controlled for
-%   multiple tests using the max statistic correction method. This method
-%   provides strong control of FWER, even for small sample sizes, and is
-%   much more powerful than traditional correction methods.
-%
-%   If Y is empty, two-tailed permutation tests between every pair of
-%   columns in X are performed, and a matrix of results is returned.
+%   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
+%   the F-statistic of the null hypothesis that the data in X and Y come
+%   from distributions with equal variances, and returns the test
+%   statistic. X and Y can have different lengths. If X and Y are matrices,
+%   separate permutation tests are performed between each corresponding
+%   pair of columns in X and Y, and a vector of results is returned. If Y
+%   is empty, two-tailed permutation tests between every pair of columns in
+%   X are performed, and a matrix of results is returned.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %
-%   [H,P] = PERMUVARTEST2(...) returns the probability (i.e. p-value) of
-%   observing the given result by chance if the null hypothesis is true.
+%   [F,P] = PERMUVARTEST2(...) returns the probability (i.e. p-value) of
+%   observing the given result by chance if the null hypothesis is true. As
+%   the null distribution is generated empirically by permuting the data,
+%   no assumption is made about the shape of the distributions that the
+%   data come from. P-values are automatically adjusted for multiple
+%   comparisons using the max correction method.
 %
-%   [H,P,CI] = PERMUVARTEST2(...) returns a 100*(1-ALPHA)% confidence
-%   interval for the true ratio of sample variances.
+%   [F,P,CI] = PERMUVARTEST2(...) returns a 100*(1-ALPHA)% confidence
+%   interval for the true ratio of sample variances. CIs are also adjusted
+%   for multiple comparisons using the max correction method.
 %
-%   [H,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
+%   [F,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
 %   following fields:
-%       'fstat'     -- the value of the test statistic
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'       -- the denominator degrees of freedom of each test
 %
-%   [H,P,CI,STATS,PDIST] = PERMUVARTEST2(...) returns the permutation
+%   [F,P,CI,STATS,PDIST] = PERMUVARTEST2(...) returns the permutation
 %   distribution of the test statistic.
 %
 %   [...] = PERMUVARTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -77,7 +70,7 @@ function [h,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -138,73 +131,73 @@ varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
 vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
 
 % Compute test statistic
-fstat = varx./vary;
+f = varx./vary;
 
-% Concatenate samples
-x = [x;y];
+if nargout > 1
 
-% Generate random permutations
-rng(arg.seed);
-maxnobs = size(x,1);
-[~,idx] = sort(rand(maxnobs,arg.nperm));
-i1 = idx(1:maxnobsx,:);
-i2 = idx(maxnobsx+1:maxnobs,:);
+    % Concatenate samples
+    x = [x;y];
 
-% Estimate permutation distribution
-pdist = zeros(arg.nperm,nvar);
-for i = 1:arg.nperm
-    x1 = x(i1(:,i),:);
-    x2 = x(i2(:,i),:);
-    var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
-    var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
-    pdist(i,:) = var1./var2;
+    % Generate random permutations
+    rng(arg.seed);
+    maxnobs = size(x,1);
+    [~,idx] = sort(rand(maxnobs,arg.nperm));
+    i1 = idx(1:maxnobsx,:);
+    i2 = idx(maxnobsx+1:maxnobs,:);
+
+    % Estimate permutation distribution
+    pdist = zeros(arg.nperm,nvar);
+    for i = 1:arg.nperm
+        x1 = x(i1(:,i),:);
+        x2 = x(i2(:,i),:);
+        var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
+        var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
+        pdist(i,:) = var1./var2;
+    end
+
+    % Apply max correction if specified
+    if arg.correct
+        [~,imax] = max(pdist,[],2);
+        [~,imin] = min(pdist,[],2);
+        csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
+        pdist = pdist';
+        pdmax = pdist(imax+csvar);
+        pdmin = pdist(imin+csvar);
+        k = 1;
+    else
+        pdmax = pdist;
+        pdmin = pdist;
+        k = 2;
+    end
+
+    % Compute p-value and CIs
+    switch arg.tail
+        case 'both'
+            p = k*(min(sum(f<=pdmax),sum(f>=pdmin))+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = [prctile(pdmin,100*arg.alpha/2);...
+                    prctile(pdmax,100*(1-arg.alpha/2))];
+                ci = f./crit;
+            end
+        case 'right'
+            p = (sum(f<=pdmax)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pdmax,100*(1-arg.alpha));
+                ci = [f./crit;Inf(1,nvar)];
+            end
+        case 'left'
+            p = (sum(f>=pdmin)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pdmin,100*arg.alpha);
+                ci = [zeros(1,nvar);f./crit];
+            end
+    end
+
 end
-
-% Apply max correction if specified
-if arg.correct
-    [~,imax] = max(pdist,[],2);
-    [~,imin] = min(pdist,[],2);
-    csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-    pdist = pdist';
-    pdmax = pdist(imax+csvar);
-    pdmin = pdist(imin+csvar);
-    k = 1;
-else
-    pdmax = pdist;
-    pdmin = pdist;
-    k = 2;
-end
-
-% Compute p-value and CIs
-switch arg.tail
-    case 'both'
-        p = k*(min(sum(fstat<=pdmax),sum(fstat>=pdmin))+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = [prctile(pdmin,100*arg.alpha/2);...
-                prctile(pdmax,100*(1-arg.alpha/2))];
-            ci = fstat./crit;
-        end
-    case 'right'
-        p = (sum(fstat<=pdmax)+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = prctile(pdmax,100*(1-arg.alpha));
-            ci = [fstat./crit;Inf(1,nvar)];
-        end
-    case 'left'
-        p = (sum(fstat>=pdmin)+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = prctile(pdmin,100*arg.alpha);
-            ci = [zeros(1,nvar);fstat./crit];
-        end
-end
-
-% Determine if p-value exceeds alpha level
-h = cast(p<=arg.alpha,'like',p);
-h(isnan(p)) = NaN;
 
 % Arrange results in a matrix if specified
 if arg.mat
-    h = ptvec2mat(h);
+    f = ptvec2mat(f);
     if nargout > 1
         p = ptvec2mat(p);
     end
@@ -215,7 +208,6 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        fstat = ptvec2mat(fstat);
         df1 = ptvec2mat(df1);
         df2 = ptvec2mat(df2);
     end
@@ -223,5 +215,6 @@ end
 
 % Store statistics in a structure
 if nargout > 3
-    stats = struct('fstat',fstat,'df1',df1,'df2',df2);
+    stats.df1 = df1;
+    stats.df2 = df2;
 end

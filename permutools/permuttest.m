@@ -1,49 +1,46 @@
-function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
+function [t,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %PERMUTTEST  One-sample and paired-sample permutation-based t-test.
-%   H = PERMUTTEST(X) returns the results of a one-sample permutation test
-%   based on the t-statistic. H=0 indicates that the null hypothesis (that
-%   the data in X come from a distribution with mean zero) cannot be
-%   rejected at the 5% significance level, wheras H=1 indicates that the
-%   null hypothesis can be rejected. As the null distribution is generated
-%   empirically by permuting the data, no assumption is made about the
-%   shape of the distribution that the data come from.
-%
-%   If X is a matrix, separate permutation tests are performed along each
-%   column of X, and a vector of results is returned. Family-wise error
-%   rate (FWER) is controlled for multiple tests using the max statistic
-%   correction method. This method provides strong control of FWER, even
-%   for small sample sizes, and is much more powerful than traditional
-%   correction methods. If the 'compare' parameter is set to 'pairwise',
-%   two-tailed permutation tests between every pair of columns in X are
-%   performed, and a matrix of results is returned.
+%   T = PERMUTTEST(X) performs a one-sample permutation test based on the
+%   t-statistic of the hypothesis that the data in X come from a
+%   distribution with mean zero, and returns the test statistic. If X is a
+%   matrix, separate permutation tests are performed along each column of
+%   X, and a vector of results is returned. If the 'compare' parameter is
+%   set to 'pairwise', two-tailed permutation tests between every pair of
+%   columns in X are performed, and a matrix of results is returned.
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
-%   H = PERMUTTEST(X,M) returns the results of a one-sample permutation
+%   T = PERMUTTEST(X,M) returns the results of a one-sample permutation
 %   test of the hypothesis that the data in X come from a distribution with
 %   mean M. M must be a scalar.
 %
-%   H = PERMUTTEST(X,Y) returns the results of a paired-sample permutation
+%   T = PERMUTTEST(X,Y) returns the results of a paired-sample permutation
 %   test between dependent samples X and Y of the hypothesis that the data
 %   in X and Y come from distributions with equal means. X and Y must have
 %   the same length. If X and Y are matrices, separate permutation tests
 %   are performed between each corresponding pair of columns in X and Y,
 %   and a vector of results is returned.
 %
-%   [H,P] = PERMUTTEST(...) returns the probability (i.e. p-value) of
-%   observing the given result by chance if the null hypothesis is true.
+%   [T,P] = PERMUTTEST(...) returns the probability (i.e. p-value) of
+%   observing the given result by chance if the null hypothesis is true. As
+%   the null distribution is generated empirically by permuting the data,
+%   no assumption is made about the shape of the distribution that the data
+%   come from. P-values are automatically adjusted for multiple comparisons
+%   using the max correction method.
 %
-%   [H,P,CI] = PERMUTTEST(...) returns a 100*(1-ALPHA)% confidence interval
-%   for the true mean of X, or of X-Y for a paired test.
+%   [T,P,CI] = PERMUTTEST(...) returns a 100*(1-ALPHA)% confidence interval
+%   (CI) for the true mean of X, or of X-Y for a paired test. CIs are also
+%   adjusted for multiple comparisons using the max correction method.
 %
-%   [H,P,CI,STATS] = PERMUTTEST(...) returns a structure with the following
+%   [T,P,CI,STATS] = PERMUTTEST(...) returns a structure with the following
 %   fields:
-%       'tstat'     -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
 %       'sd'        -- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test
+%       'mu'        -- the estimated population mean of X, or of X-Y for a
+%                      paired test
 %
-%   [H,P,CI,STATS,PDIST] = PERMUTTEST(...) returns the permutation
+%   [T,P,CI,STATS,PDIST] = PERMUTTEST(...) returns the permutation
 %   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -98,7 +95,7 @@ function [h,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -176,63 +173,63 @@ mu = sum(x,nanflag)./nobs;
 
 % Compute test statistic
 se = sd./sqrt(nobs);
-tstat = mu./se;
+t = mu./se;
 
-% Generate random permutations
-rng(arg.seed);
-signx = sign(rand(maxnobs,arg.nperm)-0.5);
+if nargout > 1
 
-% Estimate permutation distribution
-sqrtn = sqrt(nobs.*df);
-pdist = zeros(arg.nperm,nvar);
-for i = 1:arg.nperm
-    xp = x.*repmat(signx(:,i),1,nvar);
-    smx = sum(xp,nanflag);
-    pdist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
+    % Generate random permutations
+    rng(arg.seed);
+    signx = sign(rand(maxnobs,arg.nperm)-0.5);
+
+    % Estimate permutation distribution
+    sqrtn = sqrt(nobs.*df);
+    pdist = zeros(arg.nperm,nvar);
+    for i = 1:arg.nperm
+        xp = x.*repmat(signx(:,i),1,nvar);
+        smx = sum(xp,nanflag);
+        pdist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
+    end
+
+    % Apply max correction if specified
+    if arg.correct
+        pdist = max(abs(pdist),[],2);
+    end
+
+    % Add negative values
+    pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
+    arg.nperm = 2*arg.nperm;
+    if arg.verbose
+        fprintf('Adding negative of values to permutation distribution.\n')
+        fprintf('Number of permutations used: %d\n',arg.nperm)
+    end
+
+    % Compute p-value and CIs
+    switch arg.tail
+        case 'both'
+            p = 2*(sum(abs(t)<=pdist)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pdist,100*(1-arg.alpha/2)).*se;
+                ci = [mu-crit;mu+crit];
+            end
+        case 'right'
+            p = (sum(t<=pdist)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                ci = [mu-crit;Inf(1,nvar)];
+            end
+        case 'left'
+            p = (sum(t>=pdist)+1)/(arg.nperm+1);
+            if nargout > 2
+                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                ci = [-Inf(1,nvar);mu+crit];
+            end
+    end
+
 end
-
-% Apply max correction if specified
-if arg.correct
-    pdist = max(abs(pdist),[],2);
-end
-
-% Add negative values
-pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
-arg.nperm = 2*arg.nperm;
-if arg.verbose
-    fprintf('Adding negative of all values to permutation distribution.\n')
-    fprintf('Number of permutations used: %d\n',arg.nperm)
-end
-
-% Compute p-value and CIs
-switch arg.tail
-    case 'both'
-        p = 2*(sum(abs(tstat)<=pdist)+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = prctile(pdist,100*(1-arg.alpha/2)).*se;
-            ci = [mu-crit;mu+crit];
-        end
-    case 'right'
-        p = (sum(tstat<=pdist)+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = prctile(pdist,100*(1-arg.alpha)).*se;
-            ci = [mu-crit;Inf(1,nvar)];
-        end
-    case 'left'
-        p = (sum(tstat>=pdist)+1)/(arg.nperm+1);
-        if nargout > 2
-            crit = prctile(pdist,100*(1-arg.alpha)).*se;
-            ci = [-Inf(1,nvar);mu+crit];
-        end
-end
-
-% Determine if p-value exceeds alpha level
-h = cast(p<=arg.alpha,'like',p);
-h(isnan(p)) = NaN;
 
 % Arrange results in a matrix if specified
 if arg.mat
-    h = ptvec2mat(h);
+    t = ptvec2mat(t);
     if nargout > 1
         p = ptvec2mat(p);
     end
@@ -243,13 +240,15 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        tstat = ptvec2mat(tstat);
         df = ptvec2mat(df);
         sd = ptvec2mat(sd);
+        mu = ptvec2mat(mu);
     end
 end
 
 % Store statistics in a structure
 if nargout > 3
-    stats = struct('tstat',tstat,'df',df,'sd',sd);
+    stats.df = df;
+    stats.sd = sd;
+    stats.mu = mu;
 end

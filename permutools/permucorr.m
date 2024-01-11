@@ -16,17 +16,13 @@ function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %   observing the given result by chance if the null hypothesis is true.
 %   As the null distribution is generated empirically by permuting the
 %   data, no assumption is made about the shape of the distribution that
-%   the data come from. For multivariate data, separate permutation tests
-%   are performed between each pair of columns, and a vector of results is
-%   returned. When only one sample is entered in X, two-tailed permutation
-%   tests are automatically used. Family-wise error rate (FWER) is
-%   controlled for multiple tests using the max statistic correction
-%   method. This method provides strong control of FWER, even for small
-%   sample sizes, and is much more powerful than traditional correction
-%   methods.
+%   the data come from. When only one sample is entered in X, two-tailed
+%   permutation tests are automatically used. P-values are automatically
+%   adjusted for multiple comparisons using the max correction method.
 %
 %   [R,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence interval
-%   for each coefficient.
+%   (CI) for each coefficient. CIs are also adjusted for multiple
+%   comparisons using the max correction method.
 %
 %   [R,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
 %   fields:
@@ -90,7 +86,7 @@ function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %       [4] Bishara AJ, Hittner JB, (2017) Confidence intervals for
 %           correlations when data are not normal. Behav Res, 49:294-309.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -241,5 +237,5 @@ end
 
 % Store statistics in a structure
 if nargout > 3
-    stats = struct('df',df);
+    stats.df = df;
 end
