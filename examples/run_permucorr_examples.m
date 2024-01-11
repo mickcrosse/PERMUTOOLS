@@ -20,7 +20,7 @@ function run_permucorr_examples
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -106,8 +106,6 @@ for n = 1:numel(type)
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',0);
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-        plot(xaxis(p1<=alpha),p1(p1<=alpha),'ok','LineWidth',2)
-        plot(xaxis(p2<=alpha),p2(p2<=alpha),'xr','LineWidth',2)
         xlim([0,21]), ylim([0,1]), box on, grid on
         if i == 1
             title('Uncorrected')
@@ -121,8 +119,6 @@ for n = 1:numel(type)
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',1);
         subplot(3,2,i+i), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-        plot(xaxis(p1<=alpha),p1(p1<=alpha),'ok','LineWidth',2)
-        plot(xaxis(p2<=alpha),p2(p2<=alpha),'xr','LineWidth',2)
         xlim([0,21]), ylim([0,1]), box on, grid on
         if i == 1
             title('Max-corrected')

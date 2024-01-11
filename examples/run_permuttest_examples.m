@@ -13,7 +13,7 @@ function run_permuttest_examples
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -22,8 +22,7 @@ rng(42);
 x = randn(30,20);
 y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
-md = mean(x-y);
-xaxis = 1:20;
+xaxis = 1:20; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 
@@ -31,13 +30,13 @@ label = {'two','right','left'};
 figure('Name','Paired Test: mean difference & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
-    [h1,~,ci1] = ttest(x,y,'tail',tail{i});
-    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+    [~,p1,ci1] = ttest(x,y,'tail',tail{i});
+    [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
-    plot(xaxis,md,'LineWidth',3)
+    plot(xaxis,stats2.mu,'LineWidth',3)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(logical(h1)),md(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),md(logical(h2)),'xr','LineWidth',2)
+    plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
+    plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
     xlim([0,21]), ylim([-3,3]), box on, grid on
     if i == 1
         title('Uncorrected')
@@ -48,12 +47,12 @@ for i = 1:numel(tail)
     if i == 2
         legend('mean difference','parametric CI','','permutation CI')
     end
-    [h2,~,ci2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+    [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
-    plot(xaxis,md,'LineWidth',3)
+    plot(xaxis,stats2.mu,'LineWidth',3)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(logical(h1)),md(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),md(logical(h2)),'xr','LineWidth',2)
+    plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
+    plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
     xlim([0,21]), ylim([-3,3]), box on, grid on
     if i == 1
         title('Max-corrected')
@@ -66,12 +65,10 @@ end
 figure('Name','Paired Test: p-values','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
-    [h1,p1] = ttest(x,y,'tail',tail{i});
-    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+    [~,p1] = ttest(x,y,'tail',tail{i});
+    [~,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    plot(xaxis(logical(h1)),p1(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),p2(logical(h2)),'xr','LineWidth',2)
     xlim([0,21]), ylim([0,1]), box on, grid on
     if i == 1
         title('Uncorrected')
@@ -82,11 +79,9 @@ for i = 1:numel(tail)
     if i == 2
         legend('parametric {\itp}','permutation {\itp}')
     end
-    [h2,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+    [~,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    plot(xaxis(logical(h1)),p1(logical(h1)),'ok','LineWidth',2)
-    plot(xaxis(logical(h2)),p2(logical(h2)),'xr','LineWidth',2)
     xlim([0,21]), ylim([0,1]), box on, grid on
     if i == 1
         title('Max-corrected')

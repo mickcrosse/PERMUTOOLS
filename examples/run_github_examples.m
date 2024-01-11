@@ -12,7 +12,7 @@ function run_github_examples
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -27,13 +27,13 @@ y(:,1:10) = y(:,1:10)-1;
 %% 1. Permutation Distribution Example
 
 % Run PERMUTOOLS' permutation correlation measure (uncorrected)
-[hu,pu,ciu,statsu,pdistu] = permuttest2(x,y,'correct',0,'seed',7);
+[~,pu,~,~,pdistu] = permuttest2(x,y,'correct',0,'seed',7);
 
 % Run PERMUTOOLS' permutation correlation measure (max-corrected)
-[hc,pc,cic,statsc,pdistc] = permuttest2(x,y,'correct',1,'seed',7);
+[tc,pc,~,~,pdistc] = permuttest2(x,y,'correct',1,'seed',7);
 
 % Get test statistic for third variable
-t = statsc.tstat(3);
+t = tc(3);
 
 % Plot parametric & uncorrected permutation CIs
 figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
@@ -51,26 +51,26 @@ legend(['uncorrected ({\itp} = ',num2str(round(pu(3),3)),')'],...
 %% 2. F-test Example
 
 % Run MATLAB's two-sample parametric variance test (F-test)
-[h,p,ci,stats] = vartest2(x,y);
+[~,p,ci] = vartest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation variance test (uncorrected)
-[hu,pu,ciu,statsu] = permuvartest2(x,y,'correct',0);
+[f,pu,ciu] = permuvartest2(x,y,'correct',0);
 
 % Run PERMUTOOLS' two-sample permutation variance test (max-corrected)
-[hc,pc,cic,statsc] = permuvartest2(x,y,'correct',1);
+[~,pc,cic] = permuvartest2(x,y,'correct',1);
 
-% Get F-statistic
-f = statsc.fstat;
+% Set up figure
+figure('Name','Two-sample permutation F-test','NumberTitle','off')
+set(gcf,'color','w')
 xaxis = 1:size(f,2);
+alpha = 0.05;
 
 % Plot parametric & uncorrected permutation CIs
-figure('Name','Unpaired tests based on the F-statistic','NumberTitle','off')
-set(gcf,'color','w')
 subplot(2,2,1), hold on
 plot(xaxis,f,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
-plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),f(logical(hu)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),f(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),f(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,6]), box on, grid on
 title('Uncorrected'), ylabel('{\itF}-value')
 legend('{\itF}-statistic','parametric CI','','permutation CI','Location','northeast')
@@ -79,16 +79,16 @@ legend('{\itF}-statistic','parametric CI','','permutation CI','Location','northe
 subplot(2,2,2), hold on
 plot(xaxis,f,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
-plot(xaxis(logical(h)),f(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),f(logical(hc)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),f(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),f(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,6]), box on, grid on
 title('Max-corrected')
 
 % Plot parametric & uncorrected permutation p-values
 subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),pu(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable'), ylabel('probability')
 legend('parametric {\itp}','permutation {\itp}','Location','northeast')
@@ -96,52 +96,52 @@ legend('parametric {\itp}','permutation {\itp}','Location','northeast')
 % Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),pc(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 
 %% 3. t-test Example
 
 % Run MATLAB's two-sample parametric t-test
-[h,p,ci,stats] = ttest2(x,y);
+[~,p,ci] = ttest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation test (uncorrected)
-[hu,pu,ciu,statsu] = permuttest2(x,y,'correct',0);
+[~,pu,ciu,stats] = permuttest2(x,y,'correct',0);
 
 % Run PERMUTOOLS' two-sample permutation test (max-corrected)
-[hc,pc,cic,statsc] = permuttest2(x,y,'correct',1);
+[~,pc,cic] = permuttest2(x,y,'correct',1);
 
-% Compute the mean difference
-md = mean(x)-mean(y);
-xaxis = 1:size(md,2);
+% Set up figure
+figure('Name','Two-sample permutation t-test','NumberTitle','off')
+set(gcf,'color','w')
+xaxis = 1:size(f,2);
+alpha = 0.05;
 
 % Plot parametric & uncorrected permutation CIs
-figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
-set(gcf,'color','w')
 subplot(2,2,1), hold on
-plot(xaxis,md,'LineWidth',3)
+plot(xaxis,stats.mu,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
-plot(xaxis(logical(h)),md(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),md(logical(hu)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),stats.mu(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
 title('Uncorrected'), ylabel('X−Y')
 legend('mean difference','parametric CI','','permutation CI','Location','southwest')
 
 % Plot parametric & corrected permutation CIs
 subplot(2,2,2), hold on
-plot(xaxis,md,'LineWidth',3)
+plot(xaxis,stats.mu,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
-plot(xaxis(logical(h)),md(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),md(logical(hc)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),stats.mu(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
 title('Max-corrected')
 
 % Plot parametric & uncorrected permutation p-values
 subplot(2,2,3), hold on
 plot(xaxis,p,'k',xaxis,pu,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hu)),pu(logical(hu)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),pu(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable'), ylabel('probability')
 legend('parametric {\itp}','permutation {\itp}','Location','southwest')
@@ -149,8 +149,8 @@ legend('parametric {\itp}','permutation {\itp}','Location','southwest')
 % Plot parametric & corrected permutation p-values
 subplot(2,2,4), hold on
 plot(xaxis,p,'k',xaxis,pc,'--r','LineWidth',2)
-plot(xaxis(logical(h)),p(logical(h)),'ok','LineWidth',2)
-plot(xaxis(logical(hc)),pc(logical(hc)),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),p(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),pc(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
 xlabel('variable')
 
@@ -211,10 +211,10 @@ for j = 1:20
 end
 
 % Run PERMUTOOLS' permutation correlation measure (uncorrected)
-[ru,pu,ciu,statsu] = permucorr(x,y,'correct',0);
+[ru,pu,ciu] = permucorr(x,y,'correct',0);
 
 % Run PERMUTOOLS' permutation correlation measure (max-corrected)
-[rc,pc,cic,statsc] = permucorr(x,y,'correct',1);
+[rc,pc,cic] = permucorr(x,y,'correct',1);
 
 % Plot parametric & uncorrected permutation CIs
 figure('Name','Correlation measures based on Pearson''s r','NumberTitle','off')
