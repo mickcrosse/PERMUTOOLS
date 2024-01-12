@@ -5,7 +5,7 @@
 
 PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. It uses efficient resampling procedures to generate the null distribution empirically, providing distribution-free, nonparametric hypothesis testing.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of test statistics, including the ***t*-statistic** (one-sample, paired-sample, two-sample) ***F*-statistic** (two-sample), ***Z*-statistic** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way), ***t*-test** (one-sample, paired-sample, two-sample) ***F*-test** (two-sample), ***Z*-test** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
 
 PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of effect size measures due to small sample sizes is controlled by applying a bias correction factor. 
 
@@ -51,12 +51,17 @@ The above figure shows two permutation distributions based on the *t*-statistic 
 
 ## Contents
 
-* `permuttest()`	one-sample or paired-sample permutation test (*t*-statistic) with max correction
-* `permuttest2()`	unpaired two-sample permutation test (*t*-statistic) with max correction
-* `permuvartest2()` 	unpaired two-sample permutation test (*F*-statistic) with max correction
-* `permuztest()`	one-sample permutation test (*Z*-statistic) with max correction
-* `permucorr()`		permutation-based correlation measures with max correction
-* `booteffectsize()`	bias-corrected effect size measures with bootstrapped confidence intervals
+PERMUTOOLS consists of the following set of functions:
+
+| Function | Description |
+| ---- | --- |
+| [**permuanova1()**](permutools) | One-way permutation-based analysis of variance (ANOVA) |
+| [**permuttest()**](permutools) | One-sample or paired-sample permutation-based *t*-test with max correction |
+| [**permuttest2()**](permutools) | Two-sample permutation-based *t*-test with max correction |
+| [**permuvartest2()**](permutools) | Two-sample permutation-based *F*-test with max correction |
+| [**permuztest()**](permutools) | One-sample permutation-based *Z*-test with max correction |
+| [**permucorr()**](permutools) | Permutation-based correlation test with max correction |
+| [**booteffectsize()**](permutools) | Bootstrapped effect size confidence intervals with bias correction |
 
 ## Examples
 
