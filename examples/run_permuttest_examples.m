@@ -45,7 +45,7 @@ for i = 1:numel(tail)
     end
     ylabel([label{i},'-tailed'])
     if i == 2
-        legend('mean difference','parametric CI','','permutation CI')
+        legend('mean difference','95% CI (param.)','','95% CI (perm.)')
     end
     [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
@@ -77,7 +77,7 @@ for i = 1:numel(tail)
     end
     ylabel([label{i},'-tailed'])
     if i == 2
-        legend('parametric {\itp}','permutation {\itp}')
+        legend('{\itp}-value (param.)','{\itp}-value (perm.)')
     end
     [~,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on

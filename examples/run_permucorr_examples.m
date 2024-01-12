@@ -78,8 +78,8 @@ for n = 1:numel(type)
         end
         ylabel([label{i},'-tailed'])
         if i == 2
-            legend([type{n},'''s ',symbol{n}],'parametric CI','',...
-                'permutation CI')
+            legend([type{n},'''s ',symbol{n}],'95% CI (param.)','',...
+                '95% CI (perm.)')
         end
         [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{n},...
             'correct',1);
@@ -114,7 +114,7 @@ for n = 1:numel(type)
         end
         ylabel([label{i},'-tailed'])
         if i == 2
-            legend('parametric {\itp}','permutation {\itp}')
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
         end
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',1);
         subplot(3,2,i+i), hold on

@@ -26,7 +26,7 @@ tail = {'both','right','left'};
 label = {'two','right','left'};
 
 % Plot parametric & permutation CIs
-figure('Name','One-sample Test: mean & CIs','NumberTitle','off')
+figure('Name','One-sample Test: mean value & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1,ci1] = ztest(x,m,sigma,'tail',tail{i});
@@ -45,7 +45,7 @@ for i = 1:numel(tail)
     end
     ylabel([label{i},'-tailed'])
     if i == 2
-        legend('mean value','parametric CI','','permutation CI')
+        legend('mean value','95% CI (param.)','','95% CI (perm.)')
     end
     [~,p2,ci2,stats2] = permuztest(x,m,sigma,'tail',tail{i},'correct',1,...
         'verbose',0);
@@ -78,7 +78,7 @@ for i = 1:numel(tail)
     end
     ylabel([label{i},'-tailed'])
     if i == 2
-        legend('parametric {\itp}','permutation {\itp}')
+        legend('{\itp}-value (param.)','{\itp}-value (perm.)')
     end
     [~,p2] = permuztest(x,m,sigma,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on

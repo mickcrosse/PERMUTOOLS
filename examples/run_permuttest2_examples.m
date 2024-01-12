@@ -56,7 +56,7 @@ for n = 1:numel(vartype)
         end
         ylabel([label{i},'-tailed'])
         if i == 2
-            legend('mean difference','parametric CI','','permutation CI')
+            legend('mean difference','95% CI (param.)','','95% CI (perm.)')
         end
         [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
             'vartype',vartype{n},'correct',1);
@@ -91,7 +91,7 @@ for n = 1:numel(vartype)
         end
         ylabel([label{i},'-tailed'])
         if i == 2
-            legend('parametric {\itp}','permutation {\itp}')
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
         end
         [~,p2] = permuttest2(x,y,'tail',tail{i},'vartype',vartype{n},...
             'correct',1);

@@ -34,7 +34,7 @@ paired = [false,true];
 samples = {'indep.','dep.'};
 vartype = {'equal','unequal'};
 
-figure('Name','Effect Size Measure: effect sizes & CIs','NumberTitle','off')
+figure('Name','Effect Size Analysis: effect sizes & CIs','NumberTitle','off')
 set(gcf,'color','w')
 k = 1;
 for i = 1:numel(paired)
@@ -82,11 +82,11 @@ for i = 1:numel(paired)
         ylabel({[samples{i},' samples'];['w/ ',vartype{n},' SD']})
         switch effect
             case 'Cohen'
-                legend('Cohen''s {\itd}','parametric CI','',...
-                    'boostrapped CI')
+                legend('Cohen''s {\itd}','95% CI (param.)','',...
+                    '95% CI (boot.)')
             case 'Glass'
-                legend('Glass'' {\itΔ}','parametric CI','',...
-                    'boostrapped CI')
+                legend('Glass'' {\itΔ}','95% CI (param.)','',...
+                    '95% CI (boot.)')
         end
         [d2,ci2] = booteffectsize(x,yp,'paired',paired(i),...
             'vartype',vartype{n},'effect',effect,'correct',1);
@@ -102,11 +102,11 @@ for i = 1:numel(paired)
         end
         switch effect
             case 'Cohen'
-                legend('Hedges'' {\itg}','parametric CI','',...
-                    'boostrapped CI')
+                legend('Hedges'' {\itg}','95% CI (param.)','',...
+                    '95% CI (boot.)')
             case 'Glass'
-                legend('Glass'' {\itΔ}','parametric CI','',...
-                    'boostrapped CI')
+                legend('Glass'' {\itΔ}','95% CI (param.)','',...
+                    '95% CI (boot.)')
         end
 
         k = k+2;
