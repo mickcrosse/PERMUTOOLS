@@ -55,13 +55,13 @@ PERMUTOOLS consists of the following set of functions:
 
 | Function | Description |
 | ---- | --- |
-| [**permuanova1()**](permutools) | One-way permutation-based analysis of variance (ANOVA) |
-| [**permuttest()**](permutools) | One-sample or paired-sample permutation-based *t*-test with max correction |
-| [**permuttest2()**](permutools) | Two-sample permutation-based *t*-test with max correction |
-| [**permuvartest2()**](permutools) | Two-sample permutation-based *F*-test with max correction |
-| [**permuztest()**](permutools) | One-sample permutation-based *Z*-test with max correction |
-| [**permucorr()**](permutools) | Permutation-based correlation test with max correction |
-| [**booteffectsize()**](permutools) | Bootstrapped effect size confidence intervals with bias correction |
+| [**permuanova1()**](permutools/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
+| [**permuttest()**](permutools/permuttest.m) | One-sample or paired-sample permutation-based *t*-test with max correction |
+| [**permuttest2()**](permutools/permuttest2.m) | Two-sample permutation-based *t*-test with max correction |
+| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample permutation-based *F*-test with max correction |
+| [**permuztest()**](permutools/permuztest.m) | One-sample permutation-based *Z*-test with max correction |
+| [**permucorr()**](permutools/permucorr.m) | Permutation-based correlation test with max correction |
+| [**booteffectsize()**](permutools/booteffectsize.m) | Bootstrapped effect size confidence intervals with bias correction |
 
 ## Examples
 
