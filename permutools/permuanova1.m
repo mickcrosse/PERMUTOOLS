@@ -1,6 +1,6 @@
-function [f,p,ci,stats,anovatab,pdist] = permuanova1(x,group,varargin)
-%PERMUANOVA1  Permutation-based one-way analysis of variance (ANOVA).
-%   F = PERMUANOVA1(X) performs a permutation-based one-way ANOVA for
+function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
+%PERMUANOVA1  One-way permutation-based analysis of variance (ANOVA).
+%   F = PERMUANOVA1(X) performs a one-way permutation-based ANOVA for
 %   comparing the means of two or more groups of data in matrix X, and
 %   returns the test statistic. The columns of X can have different lengths
 %   by in including NaN values.
@@ -8,14 +8,14 @@ function [f,p,ci,stats,anovatab,pdist] = permuanova1(x,group,varargin)
 %   PERMUANOVA1 treats NaNs as missing values, and ignores them.
 %
 %   F = PERMUANOVA1(X,GROUP) groups the columns of X according to the
-%   values in vector GROUP. The values in GROUP can be a categorical,
+%   values in vector GROUP. The values in GROUP can be categorical,
 %   numeric, logical or strings, with each value corresponding to a column
 %   of X. Columns with the same corresponding group values are placed in
 %   the same group.
 %
 %   [F,P] = PERMUANOVA1(...) returns the probability (i.e. p-value) of
-%   observing the given result by chance if the null hypothesis that the
-%   means of the groups are equal is true. As the null distribution is
+%   observing the given result by chance if the null hypothesis (that the
+%   means of the groups are equal) is true. As the null distribution is
 %   generated empirically by permuting the data, no assumption is made
 %   about the shape of the distributions that the data come from, except
 %   that they have equal variances.
@@ -32,11 +32,11 @@ function [f,p,ci,stats,anovatab,pdist] = permuanova1(x,group,varargin)
 %       'df'        -- the error degrees of freedom
 %       's'         -- the root mean square
 %
-%   [F,P,CI,STATS,ANOVATAB] = PERMUANOVA1(...) returns the ANOVA table
-%   values as the cell array ANOVATAB.
+%   [F,P,CI,STATS,TABLE] = PERMUANOVA1(...) returns the ANOVA table
+%   contents as a cell array.
 %
-%   [F,P,CI,STATS,ANOVATAB,PDIST] = PERMUANOVA1(...) returns the
-%   permutation distribution of the test statistic.
+%   [F,P,CI,STATS,TABLE,PDIST] = PERMUANOVA1(...) returns the permutation
+%   distribution of the test statistic.
 %
 %   [...] = PERMUANOVA1(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -76,9 +76,8 @@ function [f,p,ci,stats,anovatab,pdist] = permuanova1(x,group,varargin)
 
 if nargin<2 || isempty(group)
     group = 1:size(x,2);
-else
-    [group,gnames] = grp2idx(group);
 end
+[group,gnames] = grp2idx(group);
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
@@ -99,6 +98,7 @@ else
 end
 
 % Get data dimensions, ignoring NaNs
+shapex = size(x);
 nobs = sum(~isnan(x),'all');
 
 % Compute total mean
@@ -106,15 +106,15 @@ toal_mean = mean(mean(x),'all',nanflag);
 
 % Compute within- and between-group sum of squares
 groups = unique(group)';
-mgroup = zeros(1,numel(groups));
-ngroup = zeros(1,numel(groups));
+means = zeros(1,numel(groups));
+n = zeros(1,numel(groups));
 ess = 0; rss = 0;
 for i = groups
     xgroup = x(:,group==i);
-    mgroup(i) = mean(xgroup(:),nanflag);
-    ngroup(i) = sum(~isnan(xgroup(:)),nanflag);
-    ess = ess + sum((xgroup-mgroup(i)).^2,'all',nanflag);
-    rss = rss + ngroup(i)*sum((mgroup(i)-toal_mean).^2,'all',nanflag);
+    means(i) = mean(xgroup(:),nanflag);
+    n(i) = sum(~isnan(xgroup(:)),nanflag);
+    ess = ess + sum((xgroup-means(i)).^2,'all',nanflag);
+    rss = rss + n(i)*sum((means(i)-toal_mean).^2,'all',nanflag);
 end
 
 % Compute total sum of squares
@@ -134,10 +134,12 @@ f = msr/mse;
 
 if nargout > 1
 
+    % Concatenate groups
+    x = x(:);
+
     % Generate random permutations
     rng(arg.seed);
-    xvector = x(:);
-    maxnobs = numel(xvector);
+    maxnobs = numel(x);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
 
     % Estimate permutation distribution
@@ -145,8 +147,8 @@ if nargout > 1
     mp = zeros(1,numel(groups));
     np = zeros(1,numel(groups));
     for i = 1:arg.nperm
-        xp = xvector(idx(:,i));
-        xp = reshape(xp,size(x));
+        xp = x(idx(:,i));
+        xp = reshape(xp,shapex);
         essp = 0; rssp = 0;
         for j = groups
             xgroup = xp(:,group==j);
@@ -173,16 +175,16 @@ end
 % Store statistics in a structure
 if nargout > 3
     stats.gnames = gnames;
-    stats.n = ngroup;
+    stats.n = n;
     stats.source = 'permuanova1';
-    stats.means = mgroup;
+    stats.means = means;
     stats.df = dfe;
     stats.s = sqrt(mse);
 end
 
 % Create ANOVA table
 if nargout > 4
-    anovatab = {
+    Table = {
         'Source','SS','df','MS','F','Prob>F';
         'Groups',rss,dfr,msr,f,p;
         'Error',ess,dfe,mse,[],[];
