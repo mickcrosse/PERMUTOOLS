@@ -1,4 +1,4 @@
-function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
+function [f,p,ci,stats,tbl,pdist] = permuanova1(x,group,varargin)
 %PERMUANOVA1  One-way permutation-based analysis of variance (ANOVA).
 %   F = PERMUANOVA1(X) performs a one-way permutation-based ANOVA for
 %   comparing the means of two or more groups of data in matrix X, and
@@ -32,10 +32,10 @@ function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
 %       'df'        -- the error degrees of freedom
 %       's'         -- the root mean square
 %
-%   [F,P,CI,STATS,TABLE] = PERMUANOVA1(...) returns the ANOVA table
-%   contents as a cell array.
+%   [F,P,CI,STATS,TBL] = PERMUANOVA1(...) returns the ANOVA table contents
+%   as a cell array.
 %
-%   [F,P,CI,STATS,TABLE,PDIST] = PERMUANOVA1(...) returns the permutation
+%   [F,P,CI,STATS,TBL,PDIST] = PERMUANOVA1(...) returns the permutation
 %   distribution of the test statistic.
 %
 %   [...] = PERMUANOVA1(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -55,7 +55,7 @@ function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
 %
-%   See also anova1 PERMUTTEST2 BOOTEFFECTSIZE.
+%   See also ANOVA1 PERMUANOVA2 PERMUTTEST2 BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -64,9 +64,7 @@ function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Gondan M (2010) A permutation test for the race model
-%           inequality. Behav Res Methods, 42(1):23-28.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
@@ -74,7 +72,7 @@ function [f,p,ci,stats,Table,pdist] = permuanova1(x,group,varargin)
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-if nargin<2 || isempty(group)
+if nargin < 2 || isempty(group)
     group = 1:size(x,2);
 end
 [group,gnames] = grp2idx(group);
@@ -101,24 +99,24 @@ end
 shapex = size(x);
 nobs = sum(~isnan(x),'all');
 
-% Compute total mean
-toal_mean = mean(mean(x),'all',nanflag);
+% Compute grand mean
+gm = mean(mean(x),'all',nanflag);
 
-% Compute within- and between-group sum of squares
+% Compute within and between-group sum of squares
 groups = unique(group)';
 means = zeros(1,numel(groups));
 n = zeros(1,numel(groups));
 ess = 0; rss = 0;
 for i = groups
-    xgroup = x(:,group==i);
-    means(i) = mean(xgroup(:),nanflag);
-    n(i) = sum(~isnan(xgroup(:)),nanflag);
-    ess = ess + sum((xgroup-means(i)).^2,'all',nanflag);
-    rss = rss + n(i)*sum((means(i)-toal_mean).^2,'all',nanflag);
+    xg = x(:,group==i);
+    n(i) = sum(~isnan(xg),'all',nanflag);
+    means(i) = mean(xg,'all',nanflag);
+    ess = ess + sum((xg-means(i)).^2,'all',nanflag);
+    rss = rss + n(i)*sum((means(i)-gm).^2,'all',nanflag);
 end
 
 % Compute total sum of squares
-tss = ess + rss;
+tss = ess+rss;
 
 % Compute degrees of freedom
 dft = nobs-1;
@@ -144,23 +142,18 @@ if nargout > 1
 
     % Estimate permutation distribution
     pdist = zeros(arg.nperm,1);
-    mp = zeros(1,numel(groups));
-    np = zeros(1,numel(groups));
     for i = 1:arg.nperm
         xp = x(idx(:,i));
         xp = reshape(xp,shapex);
         essp = 0; rssp = 0;
         for j = groups
-            xgroup = xp(:,group==j);
-            mp(j) = mean(xgroup(:),nanflag);
-            np(j) = sum(~isnan(xgroup(:)),nanflag);
-            essp = essp + sum((xgroup-mp(j)).^2,'all',nanflag);
-            rssp = rssp + np(j)*sum((mp(j)-toal_mean).^2,'all',...
-                nanflag);
+            xg = xp(:,group==j);
+            np = sum(~isnan(xg),'all',nanflag);
+            mp = mean(xg,'all',nanflag);
+            essp = essp + sum((xg-mp).^2,'all',nanflag);
+            rssp = rssp + np*sum((mp-gm).^2,'all',nanflag);
         end
-        msrp = rssp/dfr;
-        msep = essp/dfe;
-        pdist(i) = msrp/msep;
+        pdist(i) = (rssp/dfr)/(essp/dfe);
     end
 
     % Compute p-value and CIs
@@ -184,7 +177,7 @@ end
 
 % Create ANOVA table
 if nargout > 4
-    Table = {
+    tbl = {
         'Source','SS','df','MS','F','Prob>F';
         'Groups',rss,dfr,msr,f,p;
         'Error',ess,dfe,mse,[],[];
