@@ -5,7 +5,7 @@
 
 PERMUTOOLS is a MATLAB package for multivariate permutation testing and effect size measurement. It uses efficient resampling procedures to generate the null distribution empirically, providing distribution-free, nonparametric hypothesis testing.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way), ***t*-test** (one-sample, paired-sample, two-sample) ***F*-test** (two-sample), ***Z*-test** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), ***t*-test** (one-sample, paired-sample, two-sample) ***F*-test** (two-sample), ***Z*-test** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is implemented using the max correction method, which is less prone to type II errors than conventional methods.
 
 PERMUTOOLS offers a range of effect size measures with bootstrapped confidence intervals, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of effect size measures due to small sample sizes is controlled by applying a bias correction factor. 
 
@@ -56,6 +56,7 @@ PERMUTOOLS consists of the following set of functions:
 | Function | Description |
 | ---- | --- |
 | [**permuanova1()**](permutools/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
+| [**permuanova2()**](permutools/permuanova2.m) | Two-way permutation-based analysis of variance (ANOVA) |
 | [**permuttest()**](permutools/permuttest.m) | One-sample or paired-sample permutation-based *t*-test with max correction |
 | [**permuttest2()**](permutools/permuttest2.m) | Two-sample permutation-based *t*-test with max correction |
 | [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample permutation-based *F*-test with max correction |
