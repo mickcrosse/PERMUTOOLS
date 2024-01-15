@@ -1,12 +1,12 @@
 function run_permuanova1_examples
-%RUN_PERMUANOVA1_EXAMPLES  Run permutation one-way ANOVA examples.
-%   Generates random data for 5 "independent" groups along the columns of
-%   X. Each group has a mean value of 0, except for the first group which
-%   has a mean value of 1. Each group has 30 observations. The group labels
-%   are randomly sampled with replacement 20 times to generate 20 different
+%RUN_PERMUANOVA1_EXAMPLES  Run one-way permutation ANOVA examples.
+%   Generates random data for 5 groups along the columns of X. Each group
+%   has a mean value of 0, except for the first group which has a mean
+%   value of 1. Each group has 30 observations. The group labels are
+%   randomly sampled with replacement 20 times to generate 20 different
 %   scenarios. One-way permutation-based ANOVAs are performed on each of
 %   the datasets. The results are compared to those of the equivalent
-%   parametric statistical test (i.e. one-way ANOVA) using anova1.m.
+%   parametric statistical test (i.e. one-way ANOVAs) using anova1.m.
 %
 %   See also PERMUANOVA1 ANOVA1.
 %
@@ -53,5 +53,5 @@ legend('{\itF}-statistic','95% CI (perm.)')
 subplot(2,2,2), hold on
 plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
 xlim([0,21]), ylim([0,1]), box on, grid on
-title('{\itP}-values'), xlabel('variable'), ylabel('probability')
+title('{\itP}-values'), xlabel('permutation'), ylabel('probability')
 legend('{\itp}-value (param.)','{\itp}-value (perm.)')
