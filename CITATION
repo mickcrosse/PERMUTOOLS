@@ -1,9 +1,8 @@
-@article{crosse2023permutools,
-  title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
-  author={Crosse, Michael J and Foxe, John J and Molholm, Sophie},
-  journal={},
-  volume={},
-  pages={},
-  year={In Prep},
-  publisher={}
+@misc{crosse2024permutools,
+      title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing}, 
+      author={Michael J. Crosse and John J. Foxe and Sophie Molholm},
+      year={2024},
+      eprint={2401.09401},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME}
 }
