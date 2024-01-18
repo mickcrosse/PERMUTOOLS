@@ -1,4 +1,4 @@
-function [z,p,ci,stats,pdist] = permuztest(x,m,sigma,varargin)
+function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %PERMUZTEST  One-sample permutation-based Z-test.
 %   Z = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test based
 %   on the Z-statistic of the null hypothesis that the data in X come from
@@ -25,7 +25,7 @@ function [z,p,ci,stats,pdist] = permuztest(x,m,sigma,varargin)
 %       'sd'        -- the estimated population standard deviation of X
 %       'mu'        -- the estimated population mean of X
 %
-%   [Z,P,CI,STATS,PDIST] = PERMUZTEST(...) returns the permutation
+%   [Z,P,CI,STATS,DIST] = PERMUZTEST(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUZTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -63,11 +63,13 @@ function [z,p,ci,stats,pdist] = permuztest(x,m,sigma,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
@@ -118,47 +120,47 @@ if nargout > 1
     rng(arg.seed);
     signx = sign(rand(maxnobs,arg.nperm)-0.5);
 
-    % Estimate permutation distribution
+    % Estimate sampling distribution
     diffxm = x-m;
     sen = se.*nobs;
-    pdist = zeros(arg.nperm,nvar);
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
         xp = diffxm.*repmat(signx(:,i),1,nvar);
         smx = sum(xp,nanflag);
-        pdist(i,:) = smx./sen;
+        dist(i,:) = smx./sen;
     end
 
     % Apply max correction if specified
     if arg.correct
-        pdist = max(abs(pdist),[],2);
+        dist = max(abs(dist),[],2);
     end
 
     % Add negative values
-    pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
+    dist(arg.nperm+1:2*arg.nperm,:) = -dist;
     arg.nperm = 2*arg.nperm;
     if arg.verbose
         fprintf('Adding negative of values to permutation distribution.\n')
         fprintf('Number of permutations used: %d\n',arg.nperm)
     end
 
-    % Compute p-value and CIs
+    % Compute p-value & CI
     switch arg.tail
         case 'both'
-            p = 2*(sum(abs(z)<=pdist)+1)/(arg.nperm+1);
+            p = 2*(sum(abs(z)<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha/2)).*se;
+                crit = prctile(dist,100*(1-arg.alpha/2)).*se;
                 ci = [mu-crit;mu+crit];
             end
         case 'right'
-            p = (sum(z<=pdist)+1)/(arg.nperm+1);
+            p = (sum(z<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [mu-crit;Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(z>=pdist)+1)/(arg.nperm+1);
+            p = (sum(z>=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [-Inf(1,nvar);mu+crit];
             end
     end

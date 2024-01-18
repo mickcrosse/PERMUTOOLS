@@ -1,4 +1,4 @@
-function [f,p,ci,stats,tbl,pdist] = permuanova1(x,group,varargin)
+function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %PERMUANOVA1  One-way permutation-based analysis of variance (ANOVA).
 %   F = PERMUANOVA1(X) performs a one-way permutation-based ANOVA for
 %   comparing the means of two or more groups of data in matrix X, and
@@ -35,8 +35,8 @@ function [f,p,ci,stats,tbl,pdist] = permuanova1(x,group,varargin)
 %   [F,P,CI,STATS,TBL] = PERMUANOVA1(...) returns the ANOVA table contents
 %   as a cell array.
 %
-%   [F,P,CI,STATS,TBL,PDIST] = PERMUANOVA1(...) returns the permutation
-%   distribution of the test statistic.
+%   [F,P,CI,STATS,TBL,DIST] = PERMUANOVA1(...) returns the permuted
+%   sampling distribution of the test statistic.
 %
 %   [...] = PERMUANOVA1(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -60,13 +60,8 @@ function [f,p,ci,stats,tbl,pdist] = permuanova1(x,group,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
-%           Multivariate Permutation Tests Which May Replace Hotelling's T2
-%           Test in Prescribed Circumstances. Multivariate Behav Res,
-%           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
-%           of event-related brain potentials/fields I: A critical tutorial
-%           review. Psychophysiology, 48(12):1711-1725.
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
@@ -140,8 +135,8 @@ if nargout > 1
     maxnobs = numel(x);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
 
-    % Estimate permutation distribution
-    pdist = zeros(arg.nperm,1);
+    % Estimate sampling distribution
+    dist = zeros(arg.nperm,1);
     for i = 1:arg.nperm
         xp = x(idx(:,i));
         xp = reshape(xp,shapex);
@@ -153,13 +148,13 @@ if nargout > 1
             essp = essp + sum((xg-mp).^2,'all',nanflag);
             rssp = rssp + np*sum((mp-gm).^2,'all',nanflag);
         end
-        pdist(i) = (rssp/dfr)/(essp/dfe);
+        dist(i) = (rssp/dfr)/(essp/dfe);
     end
 
-    % Compute p-value and CIs
-    p = (sum(f<=pdist)+1)/(arg.nperm+1);
+    % Compute p-value & CI
+    p = (sum(f<=dist)+1)/(arg.nperm+1);
     if nargout > 2
-        crit = prctile(pdist,100*(1-arg.alpha));
+        crit = prctile(dist,100*(1-arg.alpha));
         ci = [f./crit;Inf];
     end
 

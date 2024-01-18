@@ -1,4 +1,4 @@
-function [t,p,ci,stats,pdist] = permuttest2(x,y,varargin)
+function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %PERMUTTEST2  Unpaired two-sample permutation-based t-test.
 %   T = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
 %   the t-statistic of the hypothesis that the data in X and Y come from
@@ -37,7 +37,7 @@ function [t,p,ci,stats,pdist] = permuttest2(x,y,varargin)
 %                      deviations (unequal variance)
 %       'mu'        -- the estimated population mean of X-Y
 %
-%   [T,P,CI,STATS,PDIST] = PERMUTTEST2(...) returns the permutation
+%   [T,P,CI,STATS,DIST] = PERMUTTEST2(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -76,17 +76,19 @@ function [t,p,ci,stats,pdist] = permuttest2(x,y,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [4] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields II: Simulation
 %           studies. Psychophysiology, 48(12):1726-1737.
-%       [4] Groppe DM (2016) Combating the scientific decline effect with
+%       [5] Groppe DM (2016) Combating the scientific decline effect with
 %           confidence (intervals). Psychophysiology, 54(1):139-145.
 
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
@@ -185,8 +187,8 @@ if nargout > 1
     i1 = idx(1:maxnobsx,:);
     i2 = idx(maxnobsx+1:maxnobs,:);
 
-    % Estimate permutation distribution
-    pdist = zeros(arg.nperm,nvar);
+    % Estimate sampling distribution
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
         x1 = x(i1(:,i),:);
         x2 = x(i2(:,i),:);
@@ -200,36 +202,36 @@ if nargout > 1
             case 'unequal'
                 sep = sqrt(var1./nobsx+var2./nobsy);
         end
-        pdist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
+        dist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
     end
 
     % Apply max correction if specified
     if arg.correct
-        [~,idx] = max(abs(pdist),[],2);
+        [~,idx] = max(abs(dist),[],2);
         csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-        pdist = pdist';
-        pdist = pdist(idx+csvar);
+        dist = dist';
+        dist = dist(idx+csvar);
     end
 
-    % Compute p-value and CIs
+    % Compute p-value & CI
     switch arg.tail
         case 'both'
-            pdabs = abs(pdist);
+            pdabs = abs(dist);
             p = (sum(abs(t)<=pdabs)+1)/(arg.nperm+1);
             if nargout > 2
                 crit = prctile(pdabs,100*(1-arg.alpha)).*se;
                 ci = [mu-crit;mu+crit];
             end
         case 'right'
-            p = (sum(t<=pdist)+1)/(arg.nperm+1);
+            p = (sum(t<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [mu-crit;Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(t>=pdist)+1)/(arg.nperm+1);
+            p = (sum(t>=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [-Inf(1,nvar);mu+crit];
             end
     end

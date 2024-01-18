@@ -1,4 +1,4 @@
-function [r,p,ci,stats,pdist] = permucorr(x,varargin)
+function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %PERMUCORR  Linear or rank permutation-based correlation.
 %   R = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
@@ -28,7 +28,7 @@ function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %   fields:
 %       'df'        -- the degrees of freedom of each test
 %
-%   [R,P,CI,STATS,PDIST] = PERMUCORR(...) returns the permutation
+%   [R,P,CI,STATS,DIST] = PERMUCORR(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUCORR(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -72,18 +72,20 @@ function [r,p,ci,stats,pdist] = permucorr(x,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
-%       [3] Bishara AJ, Hittner JB, (2012) Testing the Significance of a
+%       [4] Bishara AJ, Hittner JB, (2012) Testing the Significance of a
 %           Correlation With Nonnormal Data: Comparison of Pearson,
 %           Spearman, Transformation, and Resampling Approaches. Psychol
 %           Methods, 17(3):399-417.
-%       [4] Bishara AJ, Hittner JB, (2017) Confidence intervals for
+%       [5] Bishara AJ, Hittner JB, (2017) Confidence intervals for
 %           correlations when data are not normal. Behav Res, 49:294-309.
 
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
@@ -173,45 +175,45 @@ if nargout > 1
         [~,idx] = sort(rand(nobs,arg.nperm));
     end
 
-    % Estimate permutation distribution
-    pdist = zeros(arg.nperm,nvar);
+    % Estimate sampling distribution
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        pdist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
+        dist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
     end
 
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
             case 'both'
-                [~,idx] = max(abs(pdist),[],2);
+                [~,idx] = max(abs(dist),[],2);
                 csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-                pdist = pdist';
-                pdist = pdist(idx+csvar);
+                dist = dist';
+                dist = dist(idx+csvar);
             case 'right'
-                pdist = max(pdist,[],2);
+                dist = max(dist,[],2);
             case 'left'
-                pdist = min(pdist,[],2);
+                dist = min(dist,[],2);
         end
     end
 
-    % Compute p-value and CIs
+    % Compute p-value & CI
     switch arg.tail
         case 'both'
-            p = 2*(min(sum(r<=pdist),sum(r>=pdist))+1)/(arg.nperm+1);
+            p = 2*(min(sum(r<=dist),sum(r>=dist))+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha/2));
+                crit = prctile(dist,100*(1-arg.alpha/2));
                 ci = [max(-1,r-crit);min(1,r+crit)];
             end
         case 'right'
-            p = (sum(r<=pdist)+1)/(arg.nperm+1);
+            p = (sum(r<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha));
+                crit = prctile(dist,100*(1-arg.alpha));
                 ci = [max(-1,r-crit);Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(r>=pdist)+1)/(arg.nperm+1);
+            p = (sum(r>=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(-pdist,100*(1-arg.alpha));
+                crit = prctile(-dist,100*(1-arg.alpha));
                 ci = [-Inf(1,nvar);min(1,r+crit)];
             end
     end

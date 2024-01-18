@@ -1,4 +1,4 @@
-function [f,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
+function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %PERMUVARTEST2  Unpaired two-sample permutation-based F-test.
 %   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
 %   the F-statistic of the null hypothesis that the data in X and Y come
@@ -27,7 +27,7 @@ function [f,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'       -- the denominator degrees of freedom of each test
 %
-%   [F,P,CI,STATS,PDIST] = PERMUVARTEST2(...) returns the permutation
+%   [F,P,CI,STATS,DIST] = PERMUVARTEST2(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUVARTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -62,11 +62,13 @@ function [f,p,ci,stats,pdist] = permuvartest2(x,y,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
@@ -145,32 +147,32 @@ if nargout > 1
     i1 = idx(1:maxnobsx,:);
     i2 = idx(maxnobsx+1:maxnobs,:);
 
-    % Estimate permutation distribution
-    pdist = zeros(arg.nperm,nvar);
+    % Estimate sampling distribution
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
         x1 = x(i1(:,i),:);
         x2 = x(i2(:,i),:);
         var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
         var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
-        pdist(i,:) = var1./var2;
+        dist(i,:) = var1./var2;
     end
 
     % Apply max correction if specified
     if arg.correct
-        [~,imax] = max(pdist,[],2);
-        [~,imin] = min(pdist,[],2);
+        [~,imax] = max(dist,[],2);
+        [~,imin] = min(dist,[],2);
         csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-        pdist = pdist';
-        pdmax = pdist(imax+csvar);
-        pdmin = pdist(imin+csvar);
+        dist = dist';
+        pdmax = dist(imax+csvar);
+        pdmin = dist(imin+csvar);
         k = 1;
     else
-        pdmax = pdist;
-        pdmin = pdist;
+        pdmax = dist;
+        pdmin = dist;
         k = 2;
     end
 
-    % Compute p-value and CIs
+    % Compute p-value & CI
     switch arg.tail
         case 'both'
             p = k*(min(sum(f<=pdmax),sum(f>=pdmin))+1)/(arg.nperm+1);

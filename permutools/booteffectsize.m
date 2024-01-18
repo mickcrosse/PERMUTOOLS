@@ -1,4 +1,4 @@
-function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
+function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %BOOTEFFECTSIZE  Effect size with bootstrapped confidence intervals.
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
@@ -33,8 +33,8 @@ function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %       'sd'        -- the pooled standard deviation, or of X for a one-
 %                      sample or Glass' delta measure
 %
-%   [D,CI,STATS,BDIST] = BOOTEFFECTSIZE(...) returns the bootstrap
-%   distribution of the effect size measure.
+%   [D,CI,STATS,DIST] = BOOTEFFECTSIZE(...) returns the bootstrapped
+%   sampling distribution of the effect size measure.
 %
 %   [...] = BOOTEFFECTSIZE(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -93,12 +93,14 @@ function [d,ci,stats,bdist] = booteffectsize(x,m,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Hentschke H, Stuttgen MC (2011) Computation of measures of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Hentschke H, Stuttgen MC (2011) Computation of measures of
 %           effect size for neuroscience data sets. Eur J Neurosci,
 %           34:1887–1894.
-%       [2] Cohen J (1969) Statistical power for the behavioural sciences.
+%       [3] Cohen J (1969) Statistical power for the behavioural sciences.
 %           London: Academic Press.
-%       [3] Hedges LV, Olkin I (1985) Statistical methods for meta-
+%       [4] Hedges LV, Olkin I (1985) Statistical methods for meta-
 %           analysis. San Diego, CA: Academic Press.
 
 %   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
@@ -289,13 +291,12 @@ end
 
 if nargout > 1
 
-    % Estimate bootstrap distribution & CIs
     rng(arg.seed);
     ci = zeros(2,nvar);
 
     for i = 1:nvar
 
-        % Bootstrap samples
+        % Generate random bootstraps
         xb = x(:,i);
         yb = y(:,i);
         idx = ceil(nobsx(i)*rand([nobsx(i),arg.nboot]));
@@ -305,15 +306,12 @@ if nargout > 1
         end
         yb = yb(idx);
 
-        % Compute sample variance using fast algo
+        % Estimate sampling distribution
         smxb = sum(xb,nanflag);
         smyb = sum(yb,nanflag);
         varxb = (sum(xb.^2,nanflag)-(smxb.^2)/nobsx(i))/dfx(i);
         varyb = (sum(yb.^2,nanflag)-(smyb.^2)/nobsy(i))/dfy(i);
-
         if arg.paired
-
-            % Compute difference between samples
             switch arg.effect
                 case 'cliff'
                     diffxyb = zeros(max(nobsx)^2,arg.nboot);
@@ -325,21 +323,14 @@ if nargout > 1
                 otherwise
                     diffxyb = xb-yb;
             end
-
-            % Compute mean difference
             switch arg.effect
                 case 'mediandiff'
                     mub = median(diffxyb,nanflag);
                 otherwise
                     mub = sum(diffxyb,nanflag)/nobs(i);
             end
-
-            % Compute standard deviation
             sdb = sqrt((varxb+varyb)/2);
-
         else
-
-            % Compute difference between samples
             switch arg.effect
                 case 'cliff'
                     diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
@@ -348,8 +339,6 @@ if nargout > 1
                         diffxyb(:,j) = diffi(:);
                     end
             end
-
-            % Compute mean difference
             switch arg.effect
                 case 'cliff'
                     mub = sum(diffxyb,nanflag)/nobs(i);
@@ -358,8 +347,6 @@ if nargout > 1
                 otherwise
                     mub = smxb/nobsx(i)-smyb/nobsy(i);
             end
-
-            % Compute standard deviation
             switch arg.effect
                 case 'glass'
                     sdb = sqrt(varxb);
@@ -371,19 +358,16 @@ if nargout > 1
                             sdb = sqrt((varxb+varyb)/2);
                     end
             end
-
         end
-
-        % Compute effect size
         switch arg.effect
             case {'cliff','meandiff','mediandiff'}
-                bdist = mub;
+                dist = mub;
             otherwise
-                bdist = mub./sdb;
+                dist = mub./sdb;
         end
 
-        % Compute confidence intervals
-        ci(:,i) = prctile(bdist,100*[arg.alpha/2;1-arg.alpha/2]);
+        % Compute CI
+        ci(:,i) = prctile(dist,100*[arg.alpha/2;1-arg.alpha/2]);
 
     end
 

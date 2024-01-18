@@ -1,4 +1,4 @@
-function [f,p,ci,stats,tbl,pdist] = permuanova2(x,reps,varargin)
+function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %PERMUANOVA2  Two-way permutation-based analysis of variance (ANOVA).
 %   F = PERMUANOVA2(X) performs a balanced two-way permutation-based ANOVA
 %   for comparing the means of two or more columns and two or more rows of
@@ -36,8 +36,8 @@ function [f,p,ci,stats,tbl,pdist] = permuanova2(x,reps,varargin)
 %   [F,P,CI,STATS,TBL] = PERMUANOVA2(...) returns the ANOVA table contents
 %   as a cell array.
 %
-%   [F,P,CI,STATS,TBL,PDIST] = PERMUANOVA2(...) returns the permutation
-%   distributions of the test statistics.
+%   [F,P,CI,STATS,TBL,PDIST] = PERMUANOVA2(...) returns the permuted
+%   sampling distributions of the test statistics.
 %
 %   [...] = PERMUANOVA2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -61,13 +61,8 @@ function [f,p,ci,stats,tbl,pdist] = permuanova2(x,reps,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
-%           Multivariate Permutation Tests Which May Replace Hotelling's T2
-%           Test in Prescribed Circumstances. Multivariate Behav Res,
-%           29(2):141-163.
-%       [2] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
-%           of event-related brain potentials/fields I: A critical tutorial
-%           review. Psychophysiology, 48(12):1711-1725.
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
@@ -177,11 +172,11 @@ if nargout > 1
     maxnobs = numel(x);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
 
-    % Estimate permutation distributions
-    pdistc = zeros(arg.nperm,1);
-    pdistr = zeros(arg.nperm,1);
+    % Estimate sampling distributions
+    distc = zeros(arg.nperm,1);
+    distr = zeros(arg.nperm,1);
     if reps > 1
-        pdisti = zeros(arg.nperm,1);
+        disti = zeros(arg.nperm,1);
     end
     for i = 1:arg.nperm
         xp = x(idx(:,i));
@@ -203,18 +198,18 @@ if nargout > 1
             essp = issp;
         end
         msep = essp/dfe;
-        pdistc(i) = cssp/dfc/msep;
-        pdistr(i) = rssp/dfr/msep;
+        distc(i) = cssp/dfc/msep;
+        distr(i) = rssp/dfr/msep;
         if reps > 1
-            pdisti(i) = issp/dfi/msep;
+            disti(i) = issp/dfi/msep;
         end
     end
 
     % Compute p-values
-    pc = (sum(fc<=pdistc)+1)/(arg.nperm+1);
-    pr = (sum(fr<=pdistr)+1)/(arg.nperm+1);
+    pc = (sum(fc<=distc)+1)/(arg.nperm+1);
+    pr = (sum(fr<=distr)+1)/(arg.nperm+1);
     if reps > 1
-        pint = (sum(fi<=pdisti)+1)/(arg.nperm+1);
+        pint = (sum(fi<=disti)+1)/(arg.nperm+1);
         p = [pc,pr,pint];
     else
         pint = NaN;
@@ -223,12 +218,12 @@ if nargout > 1
 
     % Compute CIs
     if nargout > 2
-        crit = prctile(pdistc,100*(1-arg.alpha));
+        crit = prctile(distc,100*(1-arg.alpha));
         cic = [fc./crit;Inf];
-        crit = prctile(pdistr,100*(1-arg.alpha));
+        crit = prctile(distr,100*(1-arg.alpha));
         cir = [fr./crit;Inf];
         if reps > 1
-            crit = prctile(pdisti,100*(1-arg.alpha));
+            crit = prctile(disti,100*(1-arg.alpha));
             cii = [fi./crit;Inf];
             ci = [cic,cir,cii];
         else
@@ -268,8 +263,8 @@ end
 % Arrange permutation distributions
 if nargout > 5
     if reps > 1
-        pdist = [pdistc,pdistr,pdisti];
+        dist = [distc,distr,disti];
     else
-        pdist = [pdistc,pdistr];
+        dist = [distc,distr];
     end
 end

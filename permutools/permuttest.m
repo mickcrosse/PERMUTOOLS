@@ -1,4 +1,4 @@
-function [t,p,ci,stats,pdist] = permuttest(x,m,varargin)
+function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %PERMUTTEST  One-sample and paired-sample permutation-based t-test.
 %   T = PERMUTTEST(X) performs a one-sample permutation test based on the
 %   t-statistic of the hypothesis that the data in X come from a
@@ -40,7 +40,7 @@ function [t,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %       'mu'        -- the estimated population mean of X, or of X-Y for a
 %                      paired test
 %
-%   [T,P,CI,STATS,PDIST] = PERMUTTEST(...) returns the permutation
+%   [T,P,CI,STATS,DIST] = PERMUTTEST(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -85,13 +85,15 @@ function [t,p,ci,stats,pdist] = permuttest(x,m,varargin)
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
 %   References:
-%       [1] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+%       [2] Blair RC, Higgins JJ, Karniski W, Kromrey JD (1994) A Study of
 %           Multivariate Permutation Tests Which May Replace Hotelling's T2
 %           Test in Prescribed Circumstances. Multivariate Behav Res,
 %           29(2):141-163.
-%       [2] Gondan M (2010) A permutation test for the race model
+%       [3] Gondan M (2010) A permutation test for the race model
 %           inequality. Behav Res Methods, 42(1):23-28.
-%       [3] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
+%       [4] Groppe DM, Urbach TP, Kutas M (2011) Mass univariate analysis
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
@@ -181,46 +183,46 @@ if nargout > 1
     rng(arg.seed);
     signx = sign(rand(maxnobs,arg.nperm)-0.5);
 
-    % Estimate permutation distribution
+    % Estimate sampling distribution
     sqrtn = sqrt(nobs.*df);
-    pdist = zeros(arg.nperm,nvar);
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
         xp = x.*repmat(signx(:,i),1,nvar);
         smx = sum(xp,nanflag);
-        pdist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
+        dist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
     end
 
     % Apply max correction if specified
     if arg.correct
-        pdist = max(abs(pdist),[],2);
+        dist = max(abs(dist),[],2);
     end
 
     % Add negative values
-    pdist(arg.nperm+1:2*arg.nperm,:) = -pdist;
+    dist(arg.nperm+1:2*arg.nperm,:) = -dist;
     arg.nperm = 2*arg.nperm;
     if arg.verbose
         fprintf('Adding negative of values to permutation distribution.\n')
         fprintf('Number of permutations used: %d\n',arg.nperm)
     end
 
-    % Compute p-value and CIs
+    % Compute p-value & CI
     switch arg.tail
         case 'both'
-            p = 2*(sum(abs(t)<=pdist)+1)/(arg.nperm+1);
+            p = 2*(sum(abs(t)<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha/2)).*se;
+                crit = prctile(dist,100*(1-arg.alpha/2)).*se;
                 ci = [mu-crit;mu+crit];
             end
         case 'right'
-            p = (sum(t<=pdist)+1)/(arg.nperm+1);
+            p = (sum(t<=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [mu-crit;Inf(1,nvar)];
             end
         case 'left'
-            p = (sum(t>=pdist)+1)/(arg.nperm+1);
+            p = (sum(t>=dist)+1)/(arg.nperm+1);
             if nargout > 2
-                crit = prctile(pdist,100*(1-arg.alpha)).*se;
+                crit = prctile(dist,100*(1-arg.alpha)).*se;
                 ci = [-Inf(1,nvar);mu+crit];
             end
     end
