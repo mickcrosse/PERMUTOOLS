@@ -3,14 +3,18 @@ function run_github_examples
 %   Generates random multivariate data for 2 samples X and Y and runs the
 %   following examples for GitHub README:
 %       1. Plots the permutation distribution and test statistic
-%       2. Tests for differences in sample variances (F-test)
-%       3. Tests for differences in sample means (t-test)
-%       4. Computes the effect size of differences in sample means
-%       5. Measures the correlation between samples
+%       2. Tests for differences in multivariate sample variances (F-test)
+%       3. Tests for differences in multivariate sample means (t-test)
+%       4. Computes the effect sizes between multivariate samples
+%       5. Measures the correlations between multivariate samples
 %
 %   See also PERMUVARTEST2 PERMUTTEST2 BOOTEFFECTSIZE PERMUCORR.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
+
+%   References:
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
@@ -27,19 +31,22 @@ y(:,1:10) = y(:,1:10)-1;
 %% 1. Permutation Distribution Example
 
 % Run PERMUTOOLS' permutation correlation measure (uncorrected)
-[~,pu,~,~,pdistu] = permuttest2(x,y,'correct',0,'seed',7);
+[~,pu,~,~,distu] = permuttest2(x,y,'correct',0,'seed',7);
 
 % Run PERMUTOOLS' permutation correlation measure (max-corrected)
-[tc,pc,~,~,pdistc] = permuttest2(x,y,'correct',1,'seed',7);
+[tc,pc,~,~,distc] = permuttest2(x,y,'correct',1,'seed',7);
 
 % Get test statistic for third variable
 t = tc(3);
 
 % Plot parametric & uncorrected permutation CIs
 figure('Name','Unpaired tests based on the t-statistic','NumberTitle','off')
+set(gcf,'renderer','Painters')
+% set(gca,'FontName','Helvetica')
 set(gcf,'color','w'), hold on
-histogram(pdistu(:,3),100,'FaceAlpha',0.5)
-histogram(pdistc,100,'FaceAlpha',0.5)
+histogram(distu(:,3),100,'FaceAlpha',0.5)
+h = histogram(distc,100,'FaceAlpha',0.5,'FaceAlpha', 0.5);
+uistack(h, 'top')
 plot([t,t],[0,500],'--k','LineWidth',2)
 xlim([-5,5]), ylim([0,500]), box on, grid on
 title('Permutation Distribution'), xlabel('{\itt}-statistic'), ylabel('frequency')

@@ -13,6 +13,10 @@ function run_permuttest_examples
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
+%   References:
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+
 %   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
