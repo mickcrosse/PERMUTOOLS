@@ -31,23 +31,9 @@ Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home ta
 
 ## Documentation
 
-For documentation and citation, please refer to the [PERMUTOOLS paper](doc/Crosse_etal_2024.pdf).
+For documentation and citation, please refer to the [PERMUTOOLS paper](doc/Crosse_etal_arXiv_2024.pdf).
 
 For usage, please see [examples](#examples) and [example M-files](examples).
-
-## Correction Methods
-
-### Max Correction for Multiple Comparisons
-
-Max correction, also referred to as *t*<sub>max</sub> or joint correction, is an effective way of controlling family-wise error rate (FWER) when conducting multivariate permutation tests (Blair *et al.*, 1993, 1994; Westfall and Young, 1993). It works as follows: on each permutation of the data, the test statistic is computed for each variable and the maximum absolute value (or most extreme positive or negative value) is taken. Repeating this procedure thousands of times produces a single, more-conservative permutation distribution, against which the actual test statistic is compared (see figure below). Thus, the more tests there are to take the maximum across, the more conservative the permutation distribution naturally becomes. This highly intuitive approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a,b; Rousselet, 2023). PERMUTOOLS automatically applies max correction to multivariate tests, unless specified otherwise.
-
-### Bias Correction for Small Samples
-
-A common effect size measure is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Standardised effect sizes have the advantage of being metric-free, meaning that they can be directly compared across different studies (Hentschke & Stuttgen, 2011). However, Cohen's *d* has been shown to have an upwards bias of up to about 4% for sample sizes of less than 50. This bias is somewhat reduced by using the pooled weighted standard deviation of the samples, instead of that of either sample. In addition, a bias correction factor can be applied to the effect size estimate, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). When this correction factor is applied, it is usual to refer to the resulting estimate as Hedges' *g*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
-
-# <img src="img/fig_permutation_distribution.png">
-
-The above figure shows two permutation distributions based on the *t*-statistic – one with max correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 comparisons).
 
 ## Contents
 
@@ -63,6 +49,20 @@ PERMUTOOLS consists of the following set of functions:
 | [**permuztest()**](permutools/permuztest.m) | One-sample permutation-based *Z*-test with max correction |
 | [**permucorr()**](permutools/permucorr.m) | Permutation-based correlation test with max correction |
 | [**booteffectsize()**](permutools/booteffectsize.m) | Bootstrapped effect size confidence intervals with bias correction |
+
+## Correction Features
+
+### Max Correction for Multiple Comparisons
+
+Max correction, also referred to as *t*<sub>max</sub> or joint correction, is an effective way of controlling family-wise error rate (FWER) when conducting multivariate permutation tests (Blair *et al.*, 1993, 1994; Westfall and Young, 1993). It works as follows: on each permutation of the data, the test statistic is computed for each variable and the maximum absolute value (or most extreme positive or negative value) is taken. Repeating this procedure thousands of times produces a single, more-conservative permutation distribution, against which the actual test statistic is compared (see figure below). Thus, the more tests there are to take the maximum across, the more conservative the permutation distribution naturally becomes. This highly intuitive approach provides strong control of FWER, even for small sample sizes, and is much more powerful than traditional correction methods (Gondan, 2010; Groppe *et al.*, 2011a,b; Rousselet, 2023). PERMUTOOLS automatically applies max correction to multivariate tests, unless specified otherwise.
+
+### Bias Correction for Small Samples
+
+A common effect size measure is the standardised mean difference, known as Cohen's *d* (Cohen, 1969). Standardised effect sizes have the advantage of being metric-free, meaning that they can be directly compared across different studies (Hentschke & Stuttgen, 2011). However, Cohen's *d* has been shown to have an upwards bias of up to about 4% for sample sizes of less than 50. This bias is somewhat reduced by using the pooled weighted standard deviation of the samples, instead of that of either sample. In addition, a bias correction factor can be applied to the effect size estimate, which is approximately equal to $`1−3/(4n−9)`$ (Hedges, 1985). When this correction factor is applied, it is usual to refer to the resulting estimate as Hedges' *g*. PERMUTOOLS automatically applies bias correction to measures of Cohen's *d* and Glass' *Δ*, unless specified otherwise.
+
+# <img src="img/fig_permutation_distribution.png">
+
+The above figure shows two permutation distributions based on the *t*-statistic – one with max correction (red), the other without (blue) – for synthetically generated data with 20 variables (i.e. corrected for 20 comparisons).
 
 ## Examples
 
@@ -340,17 +340,16 @@ We can report the correlation coefficient and test statistics (adjusted for mult
 
 If you publish any work using PERMUTOOLS, please it cite as:
 
-Crosse MJ, Foxe JJ, Molholm S (*In Prep*) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.
+Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing. *arXiv* 2401.09401.
 
 ```
-@article{crosse2024permutools,
-  title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing},
-  author={Crosse, Michael J and Foxe, John J and Molholm, Sophie},
-  journal={},
-  volume={},
-  pages={},
-  year={In Prep},
-  publisher={}
+@misc{crosse2024permutools,
+      title={PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing}, 
+      author={Michael J. Crosse and John J. Foxe and Sophie Molholm},
+      year={2024},
+      eprint={2401.09401},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME}
 }
 ```
 
