@@ -31,9 +31,11 @@ Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home ta
 
 ## Documentation
 
-For documentation and citation, please refer to the PERMUTOOLS arXiv paper:
+For documentation and citation, please refer to the PERMUTOOLS *arXiv* paper:
 
-[Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing. *arXiv* 2401.09401.](doc/Crosse_etal_arXiv_2024.pdf)
+Crosse MJ, Foxe JJ, Molholm S (2024) [PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.](doc/Crosse_etal_arXiv_2024.pdf) *arXiv* 2401.09401.
+
+DOI: [arXiv:2401.09401 ](https://doi.org/10.48550/arXiv.2401.09401)
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
@@ -342,7 +344,7 @@ We can report the correlation coefficient and test statistics (adjusted for mult
 
 If you publish any work using PERMUTOOLS, please it cite as:
 
-Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing. *arXiv* 2401.09401.
+Crosse MJ, Foxe JJ, Molholm S (2024) **PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.** *arXiv* 2401.09401.
 
 ```
 @misc{crosse2024permutools,
