@@ -31,7 +31,9 @@ Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home ta
 
 ## Documentation
 
-For documentation and citation, please refer to the [PERMUTOOLS paper](doc/Crosse_etal_arXiv_2024.pdf).
+For documentation and citation, please refer to the PERMUTOOLS arXiv paper:
+
+[Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing. *arXiv* 2401.09401.](doc/Crosse_etal_arXiv_2024.pdf)
 
 For usage, please see [examples](#examples) and [example M-files](examples).
 
@@ -43,12 +45,12 @@ PERMUTOOLS consists of the following set of functions:
 | ---- | --- |
 | [**permuanova1()**](permutools/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
 | [**permuanova2()**](permutools/permuanova2.m) | Two-way permutation-based analysis of variance (ANOVA) |
-| [**permuttest()**](permutools/permuttest.m) | One-sample or paired-sample permutation-based *t*-test with max correction |
+| [**permuttest()**](permutools/permuttest.m) | One/paired-sample permutation-based *t*-test with max correction |
 | [**permuttest2()**](permutools/permuttest2.m) | Two-sample permutation-based *t*-test with max correction |
 | [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample permutation-based *F*-test with max correction |
 | [**permuztest()**](permutools/permuztest.m) | One-sample permutation-based *Z*-test with max correction |
-| [**permucorr()**](permutools/permucorr.m) | Permutation-based correlation test with max correction |
-| [**booteffectsize()**](permutools/booteffectsize.m) | Bootstrapped effect size confidence intervals with bias correction |
+| [**permucorr()**](permutools/permucorr.m) | Permutation-based correlation analysis with max correction |
+| [**booteffectsize()**](permutools/booteffectsize.m) | Effect size & bootstrapped confidence intervals with bias correction |
 
 ## Correction Features
 
