@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10556247.svg)](https://doi.org/10.5281/zenodo.10556247)
 
-PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient resampling procedures to generate the sampling distribution empirically, providing distribution-free, nonparametric hypothesis testing and effect size analysis.
+PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient resampling algorithms to generate the sampling distribution empirically, providing distribution-free, nonparametric hypothesis testing and effect size analysis.
 
 PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), ***t*-test** (one-sample, paired-sample, two-sample) ***F*-test** (two-sample), ***Z*-test** (one-sample), and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is automatically applied using the max correction method, which is less prone to type II errors than conventional methods.
 
