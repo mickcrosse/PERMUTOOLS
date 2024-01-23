@@ -37,9 +37,9 @@ For documentation and citation, please refer to the PERMUTOOLS *arXiv* paper:
 
 - Crosse MJ, Foxe JJ, Molholm S (2024) [**PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.**](doc/Crosse_etal_arXiv_2024.pdf) *arXiv* 2401.09401.
 
-- DOI: [arXiv:2401.09401 ](https://doi.org/10.48550/arXiv.2401.09401)
+- DOI: [10.48550/arXiv.2401.09401](https://doi.org/10.48550/arXiv.2401.09401)
 
-For usage, please see [examples](#examples) and [example M-files](examples).
+For usage, please see the example code provided here in the [examples section](#examples), as well as in the [examples folder](examples). For detailed usage, please see the help documentation in the function headers.
 
 ## Contents
 
