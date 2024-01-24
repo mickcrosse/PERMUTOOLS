@@ -4,6 +4,7 @@
 [![View PERMUTOOLS on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://uk.mathworks.com/matlabcentral/fileexchange/158176-permutools)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10556247.svg)](https://doi.org/10.5281/zenodo.10556247)
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://doi.org/10.48550/arXiv.2401.09401)
 
 PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient resampling algorithms to generate the sampling distribution empirically, providing distribution-free, nonparametric hypothesis testing and effect size analysis.
 
@@ -72,7 +73,7 @@ The above figure shows two permutation distributions based on the *t*-statistic 
 
 ## Examples
 
-All examples shown below can be found in a single M-file called `run_github_examples.m` in the [examples folder](examples), as well as additional M-files with more extensive examples.
+The example code used to generate the results and plots below can be found in [run_github_examples.m](examples/run_github_examples.m), as well as more extensive examples in the [examples folder](examples).
 
 ### Permutation tests for multivariate data
 
