@@ -34,7 +34,7 @@ Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home ta
 
 ## Documentation
 
-For documentation and citation, please refer to the [PERMUTOOLS *arXiv* paper](doc/Crosse_etal_arXiv_2024.pdf):
+For documentation and citation, please refer to the [*arXiv* paper](doc/Crosse_etal_arXiv_2024.pdf):
 
 - Crosse MJ, Foxe JJ, Molholm S (2024) **PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.** *arXiv* 2401.09401. https://doi.org/10.48550/arXiv.2401.09401
 
