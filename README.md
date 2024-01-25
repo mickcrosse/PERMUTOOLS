@@ -71,7 +71,7 @@ The above figure shows two permutation distributions based on the *t*-statistic 
 
 ## Examples
 
-The example code used to generate the results and plots below can be found in [run_github_examples.m](examples/run_github_examples.m), as well as more extensive examples in the [examples folder](examples).
+The example code used to generate the results and plots below can be found in [run_github_examples.m](examples/run_github_examples.m), as well as more extensive examples for each function in the [examples](examples) folder.
 
 ### Permutation tests for multivariate data
 
