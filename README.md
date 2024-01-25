@@ -23,10 +23,10 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 
 ## Installation
 
-Download and unzip PERMUTOOLS to a local directory, then in the MATLAB/GNU Octave command window enter:
+Download and unzip PERMUTOOLS to a local directory, then in the MATLAB or Octave command window enter:
 
 ```matlab
-addpath(genpath('directory/PERMUTOOLS'/permutools'))
+addpath(genpath('directory/PERMUTOOLS/permutools'))
 savepath
 ```
 
