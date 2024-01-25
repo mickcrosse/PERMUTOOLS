@@ -26,19 +26,17 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 Download and unzip PERMUTOOLS to a local directory, then in the MATLAB/GNU Octave command window enter:
 
 ```matlab
-addpath('directory/PERMUTOOLS')
+addpath(genpath('directory/PERMUTOOLS'/permutools'))
 savepath
 ```
 
-Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the top-level folder.
+Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the `permutools` subfolder.
 
 ## Documentation
 
-For documentation and citation, please refer to the PERMUTOOLS *arXiv* paper:
+For documentation and citation, please refer to the [PERMUTOOLS *arXiv* paper](doc/Crosse_etal_arXiv_2024.pdf):
 
-- Crosse MJ, Foxe JJ, Molholm S (2024) [**PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.**](doc/Crosse_etal_arXiv_2024.pdf) *arXiv* 2401.09401.
-
-- DOI: [10.48550/arXiv.2401.09401](https://doi.org/10.48550/arXiv.2401.09401)
+- Crosse MJ, Foxe JJ, Molholm S (2024) **PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.** *arXiv* 2401.09401. https://doi.org/10.48550/arXiv.2401.09401
 
 For usage, please see the example code provided here in the [examples section](#examples), as well as in the [examples folder](examples). For detailed usage, please see the help documentation in the function headers.
 
