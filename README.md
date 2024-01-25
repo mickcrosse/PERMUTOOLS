@@ -26,7 +26,7 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 Download and unzip PERMUTOOLS to a local directory, then in the MATLAB or Octave command window enter:
 
 ```matlab
-addpath(genpath('directory/PERMUTOOLS/permutools'))
+addpath(genpath('directory/PERMUTOOLS-1.0/permutools'))
 savepath
 ```
 
@@ -38,14 +38,14 @@ For documentation and citation, please refer to the [*arXiv* paper](doc/Crosse_e
 
 - Crosse MJ, Foxe JJ, Molholm S (2024) **PERMUTOOLS: A MATLAB Package for Multivariate Permutation Testing.** *arXiv* 2401.09401. https://doi.org/10.48550/arXiv.2401.09401
 
-For usage, please see the example code provided here in the [examples section](#examples), as well as in the [examples folder](examples). For detailed usage, please see the help documentation in the function headers.
+For usage, please see the example code provided in the [Examples](#examples) section below, as well the M-files in the [examples](examples) folder. For detailed usage, please see the help documentation in each of the function headers.
 
 ## Contents
 
 PERMUTOOLS consists of the following set of functions:
 
 | Function | Description |
-| ---- | --- |
+| --- | --- |
 | [**permuanova1()**](permutools/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
 | [**permuanova2()**](permutools/permuanova2.m) | Two-way permutation-based analysis of variance (ANOVA) |
 | [**permuttest()**](permutools/permuttest.m) | One/paired-sample permutation-based *t*-test with max correction |
