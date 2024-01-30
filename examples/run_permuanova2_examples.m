@@ -21,6 +21,10 @@ function run_permuanova2_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+% Check version
+info = ver;
+isoctave = any(ismember({info.Name},'Octave'));
+
 % Generate random data
 rng(42);
 x = randn(6,5);
@@ -40,9 +44,15 @@ p1 = zeros(dim,20);
 f2 = zeros(dim,20);
 p2 = zeros(dim,20);
 ci2 = zeros(2,dim,20);
-s = RandStream('mlfg6331_64');
+if ~isoctave
+    s = RandStream('mlfg6331_64');
+end
 for i = 1:20
-    idx = datasample(s,1:6,6,'Replace',false);
+    if isoctave
+        idx = datasample(1:6,6,'Replace',false);
+    else
+        idx = datasample(s,1:6,6,'Replace',false);
+    end
     [p1(:,i)] = anova2(x(idx,:),reps,'off');
     [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps);
 end

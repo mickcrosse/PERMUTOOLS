@@ -20,6 +20,10 @@ function run_permuztest_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+% Check version
+info = ver;
+isoctave = any(ismember({info.Name},'Octave'));
+
 % Generate random data
 rng(42);
 x = randn(30,20);
@@ -33,7 +37,15 @@ label = {'two','right','left'};
 figure('Name','One-sample Test: mean value & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
-    [~,p1,ci1] = ztest(x,m,sigma,'tail',tail{i});
+    if isoctave
+        p1 = zeros(1,20);
+        ci1 = zeros(2,20);
+        for j = 1:20
+            [~,p1(j),ci1(:,j)] = ztest(x(:,j),m,sigma,'tail',tail{i});
+        end
+    else
+        [~,p1,ci1] = ztest(x,m,sigma,'tail',tail{i});
+    end
     [~,p2,ci2,stats2] = permuztest(x,m,sigma,'tail',tail{i},'correct',0,...
         'verbose',0);
     subplot(3,2,i+i-1), hold on
@@ -70,7 +82,14 @@ end
 figure('Name','One-sample Test: p-values','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
-    [~,p1] = ztest(x,m,sigma,'tail',tail{i});
+    if isoctave
+        p1 = zeros(1,20);
+        for j = 1:20
+            [~,p1(j)] = ztest(x(:,j),m,sigma,'tail',tail{i});
+        end
+    else
+        [~,p1,ci1] = ztest(x,m,sigma,'tail',tail{i});
+    end
     [~,p2] = permuztest(x,m,sigma,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)

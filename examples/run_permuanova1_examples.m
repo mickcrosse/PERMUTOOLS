@@ -20,6 +20,10 @@ function run_permuanova1_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+% Check version
+info = ver;
+isoctave = any(ismember({info.Name},'Octave'));
+
 % Generate random data
 rng(42);
 x = randn(30,5);
@@ -32,9 +36,17 @@ p1 = zeros(1,20);
 f2 = zeros(1,20);
 p2 = zeros(1,20);
 ci2 = zeros(2,20);
-s = RandStream('mlfg6331_64');
+if ~isoctave
+    s = RandStream('mlfg6331_64');
+end
 for i = 1:20
-    group = datasample(s,group_labels,numel(group_labels),'Replace',true);
+    if isoctave
+        group = datasample(group_labels,numel(group_labels),...
+            'Replace',true);
+    else
+        group = datasample(s,group_labels,numel(group_labels),...
+            'Replace',true);
+    end
     [p1(i)] = anova1(x,group,'off');
     [f2(i),p2(i),ci2(:,i)] = permuanova1(x,group);
 end
