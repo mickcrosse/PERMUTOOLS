@@ -23,14 +23,27 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 
 ## Installation
 
-Download and unzip PERMUTOOLS to a local directory, then in the MATLAB or Octave command window enter:
+### MATLAB
+
+Download and unzip PERMUTOOLS to a local directory, then in the MATLAB command window enter:
 
 ```matlab
-addpath(genpath('directory/PERMUTOOLS-1.0/permutools'))
+addpath(genpath('directory/PERMUTOOLS-1.0/matlab'))
 savepath
 ```
 
-Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the `permutools` subfolder.
+Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the `matlab` subfolder.
+
+### Octave
+
+Download and unzip PERMUTOOLS to a local directory, then in the Octave command window enter:
+
+```octave
+addpath(genpath('directory/PERMUTOOLS-1.0/octave'))
+savepath
+```
+
+Alternatively, use the Octave dialog box to install PERMUTOOLS. In the **Edit** menu, click **Set Path**. In the Set Path dialog box, click the **Add Folder...** dropdown menu and select **Folder With Subfolders** and search for PERMUTOOLS in your local directory and select the `octave` subfolder.
 
 ## Documentation
 
@@ -75,7 +88,7 @@ The example code used to generate the results and plots below can be found in [r
 
 ### Permutation tests for multivariate data
 
-The following example demonstrates how to test whether two independent samples come from distributions with equal means in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
+The following example demonstrates how to test whether two independent samples come from distributions with equal means in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB/Octave.
 
 First, we generate random multivariate data for 2 "independent" samples X and Y. Each sample has 20 variables, each with a mean value of approximately 0, except for the first 10 variables of Y which have a mean value of approximately -1. Each variable has 30 observations.
 
@@ -259,7 +272,7 @@ We can report the test statistics and effect size measures (adjusted for multipl
 
 ### Correlation measures for multivariate data
 
-The following example demonstrates how to measure the correlation between two multivariate samples in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB.
+The following example demonstrates how to measure the correlation between two multivariate samples in PERMUTOOLS, and compares the test results to those of the equivalent parametric tests in MATLAB/Octave.
 
 First, we generate random multivariate data for 2 multivariate samples X and Y. Each sample has 20 variables, each pair with a correlation of 0, except for the first 5 variables which have a positive correlation, and the second 5 variables which have a negative correlation. Each variable has 30 observations.
 
