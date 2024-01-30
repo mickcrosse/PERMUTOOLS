@@ -41,6 +41,7 @@ Download and unzip PERMUTOOLS to a local directory, then in the Octave command w
 ```octave
 addpath(genpath('directory/PERMUTOOLS-1.0/octave'))
 savepath
+pkg load statistics
 ```
 
 Alternatively, use the Octave dialog box to install PERMUTOOLS. In the **Edit** menu, click **Set Path**. In the Set Path dialog box, click the **Add Folder...** dropdown menu and select **Folder With Subfolders** and search for PERMUTOOLS in your local directory and select the `octave` subfolder.
