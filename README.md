@@ -59,14 +59,14 @@ PERMUTOOLS consists of the following set of functions:
 
 | Function | Description |
 | --- | --- |
-| [**permuanova1()**](permutools/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
-| [**permuanova2()**](permutools/permuanova2.m) | Two-way permutation-based analysis of variance (ANOVA) |
-| [**permuttest()**](permutools/permuttest.m) | One/paired-sample permutation-based *t*-test with max correction |
-| [**permuttest2()**](permutools/permuttest2.m) | Two-sample permutation-based *t*-test with max correction |
-| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample permutation-based *F*-test with max correction |
-| [**permuztest()**](permutools/permuztest.m) | One-sample permutation-based *Z*-test with max correction |
-| [**permucorr()**](permutools/permucorr.m) | Permutation-based correlation analysis with max correction |
-| [**booteffectsize()**](permutools/booteffectsize.m) | Effect size & bootstrapped confidence intervals with bias correction |
+| [**permuanova1()**](matlab/permuanova1.m) | One-way permutation-based analysis of variance (ANOVA) |
+| [**permuanova2()**](matlab/permuanova2.m) | Two-way permutation-based analysis of variance (ANOVA) |
+| [**permuttest()**](matlab/permuttest.m) | One/paired-sample permutation-based *t*-test with max correction |
+| [**permuttest2()**](matlab/permuttest2.m) | Two-sample permutation-based *t*-test with max correction |
+| [**permuvartest2()**](matlab/permuvartest2.m) | Two-sample permutation-based *F*-test with max correction |
+| [**permuztest()**](matlab/permuztest.m) | One-sample permutation-based *Z*-test with max correction |
+| [**permucorr()**](matlab/permucorr.m) | Permutation-based correlation analysis with max correction |
+| [**booteffectsize()**](matlab/booteffectsize.m) | Effect size & bootstrapped confidence intervals with bias correction |
 
 ## Correction Features
 
