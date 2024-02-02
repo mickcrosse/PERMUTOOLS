@@ -14,8 +14,8 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 
 - [Installation](#installation)
 - [Documentation](#documentation)
-- [Correction Methods](#correction-methods)
 - [Contents](#contents)
+- [Correction Features](#correction-features)
 - [Examples](#examples)
 - [Citation](#citation)
 - [References](#references)
