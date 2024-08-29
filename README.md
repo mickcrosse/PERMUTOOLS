@@ -28,18 +28,18 @@ PERMUTOOLS also offers effect size measurement and bootstrapped confidence inter
 Download and unzip PERMUTOOLS to a local directory, then in the MATLAB command window enter:
 
 ```matlab
-addpath(genpath('directory/PERMUTOOLS-1.0/matlab'))
+addpath(genpath('directory/PERMUTOOLS-1.1/permutools'))
 savepath
 ```
 
-Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the `matlab` subfolder.
+Alternatively, use the MATLAB dialog box to install PERMUTOOLS. On the **Home tab**, in the **Environment** section, click **Set Path**. In the Set Path dialog box, click **Add Folder with Subfolders** and search for PERMUTOOLS in your local directory and select the `permutools` subfolder.
 
 ### Octave
 
 Download and unzip PERMUTOOLS to a local directory, then in the Octave command window enter:
 
 ```octave
-addpath(genpath('directory/PERMUTOOLS-1.0/octave'))
+addpath(genpath('directory/PERMUTOOLS-1.1/octave'))
 savepath
 pkg load statistics
 ```
