@@ -6,6 +6,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %   transformed to rank orders in order to compute a Spearman or rankit
 %   correlation by setting the 'type' parameter to 'spearman' or 'rankit'.
 %
+%   PERMUCORR treats NaNs as missing values, and ignores them.
+%
 %   R = PERMUCORR(X,Y) returns the pairwise correlation coefficient between
 %   vectors X and Y. X and Y must have the same length. If X and Y are
 %   matrices, the correlation coefficients between each corresponding pair
@@ -126,23 +128,30 @@ end
 
 % Use only rows with no NaN values if specified
 switch arg.rows
+    case 'all'
+        x(isnan(y)) = NaN;
+        y(isnan(x)) = NaN;
     case 'complete'
         x = x(~any(isnan(y),2),:);
         y = y(~any(isnan(y),2),:);
         y = y(~any(isnan(x),2),:);
         x = x(~any(isnan(x),2),:);
-    case 'all'
-        if any(isnan(x(:))) || any(isnan(y(:)))
-            error('X or Y is missing values. Set ROWS to ''complete''.')
-        end
 end
 
 % Get data dimensions
-[nobs,nvar] = size(x);
+[maxnobs,nvar] = size(x);
+nobs = sum(~isnan(x));
 
 % Compute degrees of freedom
 if nargout > 3
     df = nobs-2;
+end
+
+% For efficiency, only omit NaNs if necessary
+if any(isnan(x(:)))
+    nanflag = true;
+else
+    nanflag = false;
 end
 
 % Transform raw data to rank-orders if specified
@@ -156,29 +165,41 @@ switch arg.type
 end
 
 % Compute test statistic
-sdxy = sqrt((sum(x.^2)-(sum(x).^2)/nobs).*(sum(y.^2)-(sum(y).^2)/nobs));
-mu = sum(x).*sum(y)/nobs;
-r = (sum(x.*y)-mu)./sdxy;
+if nanflag
+    sdxy = sqrt((nansum(x.^2)-(nansum(x).^2)/nobs).*(nansum(y.^2)-(nansum(y).^2)/nobs));
+    mu = nansum(x).*nansum(y)/nobs;
+    r = (nansum(x.*y)-mu)./sdxy;
+else
+    sdxy = sqrt((sum(x.^2)-(sum(x).^2)/nobs).*(sum(y.^2)-(sum(y).^2)/nobs));
+    mu = sum(x).*sum(y)/nobs;
+    r = (sum(x.*y)-mu)./sdxy;
+end
 
 if nargout > 1
 
     % Generate random permutations
     rng(arg.seed);
-    if nobs < 8
-        arg.nperm = factorial(nobs);
-        idx = perms(1:nobs)';
+    if maxnobs < 8
+        arg.nperm = factorial(maxnobs);
+        idx = perms(1:maxnobs)';
         if arg.verbose
             warning('Computing all possible permutations due to small N.')
             fprintf('Number of permutations used: %d\n',arg.nperm)
         end
     else
-        [~,idx] = sort(rand(nobs,arg.nperm));
+        [~,idx] = sort(rand(maxnobs,arg.nperm));
     end
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        dist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
+    if nanflag
+        for i = 1:arg.nperm
+            dist(i,:) = (nansum(x(idx(:,i),:).*y)-mu)./sdxy;
+        end
+    else
+        for i = 1:arg.nperm
+            dist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
+        end
     end
 
     % Apply max correction if specified
@@ -195,14 +216,6 @@ if nargout > 1
                 dist = min(dist,[],2);
         end
     end
-
-    % % Add negative values
-    % dist(arg.nperm+1:2*arg.nperm,:) = -dist;
-    % arg.nperm = 2*arg.nperm;
-    % if arg.verbose
-    %     fprintf('Adding negative of values to permutation distribution.\n')
-    %     fprintf('Number of permutations used: %d\n',arg.nperm)
-    % end
 
     % Compute p-value & CI
     switch arg.tail
