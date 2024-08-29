@@ -6,6 +6,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %   transformed to rank orders in order to compute a Spearman or rankit
 %   correlation by setting the 'type' parameter to 'spearman' or 'rankit'.
 %
+%   PERMUCORR treats NaNs as missing values, and ignores them.
+%
 %   R = PERMUCORR(X,Y) returns the pairwise correlation coefficient between
 %   vectors X and Y. X and Y must have the same length. If X and Y are
 %   matrices, the correlation coefficients between each corresponding pair
@@ -126,23 +128,30 @@ end
 
 % Use only rows with no NaN values if specified
 switch arg.rows
+    case 'all'
+        x(isnan(y)) = NaN;
+        y(isnan(x)) = NaN;
     case 'complete'
         x = x(~any(isnan(y),2),:);
         y = y(~any(isnan(y),2),:);
         y = y(~any(isnan(x),2),:);
         x = x(~any(isnan(x),2),:);
-    case 'all'
-        if any(isnan(x(:))) || any(isnan(y(:)))
-            error('X or Y is missing values. Set ROWS to ''complete''.')
-        end
 end
 
 % Get data dimensions
-[nobs,nvar] = size(x);
+[maxnobs,nvar] = size(x);
+nobs = sum(~isnan(x));
 
 % Compute degrees of freedom
 if nargout > 3
     df = nobs-2;
+end
+
+% For efficiency, only omit NaNs if necessary
+if any(isnan(x(:))) || any(isnan(y(:)))
+    nanflag = 'omitmissing';
+else
+    nanflag = 'includemissing';
 end
 
 % Transform raw data to rank-orders if specified
@@ -151,34 +160,35 @@ switch arg.type
         x = tiedrank(x);
         y = tiedrank(y);
     case 'rankit'
-        x = norminv((tiedrank(x)-0.5)/nobs);
-        y = norminv((tiedrank(y)-0.5)/nobs);
+        x = norminv((tiedrank(x)-0.5)./nobs);
+        y = norminv((tiedrank(y)-0.5)./nobs);
 end
 
 % Compute test statistic
-sdxy = sqrt((sum(x.^2)-(sum(x).^2)/nobs).*(sum(y.^2)-(sum(y).^2)/nobs));
-mu = sum(x).*sum(y)/nobs;
-r = (sum(x.*y)-mu)./sdxy;
+sdxy = sqrt((sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)...
+    .*(sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobs));
+mu = sum(x,nanflag).*sum(y,nanflag)./nobs;
+r = (sum(x.*y,nanflag)-mu)./sdxy;
 
 if nargout > 1
 
     % Generate random permutations
     rng(arg.seed);
-    if nobs < 8
-        arg.nperm = factorial(nobs);
-        idx = perms(1:nobs)';
+    if maxnobs < 8
+        arg.nperm = factorial(maxnobs);
+        idx = perms(1:maxnobs)';
         if arg.verbose
             warning('Computing all possible permutations due to small N.')
             fprintf('Number of permutations used: %d\n',arg.nperm)
         end
     else
-        [~,idx] = sort(rand(nobs,arg.nperm));
+        [~,idx] = sort(rand(maxnobs,arg.nperm));
     end
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        dist(i,:) = (sum(x(idx(:,i),:).*y)-mu)./sdxy;
+        dist(i,:) = (sum(x(idx(:,i),:).*y,nanflag)-mu)./sdxy;
     end
 
     % Apply max correction if specified
