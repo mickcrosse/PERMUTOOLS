@@ -22,7 +22,7 @@ function run_paper_examples
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
 %           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -33,10 +33,10 @@ y = randn(30,20);
 y(:,1:10) = y(:,1:10)-1;
 
 % Run MATLAB's two-sample parametric t-test
-[h2,p1,ci1,stats1] = ttest2(x,y);
+[~,p1,ci1] = ttest2(x,y);
 
 % Run PERMUTOOLS' two-sample permutation t-test
-[t2,p2,ci2,stats2] = permuttest2(x,y);
+[~,p2,ci2,stats2] = permuttest2(x,y);
 
 % Run MATLAB's parametric effect size analysis
 d3 = zeros(1,20);
@@ -48,7 +48,7 @@ for j = 1:20
 end
 
 % Run PERMUTOOLS' bootstrapped effect size analysis
-[d4,ci4,stats4] = booteffectsize(x,y,'effect','cohen','paired',0);
+[d4,ci4] = booteffectsize(x,y,'effect','cohen','paired',0);
 
 % Set up figure
 figure('Name','Permutation Tests & Effect Size Analysis','NumberTitle','off')

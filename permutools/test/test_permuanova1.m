@@ -1,7 +1,7 @@
 function test_permuanova1
 %TEST_PERMUANOVA1  Unit tests for permuanova1.m.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

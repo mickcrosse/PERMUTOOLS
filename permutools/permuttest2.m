@@ -91,7 +91,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %       [5] Groppe DM (2016) Combating the scientific decline effect with
 %           confidence (intervals). Psychophysiology, 54(1):139-145.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

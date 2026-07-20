@@ -1,7 +1,7 @@
 function test_permuvartest2
 %TEST_PERMUVARTEST2  Unit tests for permuvartest2.m.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

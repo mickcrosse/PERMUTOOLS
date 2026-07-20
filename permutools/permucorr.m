@@ -90,7 +90,7 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %       [5] Bishara AJ, Hittner JB, (2017) Confidence intervals for
 %           correlations when data are not normal. Behav Res, 49:294-309.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

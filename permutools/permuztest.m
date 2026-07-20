@@ -73,7 +73,7 @@ function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

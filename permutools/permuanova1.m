@@ -3,7 +3,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %   F = PERMUANOVA1(X) performs a one-way permutation-based ANOVA for
 %   comparing the means of two or more groups of data in matrix X, and
 %   returns the test statistic. The columns of X can have different lengths
-%   by in including NaN values.
+%   by including NaN values.
 %
 %   PERMUANOVA1 treats NaNs as missing values, and ignores them.
 %
@@ -63,7 +63,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
 %           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 

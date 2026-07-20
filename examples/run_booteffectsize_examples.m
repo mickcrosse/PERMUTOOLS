@@ -23,7 +23,7 @@ function run_booteffectsize_examples
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
 %           Package for Multivariate Permutation Testing. arXiv 2401.09401.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -99,7 +99,7 @@ for i = 1:numel(paired)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         xlim([0,21]), ylim([-2,5]), box on, grid on
         if i == 1 && n == 1
-            title('Corrected')
+            title('Bias-corrected')
         end
         if i == 2 && n == 2
             xlabel('variable')

@@ -72,11 +72,11 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-if nargin<2
+if nargin < 2
     y = [];
 end
 

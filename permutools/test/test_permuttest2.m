@@ -1,7 +1,7 @@
 function test_permuttest2
 %TEST_PERMUTTEST2  Unit tests for permuttest2.m.
 
-%   © 2018-2023 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
