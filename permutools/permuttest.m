@@ -162,9 +162,9 @@ df = nobs-1;
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Compute standard deviation
@@ -187,7 +187,7 @@ if nargout > 1
     sqrtn = sqrt(nobs.*df);
     dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
-        xp = x.*repmat(signx(:,i),1,nvar);
+        xp = x.*double(signx(:,i));
         smx = sum(xp,nanflag);
         dist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
     end

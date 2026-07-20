@@ -102,9 +102,9 @@ nobs = sum(~isnan(x));
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Compute mean value

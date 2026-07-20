@@ -161,9 +161,9 @@ dfy = nobsy-1;
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:))) || any(isnan(y(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Compute sample variance using fast algo

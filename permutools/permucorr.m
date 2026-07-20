@@ -149,9 +149,9 @@ end
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:))) || any(isnan(y(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Transform raw data to rank-orders if specified

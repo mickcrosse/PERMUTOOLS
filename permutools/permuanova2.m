@@ -85,9 +85,9 @@ end
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Get data dimensions, ignoring NaNs
