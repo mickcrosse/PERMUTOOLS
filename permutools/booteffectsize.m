@@ -3,12 +3,11 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
 %   for sample size, also known as Hedges' g. For ordinal data, Cliff's
-%   delta can be computed by setting the 'effect' parameter to 'cliff'.
-%
-%   If X is a matrix, separate effect sizes are measured along each column
-%   of X, and a vector of results is returned. If the 'compare' parameter
-%   is set to 'pairwise', the effect sizes between every pair of columns in
-%   X are measured, and a matrix of results is returned.
+%   delta can be computed by setting the 'effect' parameter to 'cliff'. If 
+%   X is a matrix, separate effect sizes are measured along each column of 
+%   X, and a vector of results is returned. If the 'compare' parameter is 
+%   set to 'pairwise', the effect sizes between every pair of columns in X 
+%   are measured, and a matrix of results is returned.
 %
 %   BOOTEFFECTSIZE treats NaNs as missing values, and ignores them.
 %
@@ -73,8 +72,9 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                       'pairwise'  compare every pair of columns in X to
 %                                   each other and return a matrix of
 %                                   results
-%       'nboot'     A scalar specifying the number of bootstraps used to
-%                   estimate the confidence intervals (default=10,000).
+%       'nboot'     An integer scalar specifying the number of bootstraps 
+%                   used to estimate the confidence intervals (default=
+%                   10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
 %                   bias-correct the effect size and confidence intervals
 %                   according to sample size (default=true). Note, this
@@ -103,7 +103,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %       [4] Hedges LV, Olkin I (1985) Statistical methods for meta-
 %           analysis. San Diego, CA: Academic Press.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -299,12 +299,14 @@ if nargout > 1
         % Generate random bootstraps
         xb = x(:,i);
         yb = y(:,i);
-        idx = ceil(nobsx(i)*rand([nobsx(i),arg.nboot]));
+        idx = randi(nobsx(i),[nobsx(i),arg.nboot],'uint32');
         xb = xb(idx);
         if ~arg.paired
-            idx = ceil(nobsy(i)*rand([nobsy(i),arg.nboot]));
+            clear idx;
+            idx = randi(nobsy(i),[nobsy(i),arg.nboot],'uint32');
         end
         yb = yb(idx);
+        clear idx;
 
         % Estimate sampling distribution
         smxb = sum(xb,nanflag);
@@ -314,12 +316,22 @@ if nargout > 1
         if arg.paired
             switch arg.effect
                 case 'cliff'
-                    diffxyb = zeros(max(nobsx)^2,arg.nboot);
-                    for j = 1:arg.nboot
-                        diffi = sign(xb(:,j)-yb(:,j)');
-                        diffxyb(:,j) = diffi(:);
+                    try  % fast algo
+                        xb3d = reshape(xb,nobsx(i),1,arg.nboot);
+                        yb3d = reshape(yb,1,nobsx(i),arg.nboot);
+                        diffi = sign(xb3d-yb3d);
+                        clear xb3d yb3d;
+                        diffxyb = reshape(diffi,nobsx(i)^2,arg.nboot);
+                        clear diffi;
+                        diffxyb(1:nobsx(i)+1:end,:) = 0;
+                    catch  % memory-efficient algo
+                        diffxyb = zeros(max(nobsx)^2,arg.nboot);
+                        for j = 1:arg.nboot
+                            diffi = sign(xb(:,j)-yb(:,j)');
+                            diffxyb(:,j) = diffi(:);
+                        end
+                        diffxyb(1:max(nobsx)+1:end,:) = 0;
                     end
-                    diffxyb(1:max(nobsx)+1:end,:) = 0;
                 otherwise
                     diffxyb = xb-yb;
             end
@@ -333,10 +345,19 @@ if nargout > 1
         else
             switch arg.effect
                 case 'cliff'
-                    diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
-                    for j = 1:arg.nboot
-                        diffi = sign(xb(:,j)-yb(:,j)');
-                        diffxyb(:,j) = diffi(:);
+                    try  % fast algo
+                        xb3d = reshape(xb,nobsx(i),1,arg.nboot);
+                        yb3d = reshape(yb,1,nobsy(i),arg.nboot);
+                        diffi = sign(xb3d-yb3d);
+                        clear xb3d yb3d;
+                        diffxyb = reshape(diffi,nobsx(i)*nobsy(i),arg.nboot);
+                        clear diffi;
+                    catch  % memory-efficient algo
+                        diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
+                        for j = 1:arg.nboot
+                            diffi = sign(xb(:,j)-yb(:,j)');
+                            diffxyb(:,j) = diffi(:);
+                        end
                     end
             end
             switch arg.effect

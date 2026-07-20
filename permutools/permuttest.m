@@ -97,7 +97,7 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %           of event-related brain potentials/fields I: A critical tutorial
 %           review. Psychophysiology, 48(12):1711-1725.
 
-%   © 2018-2024 Mick Crosse <crossemj@tcd.ie>
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
@@ -181,7 +181,7 @@ if nargout > 1
 
     % Generate random permutations
     rng(arg.seed);
-    signx = sign(rand(maxnobs,arg.nperm)-0.5);
+    signx = randi([0,1],maxnobs,arg.nperm,'int8')*2-1;
 
     % Estimate sampling distribution
     sqrtn = sqrt(nobs.*df);
