@@ -151,13 +151,15 @@ if nargout > 1
         dist(i) = (rssp/dfr)/(essp/dfe);
     end
 
-    % Compute p-value & CI
+    % Compute p-value
     p = (sum(f<=dist)+1)/(arg.nperm+1);
-    if nargout > 2
-        crit = prctile(dist,100*(1-arg.alpha));
-        ci = [f./crit;Inf];
-    end
 
+end
+
+% Compute confidence interval
+if nargout > 2
+    crit = prctile(dist,100*(1-arg.alpha));
+    ci = [f./crit;Inf];
 end
 
 % Store statistics in a structure
