@@ -86,7 +86,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %       'seed'      A scalar integer specifying the seed used to initialise
 %                   the bootstrap generator. By default, the generator is
 %                   initialised based on the current time, resulting in a
-%                   different bootstrap each time.
+%                   different bootstrap on each call.
 %
 %   See also MEANEFFECTSIZE BOOTCI PERMUTTEST PERMUTTEST2 PERMUVARTEST2.
 %
