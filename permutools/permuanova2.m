@@ -5,7 +5,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   data in matrix X, and returns the test statistics for the columns, rows
 %   and interactions (if any), respectively.
 %
-%   PERMUANOVA2 treats NaNs as missing values, and ignores them.
+%   PERMUANOVA2 won't accept NaNs and requires a perfectly balanced design.
 %
 %   F = PERMUANOVA2(X,REPS) groups the rows of X according to the number of
 %   replicates REPS for each combination of factor groups. To test for an
@@ -19,7 +19,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   that they have equal variances.
 %
 %   [F,P,CI] = PERMUANOVA2(...) returns a 100*(1-ALPHA)% confidence
-%   interval (CI) for the true difference of population means.
+%   intervals (CIs) for the true difference of population means.
 %
 %   [F,P,CI,STATS] = PERMUANOVA2(...) returns a structure with the
 %   following fields:
@@ -83,23 +83,21 @@ if arg.dim==2
     x = x';
 end
 
-% For efficiency, only omit NaNs if necessary
+% Balanced design check
 if any(isnan(x(:)))
-    nanflag = 'omitnan';
-else
-    nanflag = 'includenan';
+    error('Two-way ANOVA requires a perfectly balanced design. Data must not contain NaNs.')
 end
 
-% Get data dimensions, ignoring NaNs
+% Get data dimensions
 shapex = size(x);
-nobs = sum(~isnan(x),'all');
+nobs = numel(x);
 [rows,cols] = size(x);
 if reps > 1
     grows = rows/reps;
     xm = zeros(grows,cols);
     for i = 1:grows
         idx = reps*(i-1);
-        xm(i,:) = mean(x(idx+1:idx+reps,:));
+        xm(i,:) = mean(x(idx+1:idx+reps,:),1);
     end
 else
     grows = rows;
@@ -111,22 +109,22 @@ coln = reps*grows;
 rown = reps*cols;
 
 % Compute grand mean
-gm = sum(xm,'all',nanflag)/nobs;
+gm = sum(xm,'all')/nobs;
 
 % Compute column sum of squares
-colmeans = mean(xm,1,nanflag);
-css = coln*sum((colmeans-gm).^2,'all',nanflag);
+colmeans = mean(xm,1);
+css = coln*sum((colmeans-gm).^2,'all');
 
 % Compute row sum of squares
-rowmeans = mean(xm,2,nanflag);
-rss = rown*sum((rowmeans-gm).^2,'all',nanflag);
+rowmeans = mean(xm,2);
+rss = rown*sum((rowmeans-gm).^2,'all');
 
 % Compute interaction sum of squares
-factor = reps*cols*grows*gm^2;
-iss = reps*sum(xm.^2,'all',nanflag)-css-rss-factor;
+factor = nobs*gm^2;
+iss = reps*sum(xm.^2,'all')-css-rss-factor;
 
 % Compute total sum of squares
-tss = sum(x.^2,'all',nanflag)-factor;
+tss = sum(x.^2,'all')-factor;
 
 % Compute error sum of squares
 if reps > 1
@@ -169,8 +167,7 @@ if nargout > 1
 
     % Generate random permutations
     rng(arg.seed);
-    maxnobs = numel(x);
-    [~,idx] = sort(rand(maxnobs,arg.nperm));
+    [~,idx] = sort(rand(nobs,arg.nperm));
 
     % Estimate sampling distributions
     distc = zeros(arg.nperm,1);
@@ -181,18 +178,22 @@ if nargout > 1
     for i = 1:arg.nperm
         xp = x(idx(:,i));
         xp = reshape(xp,shapex);
-        xm = zeros(grows,cols);
-        for j = 1:grows
-            idxp = reps*(j-1);
-            xm(j,:) = mean(xp(idxp+1:idxp+reps,:));
-        end
-        colmeansp = mean(xm,1,nanflag);
-        cssp = coln*sum((colmeansp-gm).^2,'all',nanflag);
-        rowmeansp = mean(xm,2,nanflag);
-        rssp = rown*sum((rowmeansp-gm).^2,'all',nanflag);
-        issp = reps*sum(xm.^2,'all',nanflag)-cssp-rssp-factor;
         if reps > 1
-            tssp = sum(xp.^2,'all',nanflag)-factor;
+            xmp = zeros(grows,cols);
+            for j = 1:grows
+                idxp = reps*(j-1);
+                xmp(j,:) = mean(xp(idxp+1:idxp+reps,:),1);
+            end
+        else
+            xmp = xp;
+        end
+        colmeansp = mean(xmp,1);
+        cssp = coln*sum((colmeansp-gm).^2,'all');
+        rowmeansp = mean(xmp,2);
+        rssp = rown*sum((rowmeansp-gm).^2,'all');
+        issp = reps*sum(xmp.^2,'all')-cssp-rssp-factor;
+        if reps > 1
+            tssp = sum(xp.^2,'all')-factor;
             essp = tssp-cssp-rssp-issp;
         else
             essp = issp;
@@ -216,21 +217,21 @@ if nargout > 1
         p = [pc,pr];
     end
 
-    % Compute CIs
-    if nargout > 2
-        crit = prctile(distc,100*(1-arg.alpha));
-        cic = [fc./crit;Inf];
-        crit = prctile(distr,100*(1-arg.alpha));
-        cir = [fr./crit;Inf];
-        if reps > 1
-            crit = prctile(disti,100*(1-arg.alpha));
-            cii = [fi./crit;Inf];
-            ci = [cic,cir,cii];
-        else
-            ci = [cic,cir];
-        end
-    end
+end
 
+% Compute confidence intervals
+if nargout > 2
+    crit = prctile(distc,100*(1-arg.alpha));
+    cic = [fc./crit;Inf];
+    crit = prctile(distr,100*(1-arg.alpha));
+    cir = [fr./crit;Inf];
+    if reps > 1
+        crit = prctile(disti,100*(1-arg.alpha));
+        cii = [fi./crit;Inf];
+        ci = [cic,cir,cii];
+    else
+        ci = [cic,cir];
+    end
 end
 
 % Store statistics in a structure
