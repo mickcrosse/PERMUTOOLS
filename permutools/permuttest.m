@@ -192,11 +192,6 @@ if nargout > 1
         dist(i,:) = smx./nobs./(sqrt(sum(xp.^2)-(smx.^2)./nobs)./sqrtn);
     end
 
-    % Apply max correction if specified
-    if arg.correct
-        dist = max(abs(dist),[],2);
-    end
-
     % Add negative values
     dist(arg.nperm+1:2*arg.nperm,:) = -dist;
     arg.nperm = 2*arg.nperm;
@@ -205,28 +200,56 @@ if nargout > 1
         fprintf('Number of permutations used: %d\n',arg.nperm)
     end
 
-    % Compute p-value & CI
-    switch arg.tail
-        case 'both'
-            p = 2*(sum(abs(t)<=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha/2)).*se;
-                ci = [mu-crit;mu+crit];
-            end
-        case 'right'
-            p = (sum(t<=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha)).*se;
-                ci = [mu-crit;Inf(1,nvar)];
-            end
-        case 'left'
-            p = (sum(t>=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha)).*se;
-                ci = [-Inf(1,nvar);mu+crit];
-            end
+    % Apply max correction if specified
+
+    if arg.correct
+        switch arg.tail
+            case 'both'
+                dist = max(dist,[],2);
+            case 'right'
+                dist = max(dist,[],2);
+            case 'left'
+                dist = min(dist,[],2);
+        end
+    else
+        switch arg.tail
+            case 'both'
+                dist = abs(dist);
+        end
     end
 
+    % Compute p-value
+    switch arg.tail
+        case 'both'
+            p = (sum(abs(t)<=dist)+1)/(arg.nperm+1);
+        case 'right'
+            p = (sum(t<=dist)+1)/(arg.nperm+1);
+        case 'left'
+            p = (sum(t>=dist)+1)/(arg.nperm+1);
+    end
+
+end
+
+% Compute confidence interval
+if nargout > 2
+    switch arg.tail
+        case 'both'
+            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;mu+crit];
+        case 'right'
+            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;Inf(1,nvar)];
+        case 'left'
+            crit = prctile(-dist,100*(1-arg.alpha)).*se;
+            ci = [-Inf(1,nvar);mu+crit];
+    end
+end
+
+% Store statistics in a structure
+if nargout > 3
+    stats.df = df;
+    stats.sd = sd;
+    stats.mu = mu;
 end
 
 % Arrange results in a matrix if specified
@@ -242,15 +265,8 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        df = ptvec2mat(df);
-        sd = ptvec2mat(sd);
-        mu = ptvec2mat(mu);
+        stats.df = ptvec2mat(df);
+        stats.sd = ptvec2mat(sd);
+        stats.mu = ptvec2mat(mu);
     end
-end
-
-% Store statistics in a structure
-if nargout > 3
-    stats.df = df;
-    stats.sd = sd;
-    stats.mu = mu;
 end

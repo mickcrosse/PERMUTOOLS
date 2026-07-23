@@ -142,9 +142,9 @@ dfy = nobsy-1;
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:))) || any(isnan(y(:)))
-    nanflag = 'omitmissing';
+    nanflag = 'omitnan';
 else
-    nanflag = 'includemissing';
+    nanflag = 'includenan';
 end
 
 % Compute sample variance using fast algo
@@ -189,53 +189,97 @@ if nargout > 1
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        x1 = x(i1(:,i),:);
-        x2 = x(i2(:,i),:);
-        sm1 = sum(x1,nanflag);
-        sm2 = sum(x2,nanflag);
-        var1 = (sum(x1.^2,nanflag)-(sm1.^2)./nobsx)./dfx;
-        var2 = (sum(x2.^2,nanflag)-(sm2.^2)./nobsy)./dfy;
-        switch arg.vartype
-            case 'equal'
-                sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
-            case 'unequal'
-                sep = sqrt(var1./nobsx+var2./nobsy);
-        end
-        dist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
+    switch nanflag
+        case 'omitnan'
+            % Dynamic N-tracking for missing data
+            for i = 1:arg.nperm
+                x1 = x(i1(:,i),:);
+                x2 = x(i2(:,i),:);
+                n1 = sum(~isnan(x1));
+                n2 = sum(~isnan(x2));
+                d1 = n1-1;
+                d2 = n2-1;
+                sm1 = sum(x1,nanflag);
+                sm2 = sum(x2,nanflag);
+                var1 = (sum(x1.^2,nanflag)-(sm1.^2)./n1)./d1;
+                var2 = (sum(x2.^2,nanflag)-(sm2.^2)./n2)./d2;
+                switch arg.vartype
+                    case 'equal'
+                        sep = sqrt((d1.*var1+d2.*var2)./(n1+n2-2)).*...
+                            sqrt((n1+n2)./(n1.*n2));
+                    case 'unequal'
+                        sep = sqrt(var1./n1+var2./n2);
+                end
+                dist(i,:) = (sm1./n1-sm2./n2)./sep;
+            end
+        case 'includenan'
+            % Fast vectorized calculation for complete data
+            for i = 1:arg.nperm
+                x1 = x(i1(:,i),:);
+                x2 = x(i2(:,i),:);
+                sm1 = sum(x1);
+                sm2 = sum(x2);
+                var1 = (sum(x1.^2)-(sm1.^2)./nobsx)./dfx;
+                var2 = (sum(x2.^2)-(sm2.^2)./nobsy)./dfy;
+                switch arg.vartype
+                    case 'equal'
+                        sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
+                    case 'unequal'
+                        sep = sqrt(var1./nobsx+var2./nobsy);
+                end
+                dist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
+            end
     end
 
     % Apply max correction if specified
     if arg.correct
-        [~,idx] = max(abs(dist),[],2);
-        csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-        dist = dist';
-        dist = dist(idx+csvar);
+        switch arg.tail
+            case 'both'
+                dist = max(abs(dist),[],2);
+            case 'right'
+                dist = max(dist,[],2);
+            case 'left'
+                dist = min(dist,[],2);
+        end
+    else
+        switch arg.tail
+            case 'both'
+                dist = abs(dist);
+        end
     end
 
-    % Compute p-value & CI
+    % Compute p-value
     switch arg.tail
         case 'both'
-            pdabs = abs(dist);
-            p = (sum(abs(t)<=pdabs)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(pdabs,100*(1-arg.alpha)).*se;
-                ci = [mu-crit;mu+crit];
-            end
+            p = (sum(abs(t)<=dist)+1)/(arg.nperm+1);
         case 'right'
             p = (sum(t<=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha)).*se;
-                ci = [mu-crit;Inf(1,nvar)];
-            end
         case 'left'
             p = (sum(t>=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha)).*se;
-                ci = [-Inf(1,nvar);mu+crit];
-            end
     end
 
+end
+
+% Compute confidence interval
+if nargout > 2
+    switch arg.tail
+        case 'both'
+            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;mu+crit];
+        case 'right'
+            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            ci = [mu-crit;Inf(1,nvar)];
+        case 'left'
+            crit = prctile(-dist,100*(1-arg.alpha)).*se;
+            ci = [-Inf(1,nvar);mu+crit];
+    end
+end
+
+% Store statistics in a structure
+if nargout > 3
+    stats.df = df;
+    stats.sd = sd;
+    stats.mu = mu;
 end
 
 % Arrange results in a matrix if specified
@@ -251,15 +295,8 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        df = ptvec2mat(df);
-        sd = ptvec2mat(sd);
-        mu = ptvec2mat(mu);
+        stats.df = ptvec2mat(df);
+        stats.sd = ptvec2mat(sd);
+        stats.mu = ptvec2mat(mu);
     end
-end
-
-% Store statistics in a structure
-if nargout > 3
-    stats.df = df;
-    stats.sd = sd;
-    stats.mu = mu;
 end

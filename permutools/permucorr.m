@@ -132,10 +132,9 @@ switch arg.rows
         x(isnan(y)) = NaN;
         y(isnan(x)) = NaN;
     case 'complete'
-        x = x(~any(isnan(y),2),:);
-        y = y(~any(isnan(y),2),:);
-        y = y(~any(isnan(x),2),:);
-        x = x(~any(isnan(x),2),:);
+        valid_rows = ~any(isnan(x),2) & ~any(isnan(y),2);
+        x = x(valid_rows,:);
+        y = y(valid_rows,:);
 end
 
 % Get data dimensions
@@ -187,47 +186,76 @@ if nargout > 1
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        dist(i,:) = (sum(x(idx(:,i),:).*y,nanflag)-mu)./sdxy;
+    if any(isnan(x(:))) || any(isnan(y(:)))
+        % Exact pair-wise calculation for missing data
+        for i = 1:arg.nperm
+            xp = x(idx(:,i), :);
+            valid = ~isnan(xp) & ~isnan(y);
+            xp(~valid) = 0;
+            y_temp = y;
+            y_temp(~valid) = 0;
+            nobs_p = sum(valid);
+            sum_xp = sum(xp);
+            sum_y = sum(y_temp);
+            sdxy_p = sqrt((sum(xp.^2)-(sum_xp.^2)./nobs_p) .* ...
+                (sum(y_temp.^2)-(sum_y.^2)./nobs_p));
+            mu_p = sum_xp .* sum_y ./ nobs_p;
+            dist(i,:) = (sum(xp .* y_temp) - mu_p) ./ sdxy_p;
+        end
+    else
+        % Fast vectorized calculation for complete data
+        for i = 1:arg.nperm
+            dist(i,:) = (sum(x(idx(:,i),:).*y,nanflag)-mu)./sdxy;
+        end
     end
 
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
             case 'both'
-                [~,idx] = max(abs(dist),[],2);
-                csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-                dist = dist';
-                dist = dist(idx+csvar);
+                dist = max(abs(dist),[],2);
             case 'right'
                 dist = max(dist,[],2);
             case 'left'
                 dist = min(dist,[],2);
         end
+    else
+        switch arg.tail
+            case 'both'
+                dist = abs(dist);
+        end
     end
 
-    % Compute p-value & CI
+    % Compute p-value
     switch arg.tail
         case 'both'
-            p = 2*(min(sum(r<=dist),sum(r>=dist))+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha/2));
-                ci = [max(-1,r-crit);min(1,r+crit)];
-            end
+            p = (sum(abs(r)<=dist)+1)/(arg.nperm+1);
         case 'right'
             p = (sum(r<=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(dist,100*(1-arg.alpha));
-                ci = [max(-1,r-crit);Inf(1,nvar)];
-            end
         case 'left'
             p = (sum(r>=dist)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(-dist,100*(1-arg.alpha));
-                ci = [-Inf(1,nvar);min(1,r+crit)];
-            end
     end
 
+end
+
+% Compute confidence interval
+if nargout > 2
+    switch arg.tail
+        case 'both'
+            crit = prctile(dist,100*(1-arg.alpha));
+            ci = [max(-1,r-crit);min(1,r+crit)];
+        case 'right'
+            crit = prctile(dist,100*(1-arg.alpha));
+            ci = [max(-1,r-crit);Inf(1,nvar)];
+        case 'left'
+            crit = prctile(-dist,100*(1-arg.alpha));
+            ci = [-Inf(1,nvar);min(1,r+crit)];
+    end
+end
+
+% Store statistics in a structure
+if nargout > 3
+    stats.df = df;
 end
 
 % Arrange results in a matrix if specified
@@ -243,11 +271,6 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        df = ptvec2mat(df);
+        stats.df = ptvec2mat(df);
     end
-end
-
-% Store statistics in a structure
-if nargout > 3
-    stats.df = df;
 end

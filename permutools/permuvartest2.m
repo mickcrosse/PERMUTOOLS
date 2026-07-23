@@ -137,7 +137,11 @@ f = varx./vary;
 
 if nargout > 1
 
-    % Concatenate samples
+    % Demean samples
+    x = x-sum(x,nanflag)./nobsx;
+    y = y-sum(y,nanflag)./nobsy;
+
+    % Concatenate centered samples
     x = [x;y];
 
     % Generate random permutations
@@ -149,52 +153,70 @@ if nargout > 1
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        x1 = x(i1(:,i),:);
-        x2 = x(i2(:,i),:);
-        var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./nobsx)./df1;
-        var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./nobsy)./df2;
-        dist(i,:) = var1./var2;
+    switch nanflag
+        case 'omitnan'
+            % Dynamic N-tracking for missing data
+            for i = 1:arg.nperm
+                x1 = x(i1(:,i),:);
+                x2 = x(i2(:,i),:);
+                n1 = sum(~isnan(x1));
+                n2 = sum(~isnan(x2));
+                var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./n1)./(n1-1);
+                var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./n2)./(n2-1);
+                dist(i,:) = var1./var2;
+            end
+        case 'includenan'
+            % Fast vectorized calculation for complete data
+            for i = 1:arg.nperm
+                x1 = x(i1(:,i),:);
+                x2 = x(i2(:,i),:);
+                var1 = (sum(x1.^2)-(sum(x1).^2)./nobsx)./df1;
+                var2 = (sum(x2.^2)-(sum(x2).^2)./nobsy)./df2;
+                dist(i,:) = var1./var2;
+            end
     end
 
     % Apply max correction if specified
     if arg.correct
-        [~,imax] = max(dist,[],2);
-        [~,imin] = min(dist,[],2);
-        csvar = [0;cumsum(ones(arg.nperm-1,1)*nvar)];
-        dist = dist';
-        pdmax = dist(imax+csvar);
-        pdmin = dist(imin+csvar);
-        k = 1;
+        pdmax = max(dist,[],2);
+        pdmin = min(dist,[],2);
     else
         pdmax = dist;
         pdmin = dist;
-        k = 2;
     end
 
-    % Compute p-value & CI
+    % Compute p-value
     switch arg.tail
         case 'both'
-            p = k*(min(sum(f<=pdmax),sum(f>=pdmin))+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = [prctile(pdmin,100*arg.alpha/2);...
-                    prctile(pdmax,100*(1-arg.alpha/2))];
-                ci = f./crit;
-            end
+            p = min(1,2*(min(sum(f<=pdmax),sum(f>=pdmin))+1)/(arg.nperm+1));
         case 'right'
             p = (sum(f<=pdmax)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(pdmax,100*(1-arg.alpha));
-                ci = [f./crit;Inf(1,nvar)];
-            end
         case 'left'
             p = (sum(f>=pdmin)+1)/(arg.nperm+1);
-            if nargout > 2
-                crit = prctile(pdmin,100*arg.alpha);
-                ci = [zeros(1,nvar);f./crit];
-            end
     end
 
+end
+
+% Compute confidence interval
+if nargout > 2
+    switch arg.tail
+        case 'both'
+            crit = [prctile(pdmin,100*arg.alpha/2);...
+                prctile(pdmax,100*(1-arg.alpha/2))];
+            ci = f./crit;
+        case 'right'
+            crit = prctile(pdmax,100*(1-arg.alpha));
+            ci = [f./crit;Inf(1,nvar)];
+        case 'left'
+            crit = prctile(pdmin,100*arg.alpha);
+            ci = [zeros(1,nvar);f./crit];
+    end
+end
+
+% Store statistics in a structure
+if nargout > 3
+    stats.df1 = df1;
+    stats.df2 = df2;
 end
 
 % Arrange results in a matrix if specified
@@ -210,13 +232,7 @@ if arg.mat
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        df1 = ptvec2mat(df1);
-        df2 = ptvec2mat(df2);
+        stats.df1 = ptvec2mat(df1);
+        stats.df2 = ptvec2mat(df2);
     end
-end
-
-% Store statistics in a structure
-if nargout > 3
-    stats.df1 = df1;
-    stats.df2 = df2;
 end
