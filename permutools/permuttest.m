@@ -201,11 +201,10 @@ if nargout > 1
     end
 
     % Apply max correction if specified
-
     if arg.correct
         switch arg.tail
             case 'both'
-                dist = max(dist,[],2);
+                dist = max(abs(dist),[],2);
             case 'right'
                 dist = max(dist,[],2);
             case 'left'
