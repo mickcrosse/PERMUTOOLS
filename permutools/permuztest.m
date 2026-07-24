@@ -123,11 +123,19 @@ if nargout > 1
     % Estimate sampling distribution
     diffxm = x-m;
     sen = se.*nobs;
-    dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        xp = diffxm.*repmat(signx(:,i),1,nvar);
-        smx = sum(xp,nanflag);
-        dist(i,:) = smx./sen;
+    switch nanflag
+        case 'omitnan'
+            % Dynamic loop for missing data
+            dist = zeros(arg.nperm,nvar);
+            for i = 1:arg.nperm
+                xp = diffxm.*repmat(signx(:,i),1,nvar);
+                smx = sum(xp,nanflag);
+                dist(i,:) = smx./sen;
+            end
+        case 'includenan'
+            % Fast vectorized calculation for complete data
+            smx = double(signx)'*diffxm;
+            dist = smx./sen;
     end
 
     % Add negative values
