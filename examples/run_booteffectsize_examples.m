@@ -30,10 +30,11 @@ function run_booteffectsize_examples
 % Generate random data
 seed = 42;
 rng(seed);
-x = randn(30,20);
-y = randn(30,20);
-y(:,1:10) = y(:,1:10)-1;
-xaxis = 1:20;
+nobs = 30; nvar = 20;
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
+xaxis = 1:nvar;
 paired = [false,true];
 samples = {'indep.','dep.'};
 vartype = {'equal','unequal'};
@@ -62,9 +63,9 @@ for i = 1:numel(paired)
         end
 
         % Plot parametric & uncorrected bootstrapped CIs
-        d1 = zeros(1,20);
-        ci1 = zeros(2,20);
-        for j = 1:20
+        d1 = zeros(1,nvar);
+        ci1 = zeros(2,nvar);
+        for j = 1:nvar
             stats1 = meanEffectSize(x(:,j),yp(:,j),'Effect',effect,...
                 'Paired',paired(i),'VarianceType',vartype{n},...
                 'ConfidenceIntervalType','exact');
@@ -76,7 +77,7 @@ for i = 1:numel(paired)
         subplot(4,2,k), hold on
         plot(xaxis,d2,'LineWidth',3)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-        xlim([0,21]), ylim([-2,5]), box on, grid on
+        xlim([0,nvar+1]), ylim([-2,5]), box on, grid on
         if i == 1 && n == 1
             title('Uncorrected')
         end
@@ -97,7 +98,7 @@ for i = 1:numel(paired)
         subplot(4,2,k+1), hold on
         plot(xaxis,d2,'LineWidth',3)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-        xlim([0,21]), ylim([-2,5]), box on, grid on
+        xlim([0,nvar+1]), ylim([-2,5]), box on, grid on
         if i == 1 && n == 1
             title('Bias-corrected')
         end

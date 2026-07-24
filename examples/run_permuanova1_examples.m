@@ -26,20 +26,21 @@ isoctave = any(ismember({info.Name},'Octave'));
 
 % Generate random data
 rng(42);
-x = randn(30,5);
+nobs = 30; nvar = 5; nperm = 20;
+x = randn(nobs,nvar);
 x(:,1) = x(:,1)+1;
-xaxis = 1:20; alpha = 0.05;
+xaxis = 1:nperm; alpha = 0.05;
 group_labels = 1:5;
 
 % Compute ANOVA
-p1 = zeros(1,20);
-f2 = zeros(1,20);
-p2 = zeros(1,20);
-ci2 = zeros(2,20);
+p1 = zeros(1,nperm);
+f2 = zeros(1,nperm);
+p2 = zeros(1,nperm);
+ci2 = zeros(2,nperm);
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
-for i = 1:20
+for i = 1:nperm
     if isoctave
         group = datasample(group_labels,numel(group_labels),...
             'Replace',true);
@@ -61,13 +62,13 @@ plot(xaxis,f2,'LineWidth',3)
 plot(xaxis,ci2,'k')
 plot(xaxis(p1<=alpha),f2(p1<=alpha),'ok','LineWidth',2)
 plot(xaxis(p2<=alpha),f2(p2<=alpha),'xr','LineWidth',2)
-xlim([0,21]), ylim([0,15]), box on, grid on
+xlim([0,nperm+1]), ylim([0,15]), box on, grid on
 title('Test Statistic'), xlabel('permutation'), ylabel('{\itF}-value')
 legend('{\itF}-statistic','95% CI (perm.)')
 
 % Plot p-values
 subplot(2,2,2), hold on
 plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-xlim([0,21]), ylim([0,1]), box on, grid on
+xlim([0,nperm+1]), ylim([0,1]), box on, grid on
 title('{\itP}-values'), xlabel('permutation'), ylabel('probability')
 legend('{\itp}-value (param.)','{\itp}-value (perm.)')

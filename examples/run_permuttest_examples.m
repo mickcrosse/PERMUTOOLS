@@ -23,10 +23,11 @@ function run_permuttest_examples
 
 % Generate random data
 rng(42);
-x = randn(30,20);
-y = randn(30,20);
-y(:,1:10) = y(:,1:10)-1;
-xaxis = 1:20; alpha = 0.05;
+nobs = 30; nvar = 20;
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
+xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 
@@ -41,7 +42,7 @@ for i = 1:numel(tail)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
     plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
     plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-    xlim([0,21]), ylim([-3,3]), box on, grid on
+    xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
     if i == 1
         title('Uncorrected')
     elseif i == 3
@@ -57,7 +58,7 @@ for i = 1:numel(tail)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
     plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
     plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-    xlim([0,21]), ylim([-3,3]), box on, grid on
+    xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
     if i == 1
         title('Max-corrected')
     elseif i == 3
@@ -73,7 +74,7 @@ for i = 1:numel(tail)
     [~,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    xlim([0,21]), ylim([0,1]), box on, grid on
+    xlim([0,nvar+1]), ylim([0,1]), box on, grid on
     if i == 1
         title('Uncorrected')
     elseif i == 3
@@ -86,7 +87,7 @@ for i = 1:numel(tail)
     [~,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    xlim([0,21]), ylim([0,1]), box on, grid on
+    xlim([0,nvar+1]), ylim([0,1]), box on, grid on
     if i == 1
         title('Max-corrected')
     elseif i == 3

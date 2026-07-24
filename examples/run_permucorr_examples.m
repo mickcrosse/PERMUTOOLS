@@ -30,11 +30,12 @@ function run_permucorr_examples
 
 % Generate random data
 rng(42);
-x = randn(30,20);
-y = randn(30,20);
+nobs = 30; nvar = 20;
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
 y(:,1:5) = y(:,1:5)+x(:,1:5)/2;
 y(:,6:10) = y(:,6:10)-x(:,6:10);
-xaxis = 1:20; alpha = 0.05;
+xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'Pearson','Spearman'};
@@ -49,8 +50,8 @@ for n = 1:numel(type)
     for i = 1:numel(tail)
         [r1,p1] = corr(x,y,'tail',tail{i},'type',type{n});
         r1 = diag(r1); p1 = diag(p1);
-        ci1 = zeros(2,20);
-        for j = 1:20
+        ci1 = zeros(2,nvar);
+        for j = 1:nvar
             switch type{n}
                 case 'Pearson'
                     [~,~,clwr,cupr] = corrcoef(x(:,j),y(:,j));
@@ -74,7 +75,7 @@ for n = 1:numel(type)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),r1(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),r2(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,21]), ylim([-2,2]), box on, grid on
+        xlim([0,nvar+1]), ylim([-2,2]), box on, grid on
         if i == 1
             title('Uncorrected')
         elseif i == 3
@@ -92,7 +93,7 @@ for n = 1:numel(type)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),r1(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),r2(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,21]), ylim([-2,2]), box on, grid on
+        xlim([0,nvar+1]), ylim([-2,2]), box on, grid on
         if i == 1
             title('Max-corrected')
         elseif i == 3
@@ -110,7 +111,7 @@ for n = 1:numel(type)
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',0);
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-        xlim([0,21]), ylim([0,1]), box on, grid on
+        xlim([0,nvar+1]), ylim([0,1]), box on, grid on
         if i == 1
             title('Uncorrected')
         elseif i == 3
@@ -123,7 +124,7 @@ for n = 1:numel(type)
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',1);
         subplot(3,2,i+i), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-        xlim([0,21]), ylim([0,1]), box on, grid on
+        xlim([0,nvar+1]), ylim([0,1]), box on, grid on
         if i == 1
             title('Max-corrected')
         elseif i == 3

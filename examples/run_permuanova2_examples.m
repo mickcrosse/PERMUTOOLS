@@ -27,9 +27,10 @@ isoctave = any(ismember({info.Name},'Octave'));
 
 % Generate random data
 rng(42);
-x = randn(6,5);
+nobs = 6; nvar = 5; nperm = 20;
+x = randn(nobs,nvar);
 x(:,1:2) = x(:,1:2)+1;
-xaxis = 1:20;
+xaxis = 1:nperm;
 alpha = 0.05;
 reps = 2;
 if reps > 1
@@ -40,14 +41,14 @@ end
 ylabels = {'columns','rows','interaction'};
 
 % Compute ANOVA
-p1 = zeros(dim,20);
-f2 = zeros(dim,20);
-p2 = zeros(dim,20);
-ci2 = zeros(2,dim,20);
+p1 = zeros(dim,nperm);
+f2 = zeros(dim,nperm);
+p2 = zeros(dim,nperm);
+ci2 = zeros(2,dim,nperm);
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
-for i = 1:20
+for i = 1:nperm
     if isoctave
         idx = datasample(1:6,6,'Replace',false);
     else
@@ -70,7 +71,7 @@ for i = 1:dim
     plot(xaxis,squeeze(ci2(:,i,:)),'k')
     plot(xaxis(p1(i,:)<=alpha),f2(i,p1(i,:)<=alpha),'ok','LineWidth',2)
     plot(xaxis(p2(i,:)<=alpha),f2(i,p2(i,:)<=alpha),'xr','LineWidth',2)
-    xlim([0,21]), ylim([0,6]), box on, grid on
+    xlim([0,nperm+1]), ylim([0,6]), box on, grid on
     if i == 1
         title('Test Statistic')
     end
@@ -85,7 +86,7 @@ for i = 1:dim
     % Plot p-values
     subplot(3,2,k+1), hold on
     plot(xaxis,p1(i,:),'k',xaxis,p2(i,:),'--r','LineWidth',2)
-    xlim([0,21]), ylim([0,1]), box on, grid on
+    xlim([0,nperm+1]), ylim([0,1]), box on, grid on
     if i == 1
         title('{\itP}-values')
         legend('{\itp}-value (param.)','{\itp}-value (perm.)')
