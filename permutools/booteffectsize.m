@@ -3,10 +3,10 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %   D = BOOTEFFECTSIZE(X) returns the effect size measure for a single
 %   sample X based on Cohen's d. By default, Cohen's d is bias-corrected
 %   for sample size, also known as Hedges' g. For ordinal data, Cliff's
-%   delta can be computed by setting the 'effect' parameter to 'cliff'. If 
-%   X is a matrix, separate effect sizes are measured along each column of 
-%   X, and a vector of results is returned. If the 'compare' parameter is 
-%   set to 'pairwise', the effect sizes between every pair of columns in X 
+%   delta can be computed by setting the 'effect' parameter to 'cliff'. If
+%   X is a matrix, separate effect sizes are measured along each column of
+%   X, and a vector of results is returned. If the 'compare' parameter is
+%   set to 'pairwise', the effect sizes between every pair of columns in X
 %   are measured, and a matrix of results is returned.
 %
 %   BOOTEFFECTSIZE treats NaNs as missing values, and ignores them.
@@ -72,7 +72,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                       'pairwise'  compare every pair of columns in X to
 %                                   each other and return a matrix of
 %                                   results
-%       'nboot'     An integer scalar specifying the number of bootstraps 
+%       'nboot'     An integer scalar specifying the number of bootstraps
 %                   used to estimate the confidence intervals (default=
 %                   10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
@@ -167,10 +167,10 @@ else
 end
 
 % Compute sample variance using fast algo
-smx = sum(x,nanflag);
-smy = sum(y,nanflag);
-varx = (sum(x.^2,nanflag)-(smx.^2)./nobsx)./dfx;
-vary = (sum(y.^2,nanflag)-(smy.^2)./nobsy)./dfy;
+sumx = sum(x,nanflag);
+sumy = sum(y,nanflag);
+varx = (sum(x.^2,nanflag)-(sumx.^2)./nobsx)./dfx;
+vary = (sum(y.^2,nanflag)-(sumy.^2)./nobsy)./dfy;
 
 if arg.paired
 
@@ -187,20 +187,20 @@ if arg.paired
     % Compute difference between samples
     switch arg.effect
         case 'cliff'
-            diffxy = zeros(max(nobsx)^2,nvar);
+            xdy = zeros(max(nobsx)^2,nvar);
             for i = 1:nvar
-                diffi = sign(x(:,i)-y(:,i)');
-                diffxy(:,i) = diffi(:);
+                signxdy = sign(x(:,i)-y(:,i)');
+                xdy(:,i) = signxdy(:);
             end
-            diffxy(1:max(nobsx)+1:end,:) = 0;
+            xdy(1:max(nobsx)+1:end,:) = 0;
         otherwise
-            diffxy = x-y;
+            xdy = x-y;
     end
 
     % Use only rows with no NaN values if specified
     switch arg.rows
         case 'complete'
-            diffxy = diffxy(~any(isnan(diffxy),2),:);
+            xdy = xdy(~any(isnan(xdy),2),:);
     end
 
     % Get data dimensions, ignoring NaNs
@@ -208,15 +208,15 @@ if arg.paired
         case 'cliff'
             nobs = nobsx.*dfx;
         otherwise
-            nobs = sum(~isnan(diffxy));
+            nobs = sum(~isnan(xdy));
     end
 
     % Compute mean difference
     switch arg.effect
         case 'mediandiff'
-            mu = median(diffxy,nanflag);
+            mu = median(xdy,nanflag);
         otherwise
-            mu = sum(diffxy,nanflag)./nobs;
+            mu = sum(xdy,nanflag)./nobs;
     end
 
     % Compute standard deviation
@@ -235,26 +235,26 @@ else
     % Compute difference between samples
     switch arg.effect
         case 'cliff'
-            diffxy = zeros(max(nobsx)*max(nobsy),nvar);
+            xdy = zeros(max(nobsx)*max(nobsy),nvar);
             for i = 1:nvar
-                diffi = sign(x(:,i)-y(:,i)');
-                diffxy(:,i) = diffi(:);
+                signxdy = sign(x(:,i)-y(:,i)');
+                xdy(:,i) = signxdy(:);
             end
         otherwise
-            diffxy = [x;y];
+            xdy = [x;y];
     end
 
     % Get data dimensions, ignoring NaNs
-    nobs = sum(~isnan(diffxy));
+    nobs = sum(~isnan(xdy));
 
     % Compute mean difference
     switch arg.effect
         case 'cliff'
-            mu = sum(diffxy,nanflag)./nobs;
+            mu = sum(xdy,nanflag)./nobs;
         case 'mediandiff'
             mu = median(x,nanflag)-median(y,nanflag);
         otherwise
-            mu = smx./nobsx-smy./nobsy;
+            mu = sumx./nobsx-sumy./nobsy;
     end
 
     % Compute standard deviation
@@ -293,80 +293,97 @@ if nargout > 1
 
     rng(arg.seed);
     ci = zeros(2,nvar);
+    dist = zeros(arg.nboot,nvar);
 
     for i = 1:nvar
 
-        % Generate random bootstraps
-        xb = x(:,i);
-        yb = y(:,i);
-        idx = randi(nobsx(i),[nobsx(i),arg.nboot],'uint32');
-        xb = xb(idx);
-        if ~arg.paired
-            clear idx;
-            idx = randi(nobsy(i),[nobsy(i),arg.nboot],'uint32');
+        % Isolate valid data to eliminate NaNs
+        if arg.paired
+            valid = ~isnan(x(:,i))&~isnan(y(:,i));
+            xi = x(valid,i);
+            yi = y(valid,i);
+            ni = sum(valid);
+            idx = randi(ni,[ni,arg.nboot],'uint32');
+            xb = xi(idx);
+            yb = yi(idx);
+            nxb = ni; nyb = ni;
+            dfxb = ni-1; dfyb = ni-1; dfb = ni-1;
+        else
+            validx = ~isnan(x(:,i));
+            xi = x(validx,i);
+            nxb = sum(validx);
+            idxxi = randi(nxb,[nxb,arg.nboot],'uint32');
+            xb = xi(idxxi);
+            dfxb = nxb-1;
+            validy = ~isnan(y(:,i));
+            yi = y(validy,i);
+            nyb = sum(validy);
+            idxyi = randi(nyb,[nyb,arg.nboot],'uint32');
+            yb = yi(idxyi);
+            dfyb = nyb-1;
+            dfb = nxb+nyb-2;
         end
-        yb = yb(idx);
-        clear idx;
 
         % Estimate sampling distribution
-        smxb = sum(xb,nanflag);
-        smyb = sum(yb,nanflag);
-        varxb = (sum(xb.^2,nanflag)-(smxb.^2)/nobsx(i))/dfx(i);
-        varyb = (sum(yb.^2,nanflag)-(smyb.^2)/nobsy(i))/dfy(i);
+        sumxb = sum(xb,1);
+        sumyb = sum(yb,1);
+        varxb = (sum(xb.^2,1)-(sumxb.^2)./nxb)./dfxb;
+        varyb = (sum(yb.^2,1)-(sumyb.^2)./nyb)./dfyb;
+
         if arg.paired
             switch arg.effect
                 case 'cliff'
                     try  % fast algo
-                        xb3d = reshape(xb,nobsx(i),1,arg.nboot);
-                        yb3d = reshape(yb,1,nobsx(i),arg.nboot);
-                        diffi = sign(xb3d-yb3d);
+                        xb3d = reshape(xb,nxb,1,arg.nboot);
+                        yb3d = reshape(yb,1,nxb,arg.nboot);
+                        signxdy = sign(xb3d-yb3d);
                         clear xb3d yb3d;
-                        diffxyb = reshape(diffi,nobsx(i)^2,arg.nboot);
-                        clear diffi;
-                        diffxyb(1:nobsx(i)+1:end,:) = 0;
+                        xdyb = reshape(signxdy,nxb^2,arg.nboot);
+                        clear signxdy;
+                        xdyb(1:nxb+1:end,:) = 0;
                     catch  % memory-efficient algo
-                        diffxyb = zeros(max(nobsx)^2,arg.nboot);
+                        xdyb = zeros(nxb^2,arg.nboot);
                         for j = 1:arg.nboot
-                            diffi = sign(xb(:,j)-yb(:,j)');
-                            diffxyb(:,j) = diffi(:);
+                            signxdy = sign(xb(:,j)-yb(:,j)');
+                            xdyb(:,j) = signxdy(:);
                         end
-                        diffxyb(1:max(nobsx)+1:end,:) = 0;
+                        xdyb(1:nxb+1:end,:) = 0;
                     end
                 otherwise
-                    diffxyb = xb-yb;
+                    xdyb = xb-yb;
             end
             switch arg.effect
                 case 'mediandiff'
-                    mub = median(diffxyb,nanflag);
+                    mub = median(xdyb,1);
                 otherwise
-                    mub = sum(diffxyb,nanflag)/nobs(i);
+                    mub = sum(xdyb,1)./nxb;
             end
             sdb = sqrt((varxb+varyb)/2);
         else
             switch arg.effect
                 case 'cliff'
                     try  % fast algo
-                        xb3d = reshape(xb,nobsx(i),1,arg.nboot);
-                        yb3d = reshape(yb,1,nobsy(i),arg.nboot);
-                        diffi = sign(xb3d-yb3d);
+                        xb3d = reshape(xb,nxb,1,arg.nboot);
+                        yb3d = reshape(yb,1,nyb,arg.nboot);
+                        signxdy = sign(xb3d-yb3d);
                         clear xb3d yb3d;
-                        diffxyb = reshape(diffi,nobsx(i)*nobsy(i),arg.nboot);
-                        clear diffi;
+                        xdyb = reshape(signxdy,nxb*nyb,arg.nboot);
+                        clear signxdy;
                     catch  % memory-efficient algo
-                        diffxyb = zeros(max(nobsx)*max(nobsy),arg.nboot);
+                        xdyb = zeros(nxb*nyb,arg.nboot);
                         for j = 1:arg.nboot
-                            diffi = sign(xb(:,j)-yb(:,j)');
-                            diffxyb(:,j) = diffi(:);
+                            signxdy = sign(xb(:,j)-yb(:,j)');
+                            xdyb(:,j) = signxdy(:);
                         end
                     end
             end
             switch arg.effect
                 case 'cliff'
-                    mub = sum(diffxyb,nanflag)/nobs(i);
+                    mub = sum(xdyb,1)./(nxb*nyb);
                 case 'mediandiff'
-                    mub = median(xb,nanflag)-median(yb,nanflag);
+                    mub = median(xb,1)-median(yb,1);
                 otherwise
-                    mub = smxb/nobsx(i)-smyb/nobsy(i);
+                    mub = sumxb./nxb-sumyb./nyb;
             end
             switch arg.effect
                 case 'glass'
@@ -374,7 +391,7 @@ if nargout > 1
                 case 'cohen'
                     switch arg.vartype
                         case 'equal'
-                            sdb = sqrt((dfx(i)*varxb+dfy(i)*varyb)/df(i));
+                            sdb = sqrt((dfxb.*varxb+dfyb.*varyb)./dfb);
                         case 'unequal'
                             sdb = sqrt((varxb+varyb)/2);
                     end
@@ -382,16 +399,21 @@ if nargout > 1
         end
         switch arg.effect
             case {'cliff','meandiff','mediandiff'}
-                dist = mub;
+                dist(:,i) = mub;
             otherwise
-                dist = mub./sdb;
+                dist(:,i) = mub./sdb;
         end
 
-        % Compute CI
-        ci(:,i) = prctile(dist,100*[arg.alpha/2;1-arg.alpha/2]);
+        % Compute confidence interval
+        ci(:,i) = prctile(dist(:,i),100*[arg.alpha/2;1-arg.alpha/2]);
 
     end
 
+end
+
+% Store statistics in a structure
+if nargout > 2
+    stats = struct('df',df,'sd',sd);
 end
 
 % Bias-correct standardised measures
@@ -403,6 +425,9 @@ if arg.correct
             if nargout > 1
                 ci = [factor;factor].*ci;
             end
+            if nargout > 3
+                dist = factor.*dist;
+            end
     end
 end
 
@@ -413,12 +438,7 @@ if arg.mat
         ci = ptvec2mat(ci);
     end
     if nargout > 2
-        df = ptvec2mat(df);
-        sd = ptvec2mat(sd);
+        stats.df = ptvec2mat(df);
+        stats.sd = ptvec2mat(sd);
     end
-end
-
-% Store statistics in a structure
-if nargout > 2
-    stats = struct('df',df,'sd',sd);
 end
