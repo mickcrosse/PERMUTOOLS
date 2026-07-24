@@ -121,21 +121,21 @@ if nargout > 1
     signx = sign(rand(maxnobs,arg.nperm)-0.5);
 
     % Estimate sampling distribution
-    diffxm = x-m;
+    xdm = x-m;
     sen = se.*nobs;
     switch nanflag
         case 'omitnan'
             % Dynamic loop for missing data
             dist = zeros(arg.nperm,nvar);
             for i = 1:arg.nperm
-                xp = diffxm.*repmat(signx(:,i),1,nvar);
-                smx = sum(xp,nanflag);
-                dist(i,:) = smx./sen;
+                xp = xdm.*repmat(signx(:,i),1,nvar);
+                sump = sum(xp,nanflag);
+                dist(i,:) = sump./sen;
             end
         case 'includenan'
             % Fast vectorized calculation for complete data
-            smx = double(signx)'*diffxm;
-            dist = smx./sen;
+            sump = double(signx)'*xdm;
+            dist = sump./sen;
     end
 
     % Add negative values

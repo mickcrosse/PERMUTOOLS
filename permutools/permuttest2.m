@@ -148,10 +148,10 @@ else
 end
 
 % Compute sample variance using fast algo
-smx = sum(x,nanflag);
-smy = sum(y,nanflag);
-varx = (sum(x.^2,nanflag)-(smx.^2)./nobsx)./dfx;
-vary = (sum(y.^2,nanflag)-(smy.^2)./nobsy)./dfy;
+sumx = sum(x,nanflag);
+sumy = sum(y,nanflag);
+varx = (sum(x.^2,nanflag)-(sumx.^2)./nobsx)./dfx;
+vary = (sum(y.^2,nanflag)-(sumy.^2)./nobsy)./dfy;
 
 % Concatenate samples
 x = [x;y];
@@ -173,7 +173,7 @@ switch arg.vartype
 end
 
 % Compute mean difference
-mu = smx./nobsx-smy./nobsy;
+mu = sumx./nobsx-sumy./nobsy;
 
 % Compute test statistic
 t = mu./se;
@@ -188,47 +188,49 @@ if nargout > 1
     i2 = idx(maxnobsx+1:maxnobs,:);
 
     % Estimate sampling distribution
-    dist = zeros(arg.nperm,nvar);
     switch nanflag
         case 'omitnan'
             % Dynamic N-tracking for missing data
+            dist = zeros(arg.nperm,nvar);
             for i = 1:arg.nperm
                 x1 = x(i1(:,i),:);
                 x2 = x(i2(:,i),:);
-                n1 = sum(~isnan(x1));
-                n2 = sum(~isnan(x2));
-                d1 = n1-1;
-                d2 = n2-1;
-                sm1 = sum(x1,nanflag);
-                sm2 = sum(x2,nanflag);
-                var1 = (sum(x1.^2,nanflag)-(sm1.^2)./n1)./d1;
-                var2 = (sum(x2.^2,nanflag)-(sm2.^2)./n2)./d2;
+                nobs1 = sum(~isnan(x1));
+                nobs2 = sum(~isnan(x2));
+                df1 = nobs1-1;
+                df2 = nobs2-1;
+                sum1 = sum(x1,nanflag);
+                sum2 = sum(x2,nanflag);
+                var1 = (sum(x1.^2,nanflag)-(sum1.^2)./nobs1)./df1;
+                var2 = (sum(x2.^2,nanflag)-(sum2.^2)./nobs2)./df2;
                 switch arg.vartype
                     case 'equal'
-                        sep = sqrt((d1.*var1+d2.*var2)./(n1+n2-2)).*...
-                            sqrt((n1+n2)./(n1.*n2));
+                        sep = sqrt((df1.*var1+df2.*var2)./(nobs1+nobs2-2)).*...
+                            sqrt((nobs1+nobs2)./(nobs1.*nobs2));
                     case 'unequal'
-                        sep = sqrt(var1./n1+var2./n2);
+                        sep = sqrt(var1./nobs1+var2./nobs2);
                 end
-                dist(i,:) = (sm1./n1-sm2./n2)./sep;
+                dist(i,:) = (sum1./nobs1-sum2./nobs2)./sep;
             end
         case 'includenan'
             % Fast vectorized calculation for complete data
-            for i = 1:arg.nperm
-                x1 = x(i1(:,i),:);
-                x2 = x(i2(:,i),:);
-                sm1 = sum(x1);
-                sm2 = sum(x2);
-                var1 = (sum(x1.^2)-(sm1.^2)./nobsx)./dfx;
-                var2 = (sum(x2.^2)-(sm2.^2)./nobsy)./dfy;
-                switch arg.vartype
-                    case 'equal'
-                        sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
-                    case 'unequal'
-                        sep = sqrt(var1./nobsx+var2./nobsy);
-                end
-                dist(i,:) = (sm1./nobsx-sm2./nobsy)./sep;
+            I = zeros(maxnobs,arg.nperm);
+            col_idx = repmat(1:arg.nperm,maxnobsx,1);
+            lin_idx = sub2ind([maxnobs,arg.nperm],i1,col_idx);
+            I(lin_idx) = 1;
+            sum1 = I'*x;
+            sum2 = sum(x,1)-sum1;
+            sumsq1 = I'*(x.^2);
+            sumsq2 = sum(x.^2,1)-sumsq1;
+            var1 = (sumsq1-(sum1.^2)./nobsx)./dfx;
+            var2 = (sumsq2-(sum2.^2)./nobsy)./dfy;
+            switch arg.vartype
+                case 'equal'
+                    sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
+                case 'unequal'
+                    sep = sqrt(var1./nobsx+var2./nobsy);
             end
+            dist = (sum1./nobsx-sum2./nobsy)./sep;
     end
 
     % Apply max correction if specified

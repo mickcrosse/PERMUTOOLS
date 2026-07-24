@@ -148,8 +148,8 @@ if nargout > 1
     rng(arg.seed);
     maxnobs = size(x,1);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
-    i1 = idx(1:maxnobsx,:);
-    i2 = idx(maxnobsx+1:maxnobs,:);
+    idx1 = idx(1:maxnobsx,:);
+    idx2 = idx(maxnobsx+1:maxnobs,:);
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
@@ -157,23 +157,29 @@ if nargout > 1
         case 'omitnan'
             % Dynamic N-tracking for missing data
             for i = 1:arg.nperm
-                x1 = x(i1(:,i),:);
-                x2 = x(i2(:,i),:);
-                n1 = sum(~isnan(x1));
-                n2 = sum(~isnan(x2));
-                var1 = (sum(x1.^2,nanflag)-(sum(x1,nanflag).^2)./n1)./(n1-1);
-                var2 = (sum(x2.^2,nanflag)-(sum(x2,nanflag).^2)./n2)./(n2-1);
+                x1 = x(idx1(:,i),:);
+                x2 = x(idx2(:,i),:);
+                nobs1 = sum(~isnan(x1));
+                nobs2 = sum(~isnan(x2));
+                var1 = (sum(x1.^2,nanflag)-...
+                    (sum(x1,nanflag).^2)./nobs1)./(nobs1-1);
+                var2 = (sum(x2.^2,nanflag)-...
+                    (sum(x2,nanflag).^2)./nobs2)./(nobs2-1);
                 dist(i,:) = var1./var2;
             end
         case 'includenan'
             % Fast vectorized calculation for complete data
-            for i = 1:arg.nperm
-                x1 = x(i1(:,i),:);
-                x2 = x(i2(:,i),:);
-                var1 = (sum(x1.^2)-(sum(x1).^2)./nobsx)./df1;
-                var2 = (sum(x2.^2)-(sum(x2).^2)./nobsy)./df2;
-                dist(i,:) = var1./var2;
-            end
+            I = zeros(maxnobs,arg.nperm);
+            col_idx = repmat(1:arg.nperm,maxnobsx,1);
+            lin_idx = sub2ind([maxnobs,arg.nperm],idx1,col_idx);
+            I(lin_idx) = 1;
+            sum1 = I'*x;
+            sum2 = sum(x,1)-sum1;
+            sumsq1 = I'*(x.^2);
+            sumsq2 = sum(x.^2,1)-sumsq1;
+            var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
+            var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
+            dist = var1./var2;
     end
 
     % Apply max correction if specified

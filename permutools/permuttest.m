@@ -184,24 +184,23 @@ if nargout > 1
     signx = randi([0,1],maxnobs,arg.nperm,'int8')*2-1;
 
     % Estimate sampling distribution
+    sumsq = sum(x.^2,nanflag);
     switch nanflag
         case 'omitnan'
             % Dynamic N-tracking for missing data
             dist = zeros(arg.nperm,nvar);
-            sumx2 = sum(x.^2,nanflag);
             for i = 1:arg.nperm
                 xp = x.*repmat(signx(:,i),1,nvar);
                 np = sum(~isnan(xp));
-                smx = sum(xp,nanflag);
-                varp = (sumx2-(smx.^2)./np)./(np-1);
+                sump = sum(xp,nanflag);
+                varp = (sumsq-(sump.^2)./np)./(np-1);
                 sep = sqrt(varp./np);
-                dist(i,:) = (smx./np)./sep;
+                dist(i,:) = (sump./np)./sep;
             end
         case 'includenan'
             % Fast vectorized calculation for complete data
             xp = double(signx)'*x;
-            smx2 = sum(x.^2);
-            varp = (smx2-(xp.^2)./nobs)./df;
+            varp = (sumsq-(xp.^2)./nobs)./df;
             sep = sqrt(varp./nobs);
             dist = (xp./nobs)./sep;
     end

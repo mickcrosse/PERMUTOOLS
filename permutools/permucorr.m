@@ -189,23 +189,26 @@ if nargout > 1
     if any(isnan(x(:))) || any(isnan(y(:)))
         % Exact pair-wise calculation for missing data
         for i = 1:arg.nperm
-            xp = x(idx(:,i), :);
+            xp = x(idx(:,i),:);
             valid = ~isnan(xp) & ~isnan(y);
             xp(~valid) = 0;
-            y_temp = y;
-            y_temp(~valid) = 0;
-            nobs_p = sum(valid);
-            sum_xp = sum(xp);
-            sum_y = sum(y_temp);
-            sdxy_p = sqrt((sum(xp.^2)-(sum_xp.^2)./nobs_p) .* ...
-                (sum(y_temp.^2)-(sum_y.^2)./nobs_p));
-            mu_p = sum_xp .* sum_y ./ nobs_p;
-            dist(i,:) = (sum(xp .* y_temp) - mu_p) ./ sdxy_p;
+            yp = y;
+            yp(~valid) = 0;
+            nobsp = sum(valid);
+            sumx = sum(xp);
+            sumy = sum(yp);
+            sdxyp = sqrt((sum(xp.^2)-(sumx.^2)./nobsp).*...
+                (sum(yp.^2)-(sumy.^2)./nobsp));
+            mup = sumx.*sumy./nobsp;
+            dist(i,:) = (sum(xp.*yp)-mup)./sdxyp;
         end
     else
         % Fast vectorized calculation for complete data
-        for i = 1:arg.nperm
-            dist(i,:) = (sum(x(idx(:,i),:).*y,nanflag)-mu)./sdxy;
+        for j = 1:nvar
+            xp = x(:,j);
+            yp = y(:,j);
+            sumxy = yp'*xp(idx);
+            dist(:,j) = (sumxy'-mu(j))./sdxy(j);
         end
     end
 
