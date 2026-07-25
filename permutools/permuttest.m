@@ -8,6 +8,10 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %   set to 'pairwise', two-tailed permutation tests between every pair of
 %   columns in X are performed, and a matrix of results is returned.
 %
+%   For non-normally distributed samples, the raw data may be transformed
+%   to signed ranks in order to compute a Wilcoxon signed-rank test by 
+%   setting the 'type' parameter to 'rank'.
+% 
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
 %   T = PERMUTTEST(X,M) returns the results of a one-sample permutation
