@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
-%PERMUTTEST2  Unpaired two-sample permutation-based t-test.
+%PERMUTTEST2  Two-sample permutation t-test and Mann-Whitney U test.
 %   T = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
 %   the t-statistic of the hypothesis that the data in X and Y come from
 %   distributions with equal means, and returns the test statistic. If X
@@ -11,7 +11,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %
 %   For non-normally distributed samples, the raw data may be transformed
 %   to rank orders in order to compute a Mann-Whitney U / Wilcoxon rank-sum
-%   test by setting the 'type' parameter to 'rank'.
+%   test by setting the 'type' parameter to 'ranksum'.
 %
 %   For samples of unequal size or variance, Welch's t-statistic may be
 %   used by setting the 'vartype' parameter to 'unequal' as it is less
@@ -59,9 +59,8 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %                       'right'     mean of X is greater than mean of Y
 %                       'left'      mean of X is less than mean of Y
 %       'type'      A string specifying the type of test measure:
-%                       'mean'      difference of means (t-test, default)
-%                       'rank'      difference of mean ranks (Mann-Whitney
-%                                   U / Wilcoxon rank-sum test)
+%                       'ttest2'    two-sample t-test (default)
+%                       'ranksum'   Mann-Whitney U / Wilcoxon rank-sum test
 %       'vartype'   A string specifying the variance equivalence of X and Y
 %                   to determine the SD and t-statistic estimation method:
 %                       'equal'   	assume equal variances (default)
@@ -110,7 +109,7 @@ end
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
-    arg.type = 'mean';
+    arg.type = 'ttest2';
 end
 
 % Validate input parameters
@@ -149,12 +148,14 @@ nobsy = sum(~isnan(y));
 
 % Transform raw data to rank orders if specified
 switch arg.type
-    case 'rank'
-        % Pool samples, rank column-wise, and split back
+    case 'ttest2'
+    case 'ranksum'
         xy = tiedrank([x;y]);
         nobsxtmp = size(x,1);
         x = xy(1:nobsxtmp,:);
         y = xy(nobsxtmp+1:end,:);
+    otherwise
+        error('The TYPE parameter value must be TTEST2, or RANKSUM.')
 end
 
 % Compute degrees of freedom

@@ -53,9 +53,8 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
 %       'type'      A string specifying the type of test measure:
-%                       'mean'      difference of means (ANOVA, default)
-%                       'rank'      difference of mean ranks (Kruskal-
-%                                   Wallis test)
+%                       'anova1'        one-way ANOVA (default)
+%                       'kruskalwallis' Kruskal-Wallis test
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
@@ -83,7 +82,7 @@ end
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
-    arg.type = 'mean';
+    arg.type = 'anova';
 end
 
 % Validate input parameters
@@ -107,8 +106,11 @@ nobs = sum(~isnan(x),'all');
 
 % Transform raw data to rank orders if specified
 switch arg.type
-    case 'rank'
+    case 'anova1'
+    case 'kruskalwallis'
         x = reshape(tiedrank(x(:)),shapex);
+    otherwise
+        error('The TYPE parameter value must be ANOVA1, or KRUSKALWALLIS.')
 end
 
 % Compute grand mean

@@ -1,9 +1,9 @@
 function [chi2,p,ci,stats,dist] = bootvartest(x,v,varargin)
-%BOOTVARTEST  One-sample bootstrapped chi-square test.
-%   CHI2 = BOOTVARTEST(X,V) performs a one-sample bootstrapped test based
-%   on the chi-squared statistic of the the null hypothesis that the data
-%   in X come from a distribution with variance V, and returns the test
-%   statistic. If X is a matrix, separate bootstrapped tests are performed
+%BOOTVARTEST  One-sample bootstrap chi-square test.
+%   CHI2 = BOOTVARTEST(X,V) performs a one-sample bootstrap test based on
+%   the chi-squared statistic of the the null hypothesis that the data in X
+%   come from a distribution with variance V, and returns the test
+%   statistic. If X is a matrix, separate bootstrap tests are performed
 %   along each column of X, and a vector of results is returned. V must be
 %   a scalar.
 %

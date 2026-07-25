@@ -1,5 +1,5 @@
 function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
-%PERMUVARTEST2  Unpaired two-sample permutation-based F-test.
+%PERMUVARTEST2  Two-sample permutation F-test and Conover squared-rank test.
 %   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
 %   the F-statistic of the null hypothesis that the data in X and Y come
 %   from distributions with equal variances, and returns the test
@@ -8,6 +8,10 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %   pair of columns in X and Y, and a vector of results is returned. If Y
 %   is empty, two-tailed permutation tests between every pair of columns in
 %   X are performed, and a matrix of results is returned.
+%
+%   For non-normally distributed samples, the raw data may be transformed
+%   to squared ranks in order to compute a Conover squared-rank test by
+%   setting the 'type' parameter to 'squarerank'.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %
@@ -44,6 +48,9 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %                       'both'      means are not equal (default)
 %                       'right'     mean of X is greater than mean of Y
 %                       'left'      mean of X is less than mean of Y
+%       'type'      A string specifying the type of test measure:
+%                       'ftest'         Two-sample F-test (default)
+%                       'squarerank'    Conover squared-rank test
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
@@ -82,6 +89,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'ftest';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
@@ -126,6 +136,19 @@ if any(isnan(x(:))) || any(isnan(y(:)))
     nanflag = 'omitnan';
 else
     nanflag = 'includenan';
+end
+
+% Transform raw data to squared ranks if specified
+switch arg.type
+    case 'ftest'
+    case 'squarerank'
+        devx = x-sum(x,nanflag)./nobsx;
+        devy = y-sum(y,nanflag)./nobsy;
+        devxy = tiedrank(abs([devx;devy]));
+        x = devxy(1:size(x,1),:).^2;
+        y = devxy(size(x,1)+1:end,:).^2;
+    otherwise
+        error('The TYPE parameter value must be FTEST, or SQUARERANK.')
 end
 
 % Compute sample variance using fast algo

@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
-%PERMUTTEST  One- or paired-sample permutation t-test and Wilcoxon signed-rank test.
+%PERMUTTEST  One-sample and paired-sample permutation-based t-test.
 %   T = PERMUTTEST(X) performs a one-sample permutation test based on the
 %   t-statistic of the hypothesis that the data in X come from a
 %   distribution with mean zero, and returns the test statistic. If X is a
@@ -9,9 +9,9 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %   columns in X are performed, and a matrix of results is returned.
 %
 %   For non-normally distributed samples, the raw data may be transformed
-%   to signed ranks in order to compute a Wilcoxon signed-rank test by
-%   setting the 'type' parameter to 'signrank'.
-%
+%   to signed ranks in order to compute a Wilcoxon signed-rank test by 
+%   setting the 'type' parameter to 'wilcoxon' or 'rank'.
+% 
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
 %   T = PERMUTTEST(X,M) returns the results of a one-sample permutation
@@ -62,8 +62,8 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %                       'right'     mean is greater than M (right-tailed)
 %                       'left'      mean is less than M (left-tailed)
 %       'type'      A string specifying the type of test:
-%                       'ttest'     One- or paired-sample t-test (default)
-%                       'signrank'  Wilcoxon signed-rank test
+%                       't-test'    One- or paired-sample t-test (default)
+%                       'wilcoxon'  Wilcoxon signed-rank test
 %       'compare'   A string specifying what to compare each variable to
 %                   when only X is entered:
 %                       'zero'      compare each column of X to zero and
@@ -119,7 +119,7 @@ end
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
-    arg.type = 'ttest';
+    arg.type = 't-test';
 end
 
 % Validate input parameters
@@ -159,11 +159,12 @@ x = x-y;
 
 % Transform raw data to signed ranks if specified
 switch arg.type
-    case 'ttest'
-    case 'signrank'
+    case {'t-test','raw'}
+        continue
+    case {'wilcoxon','rank'}
         x = sign(x).*tiedrank(abs(x));
     otherwise
-        error('The TYPE parameter value must be TTEST, or SIGNRANK.')
+        error('The TYPE parameter value must be T-TEST, WILCOXON, or RANK.')
 end
 
 % Use only rows with no NaN values if specified
