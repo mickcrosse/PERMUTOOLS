@@ -5,6 +5,10 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %   returns the test statistic. The columns of X can have different lengths
 %   by including NaN values.
 %
+%   For non-normally distributed data, the raw data may be transformed
+%   to rank orders in order to compute a Kruskal-Wallis test by setting the
+%   'type' parameter to 'rank'.
+%
 %   PERMUANOVA1 treats NaNs as missing values, and ignores them.
 %
 %   F = PERMUANOVA1(X,GROUP) groups the columns of X according to the
@@ -48,6 +52,10 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %       'dim'       A scalar specifying the dimension to work along: pass
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
+%       'type'      A string specifying the type of test measure:
+%                       'mean'      difference of means (ANOVA, default)
+%                       'rank'      difference of mean ranks (Kruskal-
+%                                   Wallis test)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
@@ -74,6 +82,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'mean';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
@@ -93,6 +104,12 @@ end
 % Get data dimensions, ignoring NaNs
 shapex = size(x);
 nobs = sum(~isnan(x),'all');
+
+% Transform raw data to rank-orders if specified
+switch arg.type
+    case 'rank'
+        x = reshape(tiedrank(x(:)),shapex);
+end
 
 % Compute grand mean
 gm = sum(x,'all',nanflag)/nobs;
