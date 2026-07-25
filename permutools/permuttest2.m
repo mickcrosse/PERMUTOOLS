@@ -147,7 +147,7 @@ end
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
 
-% Transform raw data to rank-orders if specified
+% Transform raw data to rank orders if specified
 switch arg.type
     case 'rank'
         % Pool samples, rank column-wise, and split back
