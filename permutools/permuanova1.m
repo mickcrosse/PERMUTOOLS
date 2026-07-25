@@ -105,7 +105,7 @@ end
 shapex = size(x);
 nobs = sum(~isnan(x),'all');
 
-% Transform raw data to rank-orders if specified
+% Transform raw data to rank orders if specified
 switch arg.type
     case 'rank'
         x = reshape(tiedrank(x(:)),shapex);
