@@ -29,6 +29,11 @@ tailOptions = {'left','both','right'};
 validFcn = @(x) any(validatestring(x,tailOptions));
 addParameter(p,'tail','both',validFcn);
 
+% Test type
+typeOptions = {'','mean','var','rank','pearson','spearman','rankit'};
+validFcn = @(x) any(validatestring(x,typeOptions));
+addParameter(p,'type','',validFcn);
+
 % Number of permutations
 errorMsg = 'It must be a positive integer scalar.';
 validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
@@ -63,11 +68,6 @@ addParameter(p,'compare','one',validFcn);
 vartypeOptions = {'equal','unequal'};
 validFcn = @(x) any(validatestring(x,vartypeOptions));
 addParameter(p,'vartype','equal',validFcn);
-
-% Test type
-typeOptions = {'','mean','rank','pearson','spearman','rankit'};
-validFcn = @(x) any(validatestring(x,typeOptions));
-addParameter(p,'type','',validFcn);
 
 % Effect size measure
 effectOptions = {'cohen','glass','cliff','meandiff','mediandiff'};
