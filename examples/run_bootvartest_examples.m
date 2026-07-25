@@ -32,7 +32,7 @@ tail = {'both','right','left'};
 label = {'two','right','left'};
 
 % Plot parametric & bootstrapped CIs
-figure('Name','One-sample Test: variance & CIs','NumberTitle','off')
+figure('Name','One-sample test: variance & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1,ci1] = vartest(x,v,'tail',tail{i});
@@ -69,7 +69,7 @@ for i = 1:numel(tail)
 end
 
 % Plot parametric & bootstrapped p-values
-figure('Name','One-sample Test: p-values','NumberTitle','off')
+figure('Name','One-sample test: p-values','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1] = vartest(x,v,'tail',tail{i});

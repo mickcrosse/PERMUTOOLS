@@ -35,7 +35,7 @@ tail = {'both','right','left'};
 label = {'two','right','left'};
 
 % Plot parametric & permutation CIs
-figure('Name','One-sample Test: mean value & CIs','NumberTitle','off')
+figure('Name','One-sample test: mean value & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     if isoctave
@@ -80,7 +80,7 @@ for i = 1:numel(tail)
 end
 
 % Plot parametric & permutation p-values
-figure('Name','One-sample Test: p-values','NumberTitle','off')
+figure('Name','One-sample test: p-values','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     if isoctave

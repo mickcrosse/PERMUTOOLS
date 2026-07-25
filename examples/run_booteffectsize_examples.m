@@ -39,7 +39,7 @@ paired = [false,true];
 samples = {'indep.','dep.'};
 vartype = {'equal','unequal'};
 
-figure('Name','Effect Size Analysis: effect sizes & CIs','NumberTitle','off')
+figure('Name','Effect size analysis: effect sizes & CIs','NumberTitle','off')
 set(gcf,'color','w')
 k = 1;
 for i = 1:numel(paired)

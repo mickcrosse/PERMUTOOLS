@@ -44,7 +44,7 @@ symbol = {'{\itr}','{\itρ}'};
 for n = 1:numel(type)
 
     % Plot parametric & permutation CIs
-    figure('Name',[type{n},'''s Correlation: coefficients & CIs'],...
+    figure('Name',[type{n},'''s correlation: coefficients & CIs'],...
         'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
@@ -102,7 +102,7 @@ for n = 1:numel(type)
     end
 
     % Plot parametric & permutation p-values
-    figure('Name',[type{n},'''s Correlation: p-values'],...
+    figure('Name',[type{n},'''s correlation: p-values'],...
         'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)

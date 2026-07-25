@@ -32,7 +32,7 @@ tail = {'both','right','left'};
 label = {'two','right','left'};
 
 % Plot parametric & permutation CIs
-figure('Name','Paired Test: mean difference & CIs','NumberTitle','off')
+figure('Name','Paired test: mean difference & CIs','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1,ci1] = ttest(x,y,'tail',tail{i});
@@ -67,7 +67,7 @@ for i = 1:numel(tail)
 end
 
 % Plot parametric & permutation p-values
-figure('Name','Paired Test: p-values','NumberTitle','off')
+figure('Name','Paired test: p-values','NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1] = ttest(x,y,'tail',tail{i});
