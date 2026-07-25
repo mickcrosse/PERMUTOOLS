@@ -57,6 +57,10 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %                       'both'      mean is not M (two-tailed, default)
 %                       'right'     mean is greater than M (right-tailed)
 %                       'left'      mean is less than M (left-tailed)
+%       'type'      A string specifying the type of test measure:
+%                       'mean'      difference of means (t-test, default)
+%                       'rank'      difference of mean ranks (Wilcoxon
+%                                   signed-rank test)
 %       'compare'   A string specifying what to compare each variable to
 %                   when only X is entered:
 %                       'zero'      compare each column of X to zero and
@@ -111,6 +115,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'mean';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
@@ -146,6 +153,12 @@ end
 
 % Compute difference between samples
 x = x-y;
+
+% Transform raw data to signed ranks if specified
+switch arg.type
+    case 'rank'
+        x = sign(x).*tiedrank(abs(x));
+end
 
 % Use only rows with no NaN values if specified
 switch arg.rows

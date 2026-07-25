@@ -8,7 +8,7 @@
 
 PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient vectorised implementations of resampling algorithms to generate the sampling distribution empirically, providing distribution-free nonparametric hypothesis testing and effect size analysis.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), **Kruskal-Wallis test**, ***t*-test** (one-sample, paired-sample, two-sample), **Mann-Whitney U / Wilcoxon rank-sum test**, **Chi-square test**, ***F*-test**, ***Z*-test**, and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), **Kruskal-Wallis test**, ***t*-test** (one-sample, paired-sample, two-sample), **Wilcoxon signed-rank test**, **Mann-Whitney U / Wilcoxon rank-sum test**, **Chi-square test**, ***F*-test**, ***Z*-test**, and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
 
 PERMUTOOLS also offers effect size measurement and bootstrapped confidence interval estimation for a range of standardised and unstandardised effect sizes, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of standardised effect size measures and their CIs due to sample size is controlled by applying a ***bias correction factor***.
 
@@ -60,10 +60,10 @@ PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 
 | Function | Description |
 | --- | --- |
-| [**permuanova1()**](matlab/permuanova1.m) | One-way analysis of variance (ANOVA) or Kruskal-Wallis test|
+| [**permuanova1()**](matlab/permuanova1.m) | One-way analysis of variance (ANOVA) and Kruskal-Wallis test|
 | [**permuanova2()**](matlab/permuanova2.m) | Two-way analysis of variance (ANOVA) |
-| [**permuttest()**](matlab/permuttest.m) | One/paired-sample *t*-test with max correction |
-| [**permuttest2()**](matlab/permuttest2.m) | Two-sample *t*-test or Mann-Whitney U / Wilcoxon rank-sum test with max correction |
+| [**permuttest()**](matlab/permuttest.m) | One/paired-sample *t*-test and Wilcoxon signed-rank test with max correction |
+| [**permuttest2()**](matlab/permuttest2.m) | Two-sample *t*-test ant Mann-Whitney U / Wilcoxon rank-sum test with max correction |
 | [**permuvartest2()**](matlab/bootvartest.m) | One-sample chi-square test with max correction |
 | [**permuvartest2()**](matlab/permuvartest2.m) | Two-sample *F*-test with max correction |
 | [**permuztest()**](matlab/permuztest.m) | One-sample *Z*-test with max correction |
