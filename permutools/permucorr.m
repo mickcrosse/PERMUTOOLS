@@ -103,6 +103,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'pearson';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
