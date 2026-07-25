@@ -64,10 +64,10 @@ vartypeOptions = {'equal','unequal'};
 validFcn = @(x) any(validatestring(x,vartypeOptions));
 addParameter(p,'vartype','equal',validFcn);
 
-% Correlation type
-typeOptions = {'pearson','spearman','rankit'};
+% Test type
+typeOptions = {'','mean','rank','pearson','spearman','rankit'};
 validFcn = @(x) any(validatestring(x,typeOptions));
-addParameter(p,'type','pearson',validFcn);
+addParameter(p,'type','',validFcn);
 
 % Effect size measure
 effectOptions = {'cohen','glass','cliff','meandiff','mediandiff'};
