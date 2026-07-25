@@ -2,9 +2,12 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %PERMUCORR  Linear or rank permutation-based correlation.
 %   R = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
-%   Pearson's r. For nonlinear correlations, the raw data may be
-%   transformed to rank orders in order to compute a Spearman or rankit
-%   correlation by setting the 'type' parameter to 'spearman' or 'rankit'.
+%   Pearson's r.
+%
+%   For nonlinear correlations, the raw data may be transformed to rank
+%   orders in order to compute a Spearman rank correlation by setting
+%   the 'type' parameter to 'spearman' or 'rank', or a Bliss rankit
+%   correlation by setting the 'type' parameter to 'rankit'.
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %
@@ -48,8 +51,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                       'right'     correlation is greater than zero
 %                       'left'      correlation is less than zero
 %       'type'      A string specifying the type of correlation measure:
-%                       'pearson'   linear correlation coefficient based on
-%                                   Pearson's r (default)
+%                       'pearson'   Pearson's correlation coefficient
+%                                   (default)
 %                       'spearman'  Spearman's rank correlation coefficient
 %                       'rankit'    Bliss' rankit correlation coefficient
 %       'nperm'     An integer scalar specifying the number of permutations
@@ -156,9 +159,9 @@ else
     nanflag = 'includenan';
 end
 
-% Transform raw data to rank-orders if specified
+% Transform raw data to rank orders if specified
 switch arg.type
-    case 'spearman'
+    case {'spearman', 'rank'}
         x = tiedrank(x);
         y = tiedrank(y);
     case 'rankit'
