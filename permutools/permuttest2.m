@@ -9,6 +9,10 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   pair of columns in X are performed, and a matrix of results is
 %   returned. X and Y can have different lengths.
 %
+%   For non-normally distributed samples, the raw data may be transformed
+%   to rank orders in order to compute a Mann-Whitney U / Wilcoxon rank-sum
+%   test by setting the 'type' parameter to 'rank'.
+%
 %   For samples of unequal size or variance, Welch's t-statistic may be
 %   used by setting the 'vartype' parameter to 'unequal' as it is less
 %   sensitive to differences in variance (but also less sensitive to
@@ -54,6 +58,10 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %                       'both'      means are not equal (default)
 %                       'right'     mean of X is greater than mean of Y
 %                       'left'      mean of X is less than mean of Y
+%       'type'      A string specifying the type of test measure:
+%                       'mean'      difference of means (t-test, default)
+%                       'rank'      difference of mean ranks (Mann-Whitney
+%                                   U / Wilcoxon rank-sum test)
 %       'vartype'   A string specifying the variance equivalence of X and Y
 %                   to determine the SD and t-statistic estimation method:
 %                       'equal'   	assume equal variances (default)
@@ -71,7 +79,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
 %
-%   See also TTEST2 PERMUTTEST PERMUVARTEST2 BOOTEFFECTSIZE.
+%   See also TTEST2 RANKSUM PERMUTTEST PERMUVARTEST2 BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -101,6 +109,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'mean';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
@@ -135,6 +146,16 @@ end
 [maxnobsx,nvar] = size(x);
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
+
+% Transform raw data to rank-orders if specified
+switch arg.type
+    case 'rank'
+        % Pool samples, rank column-wise, and split back
+        xy = tiedrank([x;y]);
+        nobsxtmp = size(x,1);
+        x = xy(1:nobsxtmp,:);
+        y = xy(nobsxtmp+1:end,:);
+end
 
 % Compute degrees of freedom
 dfx = nobsx-1;
