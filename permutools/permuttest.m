@@ -10,7 +10,7 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %
 %   For non-normally distributed samples, the raw data may be transformed
 %   to signed ranks in order to compute a Wilcoxon signed-rank test by
-%   setting the 'type' parameter to 'signrank'.
+%   setting the 'type' parameter to 'signrank' or 'rank'.
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
@@ -160,7 +160,7 @@ x = x-y;
 % Transform raw data to signed ranks if specified
 switch arg.type
     case 'ttest'
-    case 'signrank'
+    case {'signrank','rank'}
         x = sign(x).*tiedrank(abs(x));
     otherwise
         error('The TYPE parameter value must be TTEST, or SIGNRANK.')

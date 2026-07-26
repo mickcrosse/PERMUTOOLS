@@ -6,8 +6,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %
 %   For nonlinear correlations, the raw data may be transformed to rank
 %   orders in order to compute a Spearman rank correlation by setting
-%   the 'type' parameter to 'spearman', or a rankit correlation by setting
-%   the 'type' parameter to 'rankit'.
+%   the 'type' parameter to 'spearman' or 'rank', or a rankit correlation
+%   by setting the 'type' parameter to 'rankit'.
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %
@@ -162,7 +162,7 @@ end
 % Transform raw data to rank orders if specified
 switch arg.type
     case 'pearson'
-    case 'spearman'
+    case {'spearman','rank'}
         x = tiedrank(x);
         y = tiedrank(y);
     case 'rankit'

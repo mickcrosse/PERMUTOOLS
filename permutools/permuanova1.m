@@ -7,7 +7,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %
 %   For non-normally distributed data, the raw data may be transformed
 %   to rank orders in order to compute a Kruskal-Wallis test by setting the
-%   'type' parameter to 'rank'.
+%   'type' parameter to 'kruskalwallis' or 'rank'.
 %
 %   PERMUANOVA1 treats NaNs as missing values, and ignores them.
 %
@@ -82,7 +82,7 @@ end
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
-    arg.type = 'anova';
+    arg.type = 'anova1';
 end
 
 % Validate input parameters
@@ -107,7 +107,7 @@ nobs = sum(~isnan(x),'all');
 % Transform raw data to rank orders if specified
 switch arg.type
     case 'anova1'
-    case 'kruskalwallis'
+    case {'kruskalwallis','rank'}
         x = reshape(tiedrank(x(:)),shapex);
     otherwise
         error('The TYPE parameter value must be ANOVA1, or KRUSKALWALLIS.')

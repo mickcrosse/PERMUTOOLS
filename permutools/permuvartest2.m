@@ -11,7 +11,7 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %
 %   For non-normally distributed samples, the raw data may be transformed
 %   to squared ranks in order to compute a Conover squared-rank test by
-%   setting the 'type' parameter to 'squarerank'.
+%   setting the 'type' parameter to 'squarerank' or 'rank'.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %
@@ -141,7 +141,7 @@ end
 % Transform raw data to squared ranks if specified
 switch arg.type
     case 'ftest'
-    case 'squarerank'
+    case {'squarerank','rank'}
         devx = x-sum(x,nanflag)./nobsx;
         devy = y-sum(y,nanflag)./nobsy;
         devxy = tiedrank(abs([devx;devy]));

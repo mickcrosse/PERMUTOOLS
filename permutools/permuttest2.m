@@ -11,7 +11,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %
 %   For non-normally distributed samples, the raw data may be transformed
 %   to rank orders in order to compute a Mann-Whitney U / Wilcoxon rank-sum
-%   test by setting the 'type' parameter to 'ranksum'.
+%   test by setting the 'type' parameter to 'ranksum' or 'rank'.
 %
 %   For samples of unequal size or variance, Welch's t-statistic may be
 %   used by setting the 'vartype' parameter to 'unequal' as it is less
@@ -149,7 +149,7 @@ nobsy = sum(~isnan(y));
 % Transform raw data to rank orders if specified
 switch arg.type
     case 'ttest2'
-    case 'ranksum'
+    case {'ranksum','rank'}
         xy = tiedrank([x;y]);
         nobsxtmp = size(x,1);
         x = xy(1:nobsxtmp,:);
