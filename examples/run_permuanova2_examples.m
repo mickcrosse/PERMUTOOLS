@@ -27,7 +27,7 @@ isoctave = any(ismember({info.Name},'Octave'));
 
 % Generate random data
 rng(42);
-nobs = 6; nvar = 5; nperm = 20;
+nobs = 6; nvar = 5; nperm = 10;
 x = randn(nobs,nvar);
 x(:,1:2) = x(:,1:2)+1;
 xaxis = 1:nperm;
@@ -39,6 +39,7 @@ else
     dim = 2;
 end
 ylabels = {'columns','rows','interaction'};
+type = {'anova2','alignedrank'};
 
 % Compute ANOVA
 p1 = zeros(dim,nperm);
@@ -48,53 +49,64 @@ ci2 = zeros(2,dim,nperm);
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
-for i = 1:nperm
-    if isoctave
-        idx = datasample(1:6,6,'Replace',false);
-    else
-        idx = datasample(s,1:6,6,'Replace',false);
-    end
-    [p1(:,i)] = anova2(x(idx,:),reps,'off');
-    [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps);
-end
 
-% Set up figure
-figure('Name','Two-way permutation-based ANOVA','NumberTitle','off')
-set(gcf,'color','w')
 
-k = 1;
-for i = 1:dim
+for t = 1:numel(type)
 
-    % Plot F-statistic & CIs
-    subplot(3,2,k), hold on
-    plot(xaxis,f2(i,:),'LineWidth',3)
-    plot(xaxis,squeeze(ci2(:,i,:)),'k')
-    plot(xaxis(p1(i,:)<=alpha),f2(i,p1(i,:)<=alpha),'ok','LineWidth',2)
-    plot(xaxis(p2(i,:)<=alpha),f2(i,p2(i,:)<=alpha),'xr','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,6]), box on, grid on
-    if i == 1
-        title('Test Statistic')
-    end
-    ylabel(ylabels{i})
-    if i ==2
-        legend('{\itF}-statistic','95% CI (perm.)')
-    end
-    if i == dim
-        xlabel('permutation')
+    for i = 1:nperm
+        if isoctave
+            idx = datasample(1:6,6,'Replace',false);
+        else
+            idx = datasample(s,1:6,6,'Replace',false);
+        end
+        switch type{t}
+            case 'anova2'
+                p1(:,i) = anova2(x(idx,:),reps,'off');
+            case 'alignedrank'
+                p1(:,i) = nan(dim,1);
+        end
+        [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps,'type',type{t});
     end
 
-    % Plot p-values
-    subplot(3,2,k+1), hold on
-    plot(xaxis,p1(i,:),'k',xaxis,p2(i,:),'--r','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,1]), box on, grid on
-    if i == 1
-        title('{\itP}-values')
-        legend('{\itp}-value (param.)','{\itp}-value (perm.)')
-    end
-    if i == dim
-        xlabel('permutation')
-    end
+    % Set up figure
+    figure('Name',['Two-way ',type{t},' test'],'NumberTitle','off')
+    set(gcf,'color','w')
 
-    k = k+2;
+    k = 1;
+    for i = 1:dim
+
+        % Plot F-statistic & CIs
+        subplot(3,2,k), hold on
+        plot(xaxis,f2(i,:),'LineWidth',3)
+        plot(xaxis,squeeze(ci2(:,i,:)),'k')
+        plot(xaxis(p1(i,:)<=alpha),f2(i,p1(i,:)<=alpha),'ok','LineWidth',2)
+        plot(xaxis(p2(i,:)<=alpha),f2(i,p2(i,:)<=alpha),'xr','LineWidth',2)
+        xlim([0,nperm+1]), ylim([0,15]), box on, grid on
+        if i == 1
+            title('Test Statistic')
+        end
+        ylabel(ylabels{i})
+        if i ==2
+            legend('{\itF}-statistic','95% CI (perm.)')
+        end
+        if i == dim
+            xlabel('permutation')
+        end
+
+        % Plot p-values
+        subplot(3,2,k+1), hold on
+        plot(xaxis,p1(i,:),'k',xaxis,p2(i,:),'--r','LineWidth',2)
+        xlim([0,nperm+1]), ylim([0,1]), box on, grid on
+        if i == 1
+            title('{\itP}-values')
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+        end
+        if i == dim
+            xlabel('permutation')
+        end
+
+        k = k+2;
+
+    end
 
 end

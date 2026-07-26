@@ -4,6 +4,10 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   for comparing the means of two or more columns and two or more rows of
 %   data in matrix X, and returns the test statistics for the columns, rows
 %   and interactions (if any), respectively.
+% 
+%   For non-normally distributed data, the raw data may be transformed
+%   to rank orders in order to compute a aligned rank test (ART) by setting
+%   the 'type' parameter to 'alignedrank' or 'rank'.
 %
 %   PERMUANOVA2 won't accept NaNs and requires a perfectly balanced design.
 %
@@ -49,6 +53,9 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %       'dim'       A scalar specifying the dimension to work along: pass
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
+%       'type'      A string specifying the type of test measure:
+%                       'anova2'        one-way ANOVA (default)
+%                       'alignedrank'   aligned rank test (ART)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
@@ -74,6 +81,9 @@ end
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if isempty(arg.type)
+    arg.type = 'anova2';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
@@ -94,44 +104,82 @@ nobs = numel(x);
 [rows,cols] = size(x);
 if reps > 1
     grows = rows/reps;
-    xm = zeros(grows,cols);
-    for i = 1:grows
-        idx = reps*(i-1);
-        xm(i,:) = mean(x(idx+1:idx+reps,:),1);
-    end
 else
     grows = rows;
-    xm = x;
+end
+
+% Aligned rank transform (ART) data prep
+switch arg.type
+    case 'anova2'
+        % Use same raw data for all three effects
+        xc = x; xr = x; xi = x;
+    case {'alignedrank', 'rank'}
+        % Calculate cell, column, and row means
+        gm = mean(x,'all');
+        MC = repmat(mean(x,1),rows,1);
+        if reps > 1
+            MR = zeros(rows,cols);
+            MCR = zeros(rows,cols);
+            for i = 1:grows
+                idx = reps*(i-1)+(1:reps);
+                MR(idx,:) = mean(x(idx,:),'all');
+                MCR(idx,:) = repmat(mean(x(idx,:),1),reps,1);
+            end
+        else
+            MR = repmat(mean(x,2),1,cols);
+            MCR = x;
+        end
+        % Align and rank data
+        YC = x-MCR+MC;
+        YR = x-MCR+MR;
+        YCR = x-MC-MR+2*gm;
+        xc = reshape(tiedrank(YC(:)),rows,cols);
+        xr = reshape(tiedrank(YR(:)),rows,cols);
+        xi = reshape(tiedrank(YCR(:)),rows,cols);
+end
+
+% Stack datasets into 3D array
+X3 = cat(3,xc,xr,xi);
+
+% Compute block means for 3D array if reps > 1
+if reps > 1
+    X3m = zeros(grows,cols,3);
+    for i = 1:grows
+        idx = reps*(i-1)+(1:reps);
+        X3m(i,:,:) = mean(X3(idx,:,:),1);
+    end
+else
+    X3m = X3;
 end
 
 % Compute group sample sizes
 coln = reps*grows;
 rown = reps*cols;
 
-% Compute grand mean
-gm = sum(xm,'all')/nobs;
+% Compute global 3D means and factors
+gm3 = sum(X3m,[1,2])/nobs;
+factor3 = nobs*gm3.^2;
 
-% Compute column sum of squares
-colmeans = mean(xm,1);
-css = coln*sum((colmeans-gm).^2,'all');
+% Compute sum of squares across 3rd dimension
+colmeans3 = mean(X3m,1);
+css3 = coln*sum((colmeans3-gm3).^2,[1,2]);
+rowmeans3 = mean(X3m,2);
+rss3 = rown*sum((rowmeans3-gm3).^2,[1,2]);
+iss3 = reps*sum(X3m.^2,[1,2])-css3-rss3-factor3;
+tss3 = sum(X3.^2,[1,2])-factor3;
 
-% Compute row sum of squares
-rowmeans = mean(xm,2);
-rss = rown*sum((rowmeans-gm).^2,'all');
-
-% Compute interaction sum of squares
-factor = nobs*gm^2;
-iss = reps*sum(xm.^2,'all')-css-rss-factor;
-
-% Compute total sum of squares
-tss = sum(x.^2,'all')-factor;
-
-% Compute error sum of squares
+% Compute error SS
 if reps > 1
-    ess = tss-css-rss-iss;
+    ess3 = tss3-css3-rss3-iss3;
 else
-    ess = iss;
+    ess3 = iss3;
 end
+
+% Extract relevant ART statistics
+css = css3(1);
+rss = rss3(2);
+iss = iss3(3);
+ess = ess3(3);
 
 % Compute degrees of freedom
 dft = nobs-1;
@@ -144,16 +192,18 @@ else
 end
 dfi = dfc*dfr;
 
-% Compute mean squares
+% Compute mean squares using effect-specific error SS
 msc = css/dfc;
 msr = rss/dfr;
 msi = iss/dfi;
-mse = ess/dfe;
+msec = ess3(1)/dfe;
+mser = ess3(2)/dfe;
+msei = ess3(3)/dfe;
 
 % Compute F-statistics
-fc = msc/mse;
-fr = msr/mse;
-fi = msi/mse;
+fc = msc/msec;
+fr = msr/mser;
+fi = msi/msei;
 if reps > 1
     f = [fc,fr,fi];
 else
@@ -163,7 +213,9 @@ end
 if nargout > 1
 
     % Concatenate groups
-    x = x(:);
+    xc = xc(:);
+    xr = xr(:);
+    xi = xi(:);
 
     % Generate random permutations
     rng(arg.seed);
@@ -175,35 +227,58 @@ if nargout > 1
     if reps > 1
         disti = zeros(arg.nperm,1);
     end
+
     for i = 1:arg.nperm
-        xp = x(idx(:,i));
-        xp = reshape(xp,shapex);
+
+        % Apply permutation index to all 3 datasets
+        xcp = xc(idx(:,i));
+        xrp = xr(idx(:,i));
+        xip = xi(idx(:,i));
+
+        % Reshape and stack into 3D array
+        X3p = cat(3,reshape(xcp,shapex),reshape(xrp,shapex),...
+            reshape(xip,shapex));
+
+        % Compute block means for 3D array
         if reps > 1
-            xmp = zeros(grows,cols);
+            X3mp = zeros(grows,cols,3);
             for j = 1:grows
-                idxp = reps*(j-1);
-                xmp(j,:) = mean(xp(idxp+1:idxp+reps,:),1);
+                idxp = reps*(j-1)+(1:reps);
+                X3mp(j,:,:) = mean(X3p(idxp,:,:),1);
             end
         else
-            xmp = xp;
+            X3mp = X3p;
         end
-        colmeansp = mean(xmp,1);
-        cssp = coln*sum((colmeansp-gm).^2,'all');
-        rowmeansp = mean(xmp,2);
-        rssp = rown*sum((rowmeansp-gm).^2,'all');
-        issp = reps*sum(xmp.^2,'all')-cssp-rssp-factor;
+
+        % Compute global 3D means and correction factor
+        gm3p = sum(X3mp,[1,2])/nobs;
+        factor3p = nobs*gm3p.^2;
+
+        % Compute sum of squares across 3rd dimension
+        colmeans3p = mean(X3mp,1);
+        css3p = coln*sum((colmeans3p-gm3p).^2,[1,2]);
+        rowmeans3p = mean(X3mp,2);
+        rss3p = rown*sum((rowmeans3p-gm3p).^2,[1,2]);
+        iss3p = reps*sum(X3mp.^2,[1,2])-css3p-rss3p-factor3p;
         if reps > 1
-            tssp = sum(xp.^2,'all')-factor;
-            essp = tssp-cssp-rssp-issp;
+            tss3p = sum(X3p.^2,[1,2])-factor3p;
+            ess3p = tss3p-css3p-rss3p-iss3p;
         else
-            essp = issp;
+            ess3p = iss3p;
         end
-        msep = essp/dfe;
-        distc(i) = cssp/dfc/msep;
-        distr(i) = rssp/dfr/msep;
+
+        % Compute permuted mean squares using effect-specific error SS
+        msecp = ess3p(1)/dfe;
+        mserp = ess3p(2)/dfe;
+
+        % Store permuted F-statistics
+        distc(i) = (css3p(1)/dfc)/msecp;
+        distr(i) = (rss3p(2)/dfr)/mserp;
         if reps > 1
-            disti(i) = issp/dfi/msep;
+            mse_ip = ess3p(3)/dfe;
+            disti(i) = (iss3p(3)/dfi)/mse_ip;
         end
+
     end
 
     % Compute p-values
@@ -216,7 +291,6 @@ if nargout > 1
         pint = NaN;
         p = [pc,pr];
     end
-
 end
 
 % Compute confidence intervals
@@ -249,6 +323,8 @@ end
 
 % Create ANOVA table
 if nargout > 4
+    mse = ess/dfe;
+    tss = css+rss+iss+ess;
     tbl = {
         'Source','SS','df','MS','F','Prob>F';
         'Columns',css,dfc,msc,fc,pc;
