@@ -32,7 +32,7 @@ y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = {'mean','rank'};
+type = {'ttest2','ranksum'};
 vartype = {'equal','unequal'};
 
 for t = 1:numel(type)
@@ -45,15 +45,15 @@ for t = 1:numel(type)
         end
 
         % Plot parametric & permutation CIs
-        figure('Name',['Unpaired ',type{t},'-based test (',vartype{v},...
+        figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
             ' SD): mean difference & CIs'],'NumberTitle','off')
         set(gcf,'color','w')
         for i = 1:numel(tail)
             switch type{t}
-                case 'mean'
+                case 'ttest2'
                     [~,p1,ci1] = ttest2(x,y,'tail',tail{i},'vartype',vartype{v});
                     ylims = [-3,3];
-                case 'rank'
+                case 'ranksum'
                     p1 = zeros(nvar,1);
                     for j = 1:nvar
                         p1(j) = ranksum(x(:,j),y(:,j),'tail',tail{i});
@@ -94,14 +94,14 @@ for t = 1:numel(type)
         end
 
         % Plot parametric & permutation p-values
-        figure('Name',['Unpaired ',type{t},'-based test (',vartype{v},...
+        figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
             ' SD): p-values'],'NumberTitle','off')
         set(gcf,'color','w')
         for i = 1:numel(tail)
             switch type{t}
-                case 'mean'
+                case 'ttest2'
                     [~,p1] = ttest2(x,y,'tail',tail{i},'vartype',vartype{v});
-                case 'rank'
+                case 'ranksum'
                     p1 = zeros(nvar,1);
                     for j = 1:nvar
                         p1(j) = ranksum(x(:,j),y(:,j),'tail',tail{i});

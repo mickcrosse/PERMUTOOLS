@@ -38,24 +38,24 @@ y(:,6:10) = y(:,6:10)-x(:,6:10);
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = {'Pearson','Spearman'};
+type = {'pearson','spearman'};
 symbol = {'{\itr}','{\itρ}'};
 
-for n = 1:numel(type)
+for t = 1:numel(type)
 
     % Plot parametric & permutation CIs
-    figure('Name',[type{n},'''s correlation: coefficients & CIs'],...
+    figure('Name',[type{t},'''s correlation: coefficients & CIs'],...
         'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
-        [r1,p1] = corr(x,y,'tail',tail{i},'type',type{n});
+        [r1,p1] = corr(x,y,'tail',tail{i},'type',type{t});
         r1 = diag(r1); p1 = diag(p1);
         ci1 = zeros(2,nvar);
         for j = 1:nvar
-            switch type{n}
-                case 'Pearson'
+            switch type{t}
+                case 'pearson'
                     [~,~,clwr,cupr] = corrcoef(x(:,j),y(:,j));
-                case 'Spearman'
+                case 'spearman'
                     [~,~,clwr,cupr] = corrcoef(tiedrank(x(:,j)),...
                         tiedrank(y(:,j)));
             end
@@ -68,7 +68,7 @@ for n = 1:numel(type)
                     ci1(:,j) = [clwr(2);cupr(2)];
             end
         end
-        [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{n},...
+        [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{t},...
             'correct',0);
         subplot(3,2,i+i-1), hold on
         plot(xaxis,r2,'LineWidth',3)
@@ -83,10 +83,10 @@ for n = 1:numel(type)
         end
         ylabel([label{i},'-tailed'])
         if i == 2
-            legend([type{n},'''s ',symbol{n}],'95% CI (param.)','',...
+            legend([type{t},'''s ',symbol{t}],'95% CI (param.)','',...
                 '95% CI (perm.)')
         end
-        [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{n},...
+        [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{t},...
             'correct',1);
         subplot(3,2,i+i), hold on
         plot(xaxis,r2,'LineWidth',3)
@@ -102,13 +102,13 @@ for n = 1:numel(type)
     end
 
     % Plot parametric & permutation p-values
-    figure('Name',[type{n},'''s correlation: p-values'],...
+    figure('Name',[type{t},'''s correlation: p-values'],...
         'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
-        [~,p1] = corr(x,y,'tail',tail{i},'type',type{n});
+        [~,p1] = corr(x,y,'tail',tail{i},'type',type{t});
         p1 = diag(p1);
-        [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',0);
+        [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{t},'correct',0);
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -121,7 +121,7 @@ for n = 1:numel(type)
         if i == 2
             legend('{\itp}-value (param.)','{\itp}-value (perm.)')
         end
-        [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{n},'correct',1);
+        [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{t},'correct',1);
         subplot(3,2,i+i), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on

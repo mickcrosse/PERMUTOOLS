@@ -31,31 +31,34 @@ y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = {'mean','rank'};
+type = {'ttest','signrank'};
 
 for t = 1:numel(type)
 
     % Plot parametric & permutation CIs
-    figure('Name',['Paired ',type{t},'-based test: mean difference & CIs'],'NumberTitle','off')
+    figure('Name',['Paired ',type{t},' test: mean difference & CIs'],'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
         switch type{t}
-            case 'mean'
+            case 'ttest'
                 [~,p1,ci1] = ttest(x,y,'tail',tail{i});
-            case 'rank'
+                ylims = [-3,3];
+            case 'signrank'
                 p1 = zeros(nvar,1);
                 for j = 1:nvar
                     p1(j) = signrank(x(:,j),y(:,j),'tail',tail{i});
                 end
                 ci1 = nan(nvar,2);
+                ylims = [-30,30];
         end
-        [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+        [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',0,...
+            'verbose',0,'type',type{t});
         subplot(3,2,i+i-1), hold on
         plot(xaxis,stats2.mu,'LineWidth',3)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
+        xlim([0,nvar+1]), ylim(ylims), box on, grid on
         if i == 1
             title('Uncorrected')
         elseif i == 3
@@ -65,13 +68,14 @@ for t = 1:numel(type)
         if i == 2
             legend('mean difference','95% CI (param.)','','95% CI (perm.)')
         end
-        [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+        [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',1,...
+            'verbose',0,'type',type{t});
         subplot(3,2,i+i), hold on
         plot(xaxis,stats2.mu,'LineWidth',3)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
+        xlim([0,nvar+1]), ylim(ylims), box on, grid on
         if i == 1
             title('Max-corrected')
         elseif i == 3
@@ -80,19 +84,20 @@ for t = 1:numel(type)
     end
 
     % Plot parametric & permutation p-values
-    figure('Name',['Paired ',type{t},'-based test: p-values'],'NumberTitle','off')
+    figure('Name',['Paired ',type{t},' test: p-values'],'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
         switch type{t}
-            case 'mean'
+            case 'ttest'
                 [~,p1] = ttest(x,y,'tail',tail{i});
-            case 'rank'
+            case 'signrank'
                 p1 = zeros(nvar,1);
                 for j = 1:nvar
                     p1(j) = signrank(x(:,j),y(:,j),'tail',tail{i});
                 end
         end
-        [~,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0);
+        [~,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0,...
+            'type',type{t});
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -105,7 +110,8 @@ for t = 1:numel(type)
         if i == 2
             legend('{\itp}-value (param.)','{\itp}-value (perm.)')
         end
-        [~,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0);
+        [~,p2] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0,...
+            'type',type{t});
         subplot(3,2,i+i), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on

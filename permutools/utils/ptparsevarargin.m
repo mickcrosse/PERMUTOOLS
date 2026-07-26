@@ -30,7 +30,8 @@ validFcn = @(x) any(validatestring(x,tailOptions));
 addParameter(p,'tail','both',validFcn);
 
 % Test type
-typeOptions = {'','mean','var','rank','pearson','spearman','rankit'};
+typeOptions = {'','anova1','kruskalwallis','ttest','signrank','ttest2',...
+    'ranksum','ftest','squarerank','pearson','spearman','rankit'};
 validFcn = @(x) any(validatestring(x,typeOptions));
 addParameter(p,'type','',validFcn);
 

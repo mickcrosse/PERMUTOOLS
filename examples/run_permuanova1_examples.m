@@ -33,7 +33,7 @@ x = randn(nobs,nvar);
 x(:,1) = x(:,1)+1;
 xaxis = 1:nperm; alpha = 0.05;
 group_labels = 1:5;
-type = {'mean','rank'};
+type = {'anova1','kruskalwallis'};
 
 % Compute ANOVA
 p1 = zeros(1,nperm);
@@ -55,16 +55,16 @@ for t = 1:numel(type)
                 'Replace',true);
         end
         switch type{t}
-            case 'mean'
+            case 'anova1'
                 p1(i) = anova1(x,group,'off');
-            case 'rank'
+            case 'kruskalwallis'
                 p1(i) = kruskalwallis(x,group,'off');
         end
         [f2(i),p2(i),ci2(:,i)] = permuanova1(x,group,'type',type{t});
     end
 
     % Set up figure
-    figure('Name',['One-way ',type{t},'-based ANOVA'],'NumberTitle','off')
+    figure('Name',['One-way ',type{t},' test'],'NumberTitle','off')
     set(gcf,'color','w')
 
     % Plot F-statistic & CIs
