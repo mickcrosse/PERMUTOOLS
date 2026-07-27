@@ -36,7 +36,8 @@ type = {'ttest','signrank'};
 for t = 1:numel(type)
 
     % Plot parametric & permutation CIs
-    figure('Name',['Paired ',type{t},' test: mean difference & CIs'],'NumberTitle','off')
+    figure('Name',['Paired ',type{t},' test: mean difference & CIs'],...
+        'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
         switch type{t}
