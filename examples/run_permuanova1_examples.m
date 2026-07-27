@@ -26,27 +26,32 @@ function run_permuanova1_examples
 info = ver;
 isoctave = any(ismember({info.Name},'Octave'));
 
-% Generate random data
-rng(42);
-nobs = 30; nvar = 5; nperm = 10;
-x = randn(nobs,nvar);
-x(:,1) = x(:,1)+1;
-xaxis = 1:nperm; alpha = 0.05;
+% Set up experiment
+nobs = 30; nvar = 5; nsim = 10;
+xaxis = 1:nsim; alpha = 0.05;
 group_labels = 1:5;
 type = {'anova1','kruskalwallis'};
 
-% Compute ANOVA
-p1 = zeros(1,nperm);
-f2 = zeros(1,nperm);
-p2 = zeros(1,nperm);
-ci2 = zeros(2,nperm);
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+x(:,1) = x(:,1)+1;
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
 
+% Preallocate memory
+p1 = zeros(1,nsim);
+f2 = zeros(1,nsim);
+p2 = zeros(1,nsim);
+ci2 = zeros(2,nsim);
+
 for t = 1:numel(type)
 
-    for i = 1:nperm
+    % Iterate through simulations
+    for i = 1:nsim
+
+        % Ramdomly sample data with replacement
         if isoctave
             group = datasample(group_labels,numel(group_labels),...
                 'Replace',true);
@@ -54,6 +59,8 @@ for t = 1:numel(type)
             group = datasample(s,group_labels,numel(group_labels),...
                 'Replace',true);
         end
+
+        % Run statistical tests
         switch type{t}
             case 'anova1'
                 p1(i) = anova1(x,group,'off');
@@ -61,6 +68,7 @@ for t = 1:numel(type)
                 p1(i) = kruskalwallis(x,group,'off');
         end
         [f2(i),p2(i),ci2(:,i)] = permuanova1(x,group,'type',type{t});
+
     end
 
     % Set up figure
@@ -73,15 +81,15 @@ for t = 1:numel(type)
     plot(xaxis,ci2,'k')
     plot(xaxis(p1<=alpha),f2(p1<=alpha),'ok','LineWidth',2)
     plot(xaxis(p2<=alpha),f2(p2<=alpha),'xr','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,15]), box on, grid on
-    title('Test Statistic'), xlabel('permutation'), ylabel('{\itF}-value')
-    legend('{\itF}-statistic','95% CI (perm.)')
+    xlim([0,nsim+1]), ylim([0,15]), box on, grid on
+    title('Test Statistic'), xlabel('simulation'), ylabel('{\itF}-value')
+    legend('{\itF}-statistic','95% CI (perm.)','Location','best')
 
     % Plot p-values
     subplot(2,2,2), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,1]), box on, grid on
-    title('{\itP}-values'), xlabel('permutation'), ylabel('probability')
-    legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+    xlim([0,nsim+1]), ylim([0,1]), box on, grid on
+    title('{\itP}-values'), xlabel('simulation'), ylabel('probability')
+    legend('{\itp}-value (param.)','{\itp}-value (perm.)','Location','best')
 
 end
