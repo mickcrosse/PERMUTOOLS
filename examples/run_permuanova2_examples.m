@@ -25,13 +25,10 @@ function run_permuanova2_examples
 info = ver;
 isoctave = any(ismember({info.Name},'Octave'));
 
-% Generate random data
-rng(42);
-nobs = 6; nvar = 5; nperm = 10;
-x = randn(nobs,nvar);
-x(:,1:2) = x(:,1:2)+1;
-xaxis = 1:nperm;
-alpha = 0.05;
+% Set up experiment
+nobs = 6; nvar = 5; nsim = 10;
+xaxis = 1:nsim; alpha = 0.05;
+group_labels = 1:6;
 reps = 2;
 if reps > 1
     dim = 3;
@@ -41,31 +38,44 @@ end
 ylabels = {'columns','rows','interaction'};
 type = {'anova2','alignrank'};
 
-% Compute ANOVA
-p1 = zeros(dim,nperm);
-f2 = zeros(dim,nperm);
-p2 = zeros(dim,nperm);
-ci2 = zeros(2,dim,nperm);
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+x(:,1:2) = x(:,1:2)+1;
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
 
+% Preallocate memory
+p1 = zeros(dim,nsim);
+f2 = zeros(dim,nsim);
+p2 = zeros(dim,nsim);
+ci2 = zeros(2,dim,nsim);
 
 for t = 1:numel(type)
 
-    for i = 1:nperm
+    % Iterate through simulations
+    for i = 1:nsim
+
+        % Ramdomly sample data without replacement
         if isoctave
-            idx = datasample(1:6,6,'Replace',false);
+            idx = datasample(group_labels,numel(group_labels),...
+                'Replace',false);
         else
-            idx = datasample(s,1:6,6,'Replace',false);
+            idx = datasample(s,group_labels,numel(group_labels),...
+                'Replace',false);
         end
+
+        % Run statistical tests
         switch type{t}
             case 'anova2'
                 p1(:,i) = anova2(x(idx,:),reps,'off');
             case 'alignrank'
                 p1(:,i) = nan(dim,1);
         end
-        [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps,'type',type{t});
+        [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps,...
+            'type',type{t});
+
     end
 
     % Set up figure
@@ -81,28 +91,29 @@ for t = 1:numel(type)
         plot(xaxis,squeeze(ci2(:,i,:)),'k')
         plot(xaxis(p1(i,:)<=alpha),f2(i,p1(i,:)<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2(i,:)<=alpha),f2(i,p2(i,:)<=alpha),'xr','LineWidth',2)
-        xlim([0,nperm+1]), ylim([0,15]), box on, grid on
+        xlim([0,nsim+1]), ylim([0,15]), box on, grid on
         if i == 1
             title('Test Statistic')
         end
         ylabel(ylabels{i})
         if i ==2
-            legend('{\itF}-statistic','95% CI (perm.)')
+            legend('{\itF}-statistic','95% CI (perm.)','Location','best')
         end
         if i == dim
-            xlabel('permutation')
+            xlabel('simulation')
         end
 
         % Plot p-values
         subplot(3,2,k+1), hold on
         plot(xaxis,p1(i,:),'k',xaxis,p2(i,:),'--r','LineWidth',2)
-        xlim([0,nperm+1]), ylim([0,1]), box on, grid on
+        xlim([0,nsim+1]), ylim([0,1]), box on, grid on
         if i == 1
             title('{\itP}-values')
-            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+                'Location','best')
         end
         if i == dim
-            xlabel('permutation')
+            xlabel('simulation')
         end
 
         k = k+2;
