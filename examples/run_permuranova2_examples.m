@@ -25,21 +25,24 @@ function run_permuranova2_examples
 info = ver;
 isoctave = any(ismember({info.Name},'Octave'));
 
-% Generate random 3D repeated-measures data (30 subjects, 2x3 design)
+% Generate random data
 rng(42);
-nobs = 30; a = 2; b = 3; nperm = 10;
-
-% Add subject baseline effects, main effects, and interaction
+nobs = 30; a = 2; b = 3; nsim = 10;
 sub_eff = randn(nobs,1)*2;
 x = randn(nobs,a,b) + sub_eff;
 x(:,1,:) = x(:,1,:) + 0.4;
 x(:,:,1) = x(:,:,1) + 0.3;
 x(:,1,1) = x(:,1,1) + 0.5;
-xaxis = 1:nperm; alpha = 0.05;
+if ~isoctave
+    s = RandStream('mlfg6331_64');
+end
+
+% Set parameters
+xaxis = 1:nsim; alpha = 0.05;
 subjects = 1:nobs;
 type = {'ranova2','friedman'};
 
-% Setup MATLAB native fitrm variables
+% Setup fitrm variables
 if ~isoctave
     varNames = {'Y1','Y2','Y3','Y4','Y5','Y6'};
     FactorA = categorical([1;2;1;2;1;2]);
@@ -47,51 +50,48 @@ if ~isoctave
     Meas = table(FactorA,FactorB,'VariableNames',{'FactorA','FactorB'});
 end
 
-% Initialize matrices for 3 effects (A, B, AxB)
-p1 = zeros(nperm,3);
-f2 = zeros(nperm,3);
-p2 = zeros(nperm,3);
-ci2 = zeros(2,3,nperm);
-
-if ~isoctave
-    s = RandStream('mlfg6331_64');
-end
+% Preallocate memory
+p1 = zeros(nsim,3);
+f2 = zeros(nsim,3);
+p2 = zeros(nsim,3);
+ci2 = zeros(2,3,nsim);
 
 for t = 1:numel(type)
 
-    for i = 1:nperm
+    % Iterate through simulations
+    for i = 1:nsim
 
+        % Ramdomly sample data with replacement
         if isoctave
-            idx = datasample(subjects,nobs,'Replace',true);
+            idx = datasample(subjects,nobs,'replace',true);
         else
-            idx = datasample(s,subjects,nobs,'Replace',true);
+            idx = datasample(s,subjects,nobs,'replace',true);
         end
-        x_curr = x(idx,:,:);
 
+        % Run statistical tests
+        x_curr = x(idx,:,:);
         if isoctave
-            p1(i,:) = [NaN, NaN, NaN];
+            p1(i,:) = [NaN,NaN,NaN];
         else
             x_param = reshape(x_curr,nobs,a*b);
             tbl = array2table(x_param,'VariableNames',varNames);
             rm = fitrm(tbl,'Y1-Y6~1','WithinDesign',Meas);
             ranovatbl = ranova(rm,'WithinModel','FactorA*FactorB');
             rows = ranovatbl.Properties.RowNames;
-            idxA  = contains(rows, 'FactorA') & ~contains(rows, 'FactorB') & ~contains(rows, 'Error');
-            idxB  = contains(rows, 'FactorB') & ~contains(rows, 'FactorA') & ~contains(rows, 'Error');
-            idxAB = contains(rows, 'FactorA') &  contains(rows, 'FactorB') & ~contains(rows, 'Error');
+            idxA = contains(rows,'FactorA') & ~contains(rows,'FactorB') & ~contains(rows,'Error');
+            idxB = contains(rows,'FactorB') & ~contains(rows,'FactorA') & ~contains(rows,'Error');
+            idxAB = contains(rows,'FactorA') & contains(rows,'FactorB') & ~contains(rows,'Error');
             p1(i,1) = ranovatbl.pValue(idxA);
             p1(i,2) = ranovatbl.pValue(idxB);
             p1(i,3) = ranovatbl.pValue(idxAB);
         end
-
         [f2(i,:),p2(i,:),ci_tmp] = permuranova2(x_curr,'type',type{t});
         ci2(:,:,i) = ci_tmp;
 
     end
 
     % Set up figure
-    figure('Name',['Two-way ',type{t},' test'],'NumberTitle','off',...
-        'Position',[100, 100, 800, 900])
+    figure('Name',['Two-way ',type{t},' test'],'NumberTitle','off')
     set(gcf,'color','w')
     effects = {'Factor A', 'Factor B', 'A x B Interaction'};
 
@@ -103,25 +103,26 @@ for t = 1:numel(type)
         plot(xaxis,squeeze(ci2(:,e,:)),'k')
         plot(xaxis(p1(:,e)<=alpha),f2(p1(:,e)<=alpha,e),'ok','LineWidth',2)
         plot(xaxis(p2(:,e)<=alpha),f2(p2(:,e)<=alpha,e),'xr','LineWidth',2)
-        xlim([0,nperm+1]), box on, grid on
-        title([effects{e},' Test Statistic']), xlabel('permutation'), ylabel('{\itF}-value')
+        xlim([0,nsim+1]), box on, grid on
+        title([effects{e},' Test Statistic'])
+        ylabel('{\itF}-value')
         if e == 1
             legend('{\itF}-statistic','95% CI (perm.)','Location','best')
+        elseif e == 3
+            xlabel('permutation')
         end
 
         % Plot p-values
         subplot(3,2,e*2), hold on
         plot(xaxis,p1(:,e),'k',xaxis,p2(:,e),'--r','LineWidth',2)
-        xlim([0,nperm+1]), ylim([0,1]), box on, grid on
-        title([effects{e},' {\itP}-values']), xlabel('permutation'), ylabel('probability')
+        xlim([0,nsim+1]), ylim([0,1]), box on, grid on
+        title([effects{e},' {\itP}-values'])
+        ylabel('probability')
         if e == 1
-            if isoctave
-                legend('{\itp}-value (param. unavailable)','{\itp}-value (perm.)','Location','best')
-            elseif strcmp(type{t},'rank')
-                legend('{\itp}-value (param. raw data)','{\itp}-value (perm. rank)','Location','best')
-            else
-                legend('{\itp}-value (param.)','{\itp}-value (perm.)','Location','best')
-            end
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+                'Location','best')
+        elseif e == 3
+            xlabel('permutation')
         end
 
     end
