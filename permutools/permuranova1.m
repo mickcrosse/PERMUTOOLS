@@ -6,8 +6,8 @@ function [f,p,ci,stats,tbl,dist] = permuranova1(x,varargin)
 %   and columns represent conditions), and returns the test statistic F.
 %
 %   For non-normally distributed data, the raw data may be transformed
-%   to rank orders in order to compute a Friedman test by setting the
-%   'type' parameter to 'friedman' or 'rank'.
+%   to rank orders in order to compute a one-way Friedman test by setting 
+%   the 'type' parameter to 'friedman' or 'rank'.
 %
 %   PERMURANOVA1 requires a fully balanced design and does not support 
 %   missing values (NaNs).
@@ -44,7 +44,7 @@ function [f,p,ci,stats,tbl,dist] = permuranova1(x,varargin)
 %       'type'      A string specifying the type of permutation test to
 %                   perform:
 %                       'ranova1'   one-way repeated-measures ANOVA (default)
-%                       'friedman'  Friedman rank test
+%                       'friedman'  one-way Friedman rank test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
