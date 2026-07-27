@@ -1,9 +1,9 @@
 function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
-%PERMUANOVA1  One-way permutation-based analysis of variance (ANOVA).
-%   F = PERMUANOVA1(X) performs a one-way permutation-based ANOVA for
-%   comparing the means of two or more groups of data in matrix X, and
-%   returns the test statistic. The columns of X can have different lengths
-%   by including NaN values.
+%PERMUANOVA1  One-way permutation ANOVA and Kruskal-Wallis test.
+%   F = PERMUANOVA1(X) performs a one-way permutation-based analysis of
+%   variance (ANOVA) for comparing the means of two or more groups of data
+%   in matrix X, and returns the test statistic. The columns of X can have
+%   different lengths by including NaN values.
 %
 %   For non-normally distributed data, the raw data may be transformed
 %   to rank orders in order to compute a Kruskal-Wallis test by setting the
@@ -47,14 +47,15 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of permutation test to
+%                   perform:
+%                       'anova1'        one-way ANOVA (default)
+%                       'kruskalwallis' Kruskal-Wallis rank test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
-%       'type'      A string specifying the type of test measure:
-%                       'anova1'        one-way ANOVA (default)
-%                       'kruskalwallis' Kruskal-Wallis test
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
@@ -62,7 +63,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
 %
-%   See also ANOVA1 PERMUANOVA2 PERMUTTEST2 BOOTEFFECTSIZE.
+%   See also ANOVA1 KRUSKALWALLIS PERMUANOVA2 PERMUTTEST2 BOOTEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -183,9 +184,10 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.source = 'permuanova1';
+    stats.method = arg.type;
     stats.gnames = gnames;
     stats.n = n;
-    stats.source = 'permuanova1';
     stats.means = means;
     stats.df = dfe;
     stats.s = sqrt(mse);

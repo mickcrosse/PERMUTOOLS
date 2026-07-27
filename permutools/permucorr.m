@@ -1,11 +1,11 @@
 function [r,p,ci,stats,dist] = permucorr(x,varargin)
-%PERMUCORR  Pearson, Spearman rank, and rankit permutation correlation.
+%PERMUCORR  Pearson, Spearman's rank, and rankit permutation correlation coefficient.
 %   R = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
 %   Pearson's r.
 %
 %   For nonlinear correlations, the raw data may be transformed to rank
-%   orders in order to compute a Spearman rank correlation by setting
+%   orders in order to compute a Spearman's rank correlation by setting
 %   the 'type' parameter to 'spearman' or 'rank', or a rankit correlation
 %   by setting the 'type' parameter to 'rankit'.
 %
@@ -41,6 +41,12 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of correlation coefficient
+%                   to compute:
+%                       'pearson'   Pearson correlation coefficient
+%                                   (default)
+%                       'spearman'  Spearman's rank correlation coefficient
+%                       'rankit'    rankit correlation coefficient
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -50,11 +56,6 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                       'both'      correlation is not zero (default)
 %                       'right'     correlation is greater than zero
 %                       'left'      correlation is less than zero
-%       'type'      A string specifying the type of correlation measure:
-%                       'pearson'   Pearson's correlation coefficient
-%                                   (default)
-%                       'spearman'  Spearman's rank correlation coefficient
-%                       'rankit'    Bliss' rankit correlation coefficient
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000 or all possible permutations for less
 %                   than 14 observations).
@@ -267,6 +268,7 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.method = arg.type;
     stats.df = df;
 end
 

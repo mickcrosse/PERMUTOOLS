@@ -39,6 +39,10 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of permutation test to
+%                   perform:
+%                       'ftest'         two-sample F-test (default)
+%                       'squarerank'    Conover squared-rank test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -48,9 +52,6 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %                       'both'      means are not equal (default)
 %                       'right'     mean of X is greater than mean of Y
 %                       'left'      mean of X is less than mean of Y
-%       'type'      A string specifying the type of test measure:
-%                       'ftest'         Two-sample F-test (default)
-%                       'squarerank'    Conover squared-rank test
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
@@ -244,6 +245,7 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.method = arg.type;
     stats.df1 = df1;
     stats.df2 = df2;
 end

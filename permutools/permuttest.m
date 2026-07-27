@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
-%PERMUTTEST  One- or paired-sample permutation t-test and Wilcoxon signed-rank test.
+%PERMUTTEST  One/paired-sample permutation t-test and Wilcoxon signed-rank test.
 %   T = PERMUTTEST(X) performs a one-sample permutation test based on the
 %   t-statistic of the hypothesis that the data in X come from a
 %   distribution with mean zero, and returns the test statistic. If X is a
@@ -52,6 +52,10 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of permutation test to
+%                   perform:
+%                       'ttest'     one/paired-sample t-test (default)
+%                       'signrank'  Wilcoxon signed-rank test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -61,9 +65,6 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %                       'both'      mean is not M (two-tailed, default)
 %                       'right'     mean is greater than M (right-tailed)
 %                       'left'      mean is less than M (left-tailed)
-%       'type'      A string specifying the type of test:
-%                       'ttest'     One- or paired-sample t-test (default)
-%                       'signrank'  Wilcoxon signed-rank test
 %       'compare'   A string specifying what to compare each variable to
 %                   when only X is entered:
 %                       'zero'      compare each column of X to zero and
@@ -278,6 +279,7 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.method = arg.type;
     stats.df = df;
     stats.sd = sd;
     stats.mu = mu;

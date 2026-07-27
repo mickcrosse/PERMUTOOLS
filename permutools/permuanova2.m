@@ -1,15 +1,17 @@
 function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
-%PERMUANOVA2  Two-way permutation-based analysis of variance (ANOVA).
-%   F = PERMUANOVA2(X) performs a balanced two-way permutation-based ANOVA
-%   for comparing the means of two or more columns and two or more rows of
-%   data in matrix X, and returns the test statistics for the columns, rows
-%   and interactions (if any), respectively.
-% 
-%   For non-normally distributed data, the raw data may be transformed
-%   to rank orders in order to compute a aligned rank test (ART) by setting
-%   the 'type' parameter to 'alignedrank' or 'rank'.
+%PERMUANOVA2  Two-way permutation ANOVA and aligned rank transform test.
+%   F = PERMUANOVA2(X) performs a balanced two-way permutation-based 
+%   analysis of variance (ANOVA) for comparing the means of two or more 
+%   columns and two or more rows of data in matrix X, and returns the test
+%   statistics for the columns, rows and interactions (if any), 
+%   respectively.
 %
-%   PERMUANOVA2 won't accept NaNs and requires a perfectly balanced design.
+%   For non-normally distributed data, the raw data may be transformed
+%   to rank orders in order to compute an aligned rank transform (ART) test
+%   by setting the 'type' parameter to 'alignrank' or 'rank'.
+%
+%   PERMUANOVA2 requires a fully balanced design and does not support
+%   missing values (NaNs).
 %
 %   F = PERMUANOVA2(X,REPS) groups the rows of X according to the number of
 %   replicates REPS for each combination of factor groups. To test for an
@@ -48,14 +50,15 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of permutation test to
+%                   perform:
+%                       'anova2'    two-way ANOVA (default)
+%                       'alignrank' aligned rank transform (ART) test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
-%       'type'      A string specifying the type of test measure:
-%                       'anova2'        one-way ANOVA (default)
-%                       'alignedrank'   aligned rank test (ART)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
@@ -113,7 +116,7 @@ switch arg.type
     case 'anova2'
         % Use same raw data for all three effects
         xc = x; xr = x; xi = x;
-    case {'alignedrank', 'rank'}
+    case {'alignrank', 'rank'}
         % Calculate cell, column, and row means
         gm = mean(x,'all');
         MC = repmat(mean(x,1),rows,1);
@@ -136,6 +139,8 @@ switch arg.type
         xc = reshape(tiedrank(YC(:)),rows,cols);
         xr = reshape(tiedrank(YR(:)),rows,cols);
         xi = reshape(tiedrank(YCR(:)),rows,cols);
+   otherwise
+        error('The TYPE parameter value must be ANOVA2, or ALIGNRANK.')
 end
 
 % Stack datasets into 3D array
@@ -311,6 +316,7 @@ end
 % Store statistics in a structure
 if nargout > 3
     stats.source = 'permuanova2';
+    stats.method = arg.type;
     stats.sigmasq = mse;
     stats.colmeans = colmeans;
     stats.coln = coln;

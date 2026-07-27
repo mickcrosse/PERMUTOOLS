@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
-%PERMUTTEST2  Two-sample permutation t-test and Mann-Whitney U test.
+%PERMUTTEST2  Two-sample permutation t-test and Wilcoxon rank-sum test.
 %   T = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
 %   the t-statistic of the hypothesis that the data in X and Y come from
 %   distributions with equal means, and returns the test statistic. If X
@@ -10,7 +10,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   returned. X and Y can have different lengths.
 %
 %   For non-normally distributed samples, the raw data may be transformed
-%   to rank orders in order to compute a Mann-Whitney U / Wilcoxon rank-sum
+%   to rank orders in order to compute a Wilcoxon rank-sum / Mann-Whitney U
 %   test by setting the 'type' parameter to 'ranksum' or 'rank'.
 %
 %   For samples of unequal size or variance, Welch's t-statistic may be
@@ -49,6 +49,10 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   following:
 %
 %       Parameter   Value
+%       'type'      A string specifying the type of permutation test to
+%                   perform:
+%                       'ttest2'    two-sample t-test (default)
+%                       'ranksum'   Wilcoxon rank-sum / Mann-Whitney U test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -58,9 +62,6 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %                       'both'      means are not equal (default)
 %                       'right'     mean of X is greater than mean of Y
 %                       'left'      mean of X is less than mean of Y
-%       'type'      A string specifying the type of test measure:
-%                       'ttest2'    two-sample t-test (default)
-%                       'ranksum'   Mann-Whitney U / Wilcoxon rank-sum test
 %       'vartype'   A string specifying the variance equivalence of X and Y
 %                   to determine the SD and t-statistic estimation method:
 %                       'equal'   	assume equal variances (default)
@@ -301,6 +302,7 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.method = arg.type;
     stats.df = df;
     stats.sd = sd;
     stats.mu = mu;
