@@ -30,7 +30,7 @@ isoctave = any(ismember({info.Name},'Octave'));
 
 % Generate random repeated-measures data
 rng(42);
-nobs = 30; nvar = 5; nperm = 20;
+nobs = 30; nvar = 5; nperm = 10;
 
 % Add subject baseline effects to create correlated within-subject data
 sub_eff = randn(nobs,1)*2;
