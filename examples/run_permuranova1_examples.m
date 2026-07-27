@@ -28,56 +28,57 @@ function run_permuranova1_examples
 info = ver;
 isoctave = any(ismember({info.Name},'Octave'));
 
-% Generate random repeated-measures data
-rng(42);
-nobs = 30; nvar = 5; nperm = 10;
-
-% Add subject baseline effects to create correlated within-subject data
-sub_eff = randn(nobs,1)*2;
-x = randn(nobs,nvar) + sub_eff;
-x(:,1) = x(:,1)+1;
-
-xaxis = 1:nperm; alpha = 0.05;
+% Set up experiment
+nobs = 30; nvar = 5; nsim = 10;
+xaxis = 1:nsim; alpha = 0.05;
 subjects = 1:nobs;
 type = {'ranova1','friedman'};
 
-% Compute ANOVA
-p1 = zeros(1,nperm);
-f2 = zeros(1,nperm);
-p2 = zeros(1,nperm);
-ci2 = zeros(2,nperm);
-
+% Generate random data
+rng(42);
+sub_eff = randn(nobs,1)*2;
+x = randn(nobs,nvar) + sub_eff;
+x(:,1) = x(:,1)+1;
 if ~isoctave
     s = RandStream('mlfg6331_64');
 end
 
+% Preallocate memory
+p1 = zeros(1,nsim);
+f2 = zeros(1,nsim);
+p2 = zeros(1,nsim);
+ci2 = zeros(2,nsim);
+
 for t = 1:numel(type)
 
-    for i = 1:nperm
+    % Iterate through simulations
+    for i = 1:nsim
 
+        % Ramdomly sample data with replacement
         if isoctave
             idx = datasample(subjects,nobs,'Replace',true);
         else
             idx = datasample(s,subjects,nobs,'Replace',true);
         end
-        x_curr = x(idx,:);
+        xsim = x(idx,:);
 
+        % Run statistical tests
         switch type{t}
             case 'ranova1'
                 if isoctave
                     p1(i) = NaN;
                 else
                     varNames = {'Y1','Y2','Y3','Y4','Y5'};
-                    tbl = array2table(x_curr,'VariableNames',varNames);
+                    tbl = array2table(xsim,'VariableNames',varNames);
                     Meas = table((1:nvar)','VariableNames',{'Condition'});
                     rm = fitrm(tbl,'Y1-Y5~1','WithinDesign',Meas);
                     ranovatbl = ranova(rm);
                     p1(i) = ranovatbl.pValue(1);
                 end
             case 'friedman'
-                p1(i) = friedman(x_curr,1,'off');
+                p1(i) = friedman(xsim,1,'off');
         end
-        [f2(i),p2(i),ci2(:,i)] = permuranova1(x_curr,'type',type{t});
+        [f2(i),p2(i),ci2(:,i)] = permuranova1(xsim,'type',type{t});
 
     end
 
@@ -91,20 +92,15 @@ for t = 1:numel(type)
     plot(xaxis,ci2,'k')
     plot(xaxis(p1<=alpha),f2(p1<=alpha),'ok','LineWidth',2)
     plot(xaxis(p2<=alpha),f2(p2<=alpha),'xr','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,15]), box on, grid on
+    xlim([0,nsim+1]), ylim([0,15]), box on, grid on
     title('Test Statistic'), xlabel('permutation'), ylabel('{\itF}-value')
-    legend('{\itF}-statistic','95% CI (perm.)')
+    legend('{\itF}-statistic','95% CI (perm.)','Location','best')
 
     % Plot p-values
     subplot(2,2,2), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
-    xlim([0,nperm+1]), ylim([0,1]), box on, grid on
+    xlim([0,nsim+1]), ylim([0,1]), box on, grid on
     title('{\itP}-values'), xlabel('permutation'), ylabel('probability')
-
-    if strcmp(type{t}, 'ranova') && isoctave
-        legend('{\itp}-value (param. unavailable)','{\itp}-value (perm.)')
-    else
-        legend('{\itp}-value (param.)','{\itp}-value (perm.)')
-    end
+    legend('{\itp}-value (param.)','{\itp}-value (perm.)','Location','best')
 
 end
