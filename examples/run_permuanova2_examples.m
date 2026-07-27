@@ -39,7 +39,7 @@ else
     dim = 2;
 end
 ylabels = {'columns','rows','interaction'};
-type = {'anova2','alignedrank'};
+type = {'anova2','alignrank'};
 
 % Compute ANOVA
 p1 = zeros(dim,nperm);
@@ -62,7 +62,7 @@ for t = 1:numel(type)
         switch type{t}
             case 'anova2'
                 p1(:,i) = anova2(x(idx,:),reps,'off');
-            case 'alignedrank'
+            case 'alignrank'
                 p1(:,i) = nan(dim,1);
         end
         [f2(:,i),p2(:,i),ci2(:,:,i)] = permuanova2(x(idx,:),reps,'type',type{t});
