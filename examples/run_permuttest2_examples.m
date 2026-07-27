@@ -23,17 +23,19 @@ function run_permuttest2_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-% Generate random data
-rng(42);
+% Set up experiment
 nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-y = randn(nobs,nvar);
-y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'ttest2','ranksum'};
 vartype = {'equal','unequal'};
+
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 
 for t = 1:numel(type)
 
@@ -75,8 +77,9 @@ for t = 1:numel(type)
                 xlabel('variable')
             end
             ylabel([label{i},'-tailed'])
-            if i == 2
-                legend('mean difference','95% CI (param.)','','95% CI (perm.)')
+            if i == 1
+                legend('mean difference','95% CI (param.)','','95% CI (perm.)',...
+                    'Location','best')
             end
             [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
                 'type',type{t},'vartype',vartype{v},'correct',1);
@@ -118,8 +121,9 @@ for t = 1:numel(type)
                 xlabel('variable')
             end
             ylabel([label{i},'-tailed'])
-            if i == 2
-                legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+            if i == 1
+                legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+                    'Location','best')
             end
             [~,p2] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
                 'vartype',vartype{v},'correct',1);

@@ -21,18 +21,21 @@ function run_bootvartest_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-% Generate random data
-rng(42);
-nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-v = 2;
-x(:,1:round(nvar/2)) = x(:,1:round(nvar/2))*sqrt(v);
+% Set up experiment
+nobs = 30; nvar = 20; v = 2;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
+type = 'chi2';
+
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+x(:,1:round(nvar/2)) = x(:,1:round(nvar/2))*sqrt(v);
 
 % Plot parametric & bootstrapped CIs
-figure('Name','One-sample test: variance & CIs','NumberTitle','off')
+figure('Name',['One-sample ',type,' test: variance & CIs'],...
+    'NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1,ci1] = vartest(x,v,'tail',tail{i});
@@ -50,8 +53,9 @@ for i = 1:numel(tail)
         xlabel('variable')
     end
     ylabel([label{i},'-tailed'])
-    if i == 2
-        legend('variance','95% CI (param.)','','95% CI (boot.)')
+    if i == 1
+        legend('variance','95% CI (param.)','','95% CI (boot.)',...
+            'Location','best')
     end
     [~,p2,ci2,stats2] = bootvartest(x,v,'tail',tail{i},'correct',1,...
         'verbose',0);
@@ -69,7 +73,7 @@ for i = 1:numel(tail)
 end
 
 % Plot parametric & bootstrapped p-values
-figure('Name','One-sample test: p-values','NumberTitle','off')
+figure('Name',['One-sample ',type,' test: p-values'],'NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1] = vartest(x,v,'tail',tail{i});
@@ -83,8 +87,9 @@ for i = 1:numel(tail)
         xlabel('variable')
     end
     ylabel([label{i},'-tailed'])
-    if i == 2
-        legend('{\itp}-value (param.)','{\itp}-value (boot.)')
+    if i == 1
+        legend('{\itp}-value (param.)','{\itp}-value (boot.)',...
+            'Location','best')
     end
     [~,p2] = bootvartest(x,v,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on

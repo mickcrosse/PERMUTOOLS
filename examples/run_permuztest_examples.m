@@ -24,18 +24,21 @@ function run_permuztest_examples
 info = ver;
 isoctave = any(ismember({info.Name},'Octave'));
 
-% Generate random data
-rng(42);
+% Set up experiment
 nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-x(:,1:round(nvar/2)) = x(:,1:round(nvar/2))-1;
 m = 0; sigma = 1;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
+type = 'ztest';
+
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+x(:,1:round(nvar/2)) = x(:,1:round(nvar/2))-1;
 
 % Plot parametric & permutation CIs
-figure('Name','One-sample test: mean value & CIs','NumberTitle','off')
+figure('Name',['One-sample ',type,': mean value & CIs'],'NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     if isoctave
@@ -61,8 +64,9 @@ for i = 1:numel(tail)
         xlabel('variable')
     end
     ylabel([label{i},'-tailed'])
-    if i == 2
-        legend('mean value','95% CI (param.)','','95% CI (perm.)')
+    if i == 1
+        legend('mean value','95% CI (param.)','','95% CI (perm.)',...
+            'Location','best')
     end
     [~,p2,ci2,stats2] = permuztest(x,m,sigma,'tail',tail{i},'correct',1,...
         'verbose',0);
@@ -80,7 +84,7 @@ for i = 1:numel(tail)
 end
 
 % Plot parametric & permutation p-values
-figure('Name','One-sample test: p-values','NumberTitle','off')
+figure('Name',['One-sample ',type,': p-values'],'NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     if isoctave
@@ -89,7 +93,7 @@ for i = 1:numel(tail)
             [~,p1(j)] = ztest(x(:,j),m,sigma,'tail',tail{i});
         end
     else
-        [~,p1,ci1] = ztest(x,m,sigma,'tail',tail{i});
+        [~,p1] = ztest(x,m,sigma,'tail',tail{i});
     end
     [~,p2] = permuztest(x,m,sigma,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
@@ -101,8 +105,9 @@ for i = 1:numel(tail)
         xlabel('variable')
     end
     ylabel([label{i},'-tailed'])
-    if i == 2
-        legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+    if i == 1
+        legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+            'Location','best')
     end
     [~,p2] = permuztest(x,m,sigma,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on

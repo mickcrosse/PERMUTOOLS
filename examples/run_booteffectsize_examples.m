@@ -27,20 +27,23 @@ function run_booteffectsize_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-% Generate random data
-seed = 42;
-rng(seed);
+% Set up experiment
 nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-y = randn(nobs,nvar);
-y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 xaxis = 1:nvar;
 paired = [false,true];
 samples = {'indep.','dep.'};
 vartype = {'equal','unequal'};
 
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
+
+% Set up figure
 figure('Name','Effect size analysis: effect sizes & CIs','NumberTitle','off')
 set(gcf,'color','w')
+
 k = 1;
 for i = 1:numel(paired)
 
@@ -88,10 +91,10 @@ for i = 1:numel(paired)
         switch effect
             case 'Cohen'
                 legend('Cohen''s {\itd}','95% CI (param.)','',...
-                    '95% CI (boot.)')
+                    '95% CI (boot.)','Location','best')
             case 'Glass'
                 legend('Glass'' {\itΔ}','95% CI (param.)','',...
-                    '95% CI (boot.)')
+                    '95% CI (boot.)','Location','best')
         end
         [d2,ci2] = booteffectsize(x,yp,'paired',paired(i),...
             'vartype',vartype{n},'effect',effect,'correct',1);
@@ -108,10 +111,10 @@ for i = 1:numel(paired)
         switch effect
             case 'Cohen'
                 legend('Hedges'' {\itg}','95% CI (param.)','',...
-                    '95% CI (boot.)')
+                    '95% CI (boot.)','Location','best')
             case 'Glass'
                 legend('Glass'' {\itΔ}','95% CI (param.)','',...
-                    '95% CI (boot.)')
+                    '95% CI (boot.)','Location','best')
         end
 
         k = k+2;

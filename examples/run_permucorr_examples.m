@@ -28,18 +28,20 @@ function run_permucorr_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-% Generate random data
-rng(42);
+% Set up experiment
 nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-y = randn(nobs,nvar);
-y(:,1:5) = y(:,1:5)+x(:,1:5)/2;
-y(:,6:10) = y(:,6:10)-x(:,6:10);
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'pearson','spearman'};
 symbol = {'{\itr}','{\itρ}'};
+
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:5) = y(:,1:5)+x(:,1:5)/2;
+y(:,6:10) = y(:,6:10)-x(:,6:10);
 
 for t = 1:numel(type)
 
@@ -82,9 +84,9 @@ for t = 1:numel(type)
             xlabel('variable')
         end
         ylabel([label{i},'-tailed'])
-        if i == 2
+        if i == 1
             legend([type{t},'''s ',symbol{t}],'95% CI (param.)','',...
-                '95% CI (perm.)')
+                '95% CI (perm.)','Location','best')
         end
         [r2,p2,ci2] = permucorr(x,y,'tail',tail{i},'type',type{t},...
             'correct',1);
@@ -118,8 +120,9 @@ for t = 1:numel(type)
             xlabel('variable')
         end
         ylabel([label{i},'-tailed'])
-        if i == 2
-            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+        if i == 1
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+                'Location','best')
         end
         [~,p2] = permucorr(x,y,'tail',tail{i},'type',type{t},'correct',1);
         subplot(3,2,i+i), hold on

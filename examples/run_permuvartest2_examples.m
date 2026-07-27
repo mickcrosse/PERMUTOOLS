@@ -21,21 +21,23 @@ function run_permuvartest2_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-% Generate random data
-rng(42);
+% Set up experiment
 nobs = 30; nvar = 20;
-x = randn(nobs,nvar);
-y = randn(nobs,nvar);
-y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))*2;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'ftest','squarerank'};
 
+% Generate random data
+rng(42);
+x = randn(nobs,nvar);
+y = randn(nobs,nvar);
+y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))*2;
+
 for t = 1:numel(type)
 
     % Plot parametric & permutation CIs
-    figure('Name',[type{t},' test: F-statistic & CIs'],...
+    figure('Name',['Two-sample ',type{t},' test: F-statistic & CIs'],...
         'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
@@ -60,8 +62,9 @@ for t = 1:numel(type)
             xlabel('variable')
         end
         ylabel([label{i},'-tailed'])
-        if i == 2
-            legend('{\itF}-statistic','95% CI (param.)','','95% CI (perm.)')
+        if i == 1
+            legend('{\itF}-statistic','95% CI (param.)','','95% CI (perm.)',...
+                'Location','best')
         end
         [f2,p2,ci2] = permuvartest2(x,y,'tail',tail{i},'type',type{t},...
             'correct',1);
@@ -79,7 +82,8 @@ for t = 1:numel(type)
     end
 
     % Plot parametric & permutation p-values
-    figure('Name',[type{t},' test: p-values'],'NumberTitle','off')
+    figure('Name',['Two-sample ',type{t},' test: p-values'],...
+        'NumberTitle','off')
     set(gcf,'color','w')
     for i = 1:numel(tail)
         switch type{t}
@@ -99,8 +103,9 @@ for t = 1:numel(type)
             xlabel('variable')
         end
         ylabel([label{i},'-tailed'])
-        if i == 2
-            legend('{\itp}-value (param.)','{\itp}-value (perm.)')
+        if i == 1
+            legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
+                'Location','best')
         end
         [~,p2] = permuvartest2(x,y,'tail',tail{i},'type',type{t},...
             'correct',1);
