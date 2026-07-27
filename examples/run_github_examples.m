@@ -48,7 +48,7 @@ histogram(distu(:,3),100,'FaceAlpha',0.5)
 h = histogram(distc,100,'FaceAlpha',0.5,'FaceAlpha', 0.5);
 uistack(h, 'top')
 plot([t,t],[0,500],'--k','LineWidth',2)
-xlim([-5,5]), ylim([0,500]), box on, grid on
+xlim([0,5]), ylim([0,500]), box on, grid on
 title('Permutation Distribution'), xlabel('{\itt}-statistic'), ylabel('frequency')
 legend(['uncorrected ({\itp} = ',num2str(round(pu(3),3)),')'],...
     ['max-corrected ({\itp} = ',num2str(round(pc(3),2)),')'],...
