@@ -28,7 +28,7 @@ isoctave = any(ismember({info.Name},'Octave'));
 
 % Generate random data
 rng(42);
-nobs = 30; nvar = 5; nperm = 20;
+nobs = 30; nvar = 5; nperm = 10;
 x = randn(nobs,nvar);
 x(:,1) = x(:,1)+1;
 xaxis = 1:nperm; alpha = 0.05;
