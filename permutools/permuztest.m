@@ -1,5 +1,5 @@
 function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
-%PERMUZTEST  One-sample permutation Z-test.
+%PERMUZTEST  Permutation-based one-sample Z-test.
 %   Z = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test based
 %   on the Z-statistic of the null hypothesis that the data in X come from
 %   a distribution with mean M, and returns the test statistic. M and SIGMA
