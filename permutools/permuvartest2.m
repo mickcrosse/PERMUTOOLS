@@ -209,21 +209,22 @@ if nargout > 1
 
     % Apply max correction if specified
     if arg.correct
-        pdmax = max(dist,[],2);
-        pdmin = min(dist,[],2);
+        distmax = max(dist,[],2);
+        distmin = min(dist,[],2);
     else
-        pdmax = dist;
-        pdmin = dist;
+        distmax = dist;
+        distmin = dist;
     end
 
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = min(1,2*(min(sum(f<=pdmax),sum(f>=pdmin))+1)/(arg.nperm+1));
+            p = min(1,2*(min(sum(f>=distmin),...
+                sum(f<=distmax))+1)/(arg.nperm+1));
         case 'right'
-            p = (sum(f<=pdmax)+1)/(arg.nperm+1);
+            p = (sum(f<=distmax)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(f>=pdmin)+1)/(arg.nperm+1);
+            p = (sum(f>=distmin)+1)/(arg.nperm+1);
     end
 
 end
@@ -232,14 +233,14 @@ end
 if nargout > 2
     switch arg.tail
         case 'both'
-            crit = [prctile(pdmin,100*arg.alpha/2);...
-                prctile(pdmax,100*(1-arg.alpha/2))];
+            crit = [prctile(distmin,100*arg.alpha/2);...
+                prctile(distmax,100*(1-arg.alpha/2))];
             ci = f./crit;
         case 'right'
-            crit = prctile(pdmax,100*(1-arg.alpha));
+            crit = prctile(distmax,100*(1-arg.alpha));
             ci = [f./crit;Inf(1,nvar)];
         case 'left'
-            crit = prctile(pdmin,100*arg.alpha);
+            crit = prctile(distmin,100*arg.alpha);
             ci = [zeros(1,nvar);f./crit];
     end
 end
