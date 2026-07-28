@@ -8,7 +8,7 @@
 
 PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient vectorised implementations of resampling algorithms to generate the sampling distribution empirically, providing distribution-free nonparametric hypothesis testing and effect size analysis.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), **Kruskal-Wallis test**, **aligned rank transform (ART) test**, **repeated-measures ANOVA** (one-way, two-way), **Friedman test** (one-way, two-way), ***t*-test** (one-sample, paired-sample, two-sample), **Wilcoxon signed-rank test**, **Mann-Whitney U / Wilcoxon rank-sum test**, **Chi-square test**, ***F*-test**, **Conover squared-rank test**, ***Z*-test**, and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way), **Kruskal-Wallis test**, **aligned rank transform (ART) test**, **repeated-measures ANOVA** (one-way, two-way), **Friedman test** (one-way, two-way), ***t*-test** (one/paired-sample, two-sample), **Wilcoxon signed-rank test**, **Wilcoxon rank-sum / Mann-Whitney U test**, **Test of variance** (one-sample, two-sample), **Conover squared-rank test**, ***Z*-test**, **Chi-square test of independence**, and **correlation coefficient** (Pearson, Spearman, rankit). Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
 
 PERMUTOOLS also offers effect size measurement and bootstrapped confidence interval estimation for a range of standardised and unstandardised effect sizes, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of standardised effect size measures and their CIs due to sample size is controlled by applying a ***bias correction factor***.
 
@@ -66,9 +66,10 @@ PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 | [**permuranova2()**](permutools/permuranova2.m) | Two-way repeated-measures ANOVA and Friedman test|
 | [**permuttest()**](permutools/permuttest.m) | One/paired-sample *t*-test and Wilcoxon signed-rank test with max correction |
 | [**permuttest2()**](permutools/permuttest2.m) | Two-sample *t*-test and Wilcoxon rank-sum / Mann-Whitney U test with max correction |
-| [**bootvartest()**](permutools/bootvartest.m) | One-sample chi-square test with max correction |
-| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample *F*-test and Conover squared-rank test with max correction |
+| [**bootvartest()**](permutools/bootvartest.m) | One-sample test of variance with max correction |
+| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample test of variance and Conover squared-rank test with max correction |
 | [**permuztest()**](permutools/permuztest.m) | One-sample *Z*-test with max correction |
+| [**permuzchi2()**](permutools/permuzchi2.m) | Chi-square test of independence with max correction |
 | [**permucorr()**](permutools/permucorr.m) | Pearson linear, Spearman rank and Bliss rankit correlation with max correction |
 | [**booteffectsize()**](permutools/booteffectsize.m) | Effect size & confidence interval with bias correction |
 
