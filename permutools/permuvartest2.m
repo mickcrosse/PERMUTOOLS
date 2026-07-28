@@ -1,5 +1,5 @@
 function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
-%PERMUVARTEST2  Two-sample permutation F-test and Conover squared-rank test.
+%PERMUVARTEST2  Permutation-based two-sample test of variance and Conover squared-rank test.
 %   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
 %   the F-statistic of the null hypothesis that the data in X and Y come
 %   from distributions with equal variances, and returns the test
@@ -28,6 +28,7 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %
 %   [F,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
 %   following fields:
+%       'method'    -- the statistical method used
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'       -- the denominator degrees of freedom of each test
 %

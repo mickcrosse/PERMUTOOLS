@@ -28,6 +28,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %
 %   [D,CI,STATS] = BOOTEFFECTSIZE(...) returns a structure with the
 %   following fields:
+%       'method'    -- the effect size metric used
 %       'df'        -- the degrees of freedom of each measure
 %       'sd'        -- the pooled standard deviation, or of X for a one-
 %                      sample or Glass' delta measure
@@ -49,7 +50,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %       'paired'    A numeric scalar (0,1) or logical indicating whether
 %                   the data in X and Y are paired: pass in 1 for paired
 %                   samples (default), or 0 for unpaired samples.
-%       'effect'    A string specifying the effect size to measure:
+%       'effect'    A string specifying the effect size metric to compute:
 %                       'cohen'      standardised mean difference based on
 %                                    Cohen's d (default)
 %                       'glass'      standardised mean difference based on
@@ -413,7 +414,9 @@ end
 
 % Store statistics in a structure
 if nargout > 2
-    stats = struct('df',df,'sd',sd);
+    stats.method = arg.effect;
+    stats.df = df;
+    stats.sd = sd;
 end
 
 % Bias-correct standardised measures

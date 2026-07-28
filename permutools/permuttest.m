@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
-%PERMUTTEST  One/paired-sample permutation t-test and Wilcoxon signed-rank test.
+%PERMUTTEST  Permutation-based one/paired-sample t-test and Wilcoxon signed-rank test.
 %   T = PERMUTTEST(X) performs a one-sample permutation test based on the
 %   t-statistic of the hypothesis that the data in X come from a
 %   distribution with mean zero, and returns the test statistic. If X is a
@@ -38,6 +38,7 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %
 %   [T,P,CI,STATS] = PERMUTTEST(...) returns a structure with the following
 %   fields:
+%       'method'    -- the statistical method used
 %       'df'        -- the degrees of freedom of each test
 %       'sd'        -- the estimated population standard deviation of X, or
 %                      of X-Y for a paired test

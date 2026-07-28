@@ -1,10 +1,9 @@
 function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
-%PERMUANOVA2  Two-way permutation ANOVA and aligned rank transform test.
-%   F = PERMUANOVA2(X) performs a balanced two-way permutation-based 
-%   analysis of variance (ANOVA) for comparing the means of two or more 
+%PERMUANOVA2  Permutation-based two-way ANOVA and aligned rank transform test.
+%   F = PERMUANOVA2(X) performs a balanced permutation-based two-way
+%   analysis of variance (ANOVA) for comparing the means of two or more
 %   columns and two or more rows of data in matrix X, and returns the test
-%   statistics for the columns, rows and interactions (if any), 
-%   respectively.
+%   statistics for the columns, rows and interactions, respectively.
 %
 %   For non-normally distributed data, the raw data may be transformed
 %   to rank orders in order to compute an aligned rank transform (ART) test
@@ -30,6 +29,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   [F,P,CI,STATS] = PERMUANOVA2(...) returns a structure with the
 %   following fields:
 %       'source'    -- the function used to compute the ANOVA
+%       'method'    -- the statistical method used
 %       'sigmasq'   -- the error mean square
 %       'colmeans'  -- the column means
 %       'coln'      -- the column sample sizes
@@ -139,7 +139,7 @@ switch arg.type
         xc = reshape(tiedrank(YC(:)),rows,cols);
         xr = reshape(tiedrank(YR(:)),rows,cols);
         xi = reshape(tiedrank(YCR(:)),rows,cols);
-   otherwise
+    otherwise
         error('The TYPE parameter value must be ANOVA2, or ALIGNRANK.')
 end
 

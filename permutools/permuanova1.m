@@ -1,6 +1,6 @@
 function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
-%PERMUANOVA1  One-way permutation ANOVA and Kruskal-Wallis test.
-%   F = PERMUANOVA1(X) performs a one-way permutation-based analysis of
+%PERMUANOVA1  Permutation-based one-way ANOVA and Kruskal-Wallis test.
+%   F = PERMUANOVA1(X) performs a permutation-based one-way analysis of
 %   variance (ANOVA) for comparing the means of two or more groups of data
 %   in matrix X, and returns the test statistic. The columns of X can have
 %   different lengths by including NaN values.
@@ -29,9 +29,10 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %
 %   [F,P,CI,STATS] = PERMUANOVA1(...) returns a structure with the
 %   following fields:
+%       'source'    -- the function used to compute the ANOVA
+%       'method'    -- the statistical method used
 %       'gnames'    -- the group names
 %       'n'         -- the group sample sizes
-%       'source'    -- the function used to compute the ANOVA
 %       'means'     -- the group means
 %       'df'        -- the error degrees of freedom
 %       's'         -- the root mean square

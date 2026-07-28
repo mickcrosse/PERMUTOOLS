@@ -1,5 +1,5 @@
 function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
-%PERMUTTEST2  Two-sample permutation t-test and Wilcoxon rank-sum test.
+%PERMUTTEST2  Permutation-based two-sample t-test and Wilcoxon rank-sum test.
 %   T = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
 %   the t-statistic of the hypothesis that the data in X and Y come from
 %   distributions with equal means, and returns the test statistic. If X
@@ -34,6 +34,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %
 %   [T,P,CI,STATS] = PERMUTTEST2(...) returns a structure with the
 %   following fields:
+%       'method'    -- the statistical method used
 %       'df'        -- the degrees of freedom of each test
 %       'sd'        -- the pooled estimate of the population standard
 %                      deviation (equal variances) or a vector containing

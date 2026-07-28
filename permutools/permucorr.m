@@ -1,5 +1,5 @@
 function [r,p,ci,stats,dist] = permucorr(x,varargin)
-%PERMUCORR  Pearson, Spearman's rank, and rankit permutation correlation coefficient.
+%PERMUCORR  Permutation-based Pearson, Spearman's rank, and rankit correlation coefficient.
 %   R = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
 %   Pearson's r.
@@ -31,7 +31,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %
 %   [R,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
 %   fields:
-%       'df'        -- the degrees of freedom of each test
+%       'method'    -- the correlation method used
+%       'df'        -- the degrees of freedom of each measure
 %
 %   [R,P,CI,STATS,DIST] = PERMUCORR(...) returns the permuted sampling
 %   distribution of the test statistic.

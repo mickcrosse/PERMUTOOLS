@@ -1,9 +1,10 @@
 function [f,p,ci,stats,tbl,dist] = permuranova1(x,varargin)
-%PERMURANOVA1  One-way permutation repeated-measures ANOVA and Friedman test.
-%   F = PERMURANOVA1(X) performs a one-way permutation-based repeated-
-%   measures analysis of variance (RM ANOVA) for comparing the means of
-%   two or more columns of data in matrix X (where rows represent subjects
-%   and columns represent conditions), and returns the test statistic F.
+%PERMURANOVA1  Permutation-based one-way repeated-measures ANOVA and Friedman test.
+%   F = PERMURANOVA1(X) performs a balanced permutation-based one-way 
+%   repeated-measures analysis of variance (ANOVA) for comparing the means 
+%   of two or more columns of data in matrix X (where rows represent 
+%   subjects and columns represent conditions), and returns the test 
+%   statistic.
 %
 %   For non-normally distributed data, the raw data may be transformed
 %   to rank orders in order to compute a one-way Friedman test by setting 
@@ -24,7 +25,7 @@ function [f,p,ci,stats,tbl,dist] = permuranova1(x,varargin)
 %   [F,P,CI,STATS] = PERMURANOVA1(...) returns a structure with the
 %   following fields:
 %       'source'    -- the function used to compute the ANOVA
-%       'method'    -- the type of test performed
+%       'method'    -- the statistical method used
 %       'sigmasq'   -- the error mean square
 %       'colmeans'  -- the column means
 %       'coln'      -- the column sample sizes (subjects)
