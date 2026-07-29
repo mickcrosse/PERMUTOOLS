@@ -43,8 +43,8 @@ function [chi2,p,stats,tbl,dist] = permuchi2(x,varargin)
 %                       'both'      two-tailed test
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
-%       'correct'   A numeric or logical value specifying whether to apply
-%                   max-correction for multiple comparisons (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether
+%                   to control FWER using max correction (default=1).
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the permutation generator.
 %

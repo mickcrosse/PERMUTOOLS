@@ -63,9 +63,9 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
 %       'tail'      A string specifying the alternative hypothesis:
-%                       'both'      mean is not M (two-tailed, default)
-%                       'right'     mean is greater than M (right-tailed)
-%                       'left'      mean is less than M (left-tailed)
+%                       'both'      mean is not M (default)
+%                       'right'     mean is greater than M
+%                       'left'      mean is less than M
 %       'compare'   A string specifying what to compare each variable to
 %                   when only X is entered:
 %                       'zero'      compare each column of X to zero and
@@ -76,7 +76,7 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=true).
+%                   to control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
@@ -85,9 +85,8 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %                   initialise the permutation generator. By default, the
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
-%       'verbose'   A numeric or logical specifying whether to execute in
-%                   verbose mode: pass in 1 for verbose mode (default), or
-%                   0 for non-verbose mode.
+%       'verbose'   A numeric scalar (0,1) or logical indicating whether to 
+%                   execute in verbose mode (default=1).
 %
 %   See also TTEST PERMUTTEST2 BOOTEFFECTSIZE.
 %

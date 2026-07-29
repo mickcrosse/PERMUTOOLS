@@ -70,7 +70,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=true).
+%                   to control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)

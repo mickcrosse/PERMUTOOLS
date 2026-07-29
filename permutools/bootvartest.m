@@ -39,13 +39,13 @@ function [chi2,p,ci,stats,dist] = bootvartest(x,v,varargin)
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
 %       'tail'      A string specifying the alternative hypothesis:
-%                       'both'      means are not equal (default)
-%                       'right'     mean of X is greater than mean of Y
-%                       'left'      mean of X is less than mean of Y
+%                       'both'      variance is not V (default)
+%                       'right'     variance is greater than V
+%                       'left'      variance is less than V
 %       'nboot'     An integer scalar specifying the number of bootstraps
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=true).
+%                   to control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)

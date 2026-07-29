@@ -77,8 +77,8 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                   used to estimate the confidence intervals (default=
 %                   10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
-%                   bias-correct the effect size and confidence intervals
-%                   according to sample size (default=true). Note, this
+%                   bias-correct the effect size and confidence interval
+%                   according to sample size (default=1). Note, this
 %                   only applies to standardised effect size measures.
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):

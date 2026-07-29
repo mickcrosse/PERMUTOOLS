@@ -61,7 +61,7 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                   (default=10,000 or all possible permutations for less
 %                   than 14 observations).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using rmax correction (default=true).
+%                   to control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
@@ -70,9 +70,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                   initialise the permutation generator. By default, the
 %                   generator is initialised based on the current time,
 %                   resulting in a different permutation on each call.
-%       'verbose'   A numeric or logical specifying whether to execute in
-%                   verbose mode: pass in 1 for verbose mode (default), or
-%                   0 for non-verbose mode.
+%       'verbose'   A numeric scalar (0,1) or logical indicating whether to 
+%                   execute in verbose mode (default=1).
 %
 %   See also CORR CORRCOEF PARTIALCORR TIEDRANK.
 %

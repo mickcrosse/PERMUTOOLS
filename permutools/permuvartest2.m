@@ -50,13 +50,13 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
 %       'tail'      A string specifying the alternative hypothesis:
-%                       'both'      means are not equal (default)
-%                       'right'     mean of X is greater than mean of Y
-%                       'left'      mean of X is less than mean of Y
+%                       'both'  variances are not equal (default)
+%                       'right' variance of X is greater than variance of Y
+%                       'left'  variance of X is less than variance of Y
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=true).
+%                   to control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
