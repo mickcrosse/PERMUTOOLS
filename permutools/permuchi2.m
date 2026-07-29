@@ -69,20 +69,26 @@ end
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
 
+% Handle explicit NaNs
+if any(isnan(x(:)))
+    x(isnan(x)) = 0;
+    nanflag = 'omitnan';
+else
+    nanflag = 'includenan';
+end
+
 % Get data dimensions
 [r,c,v] = size(x);
 
 % Compute degrees of freedom
 df = (r-1)*(c-1);
 
-% Validate max-correction sample sizes
-if arg.correct
-    nobsall = squeeze(sum(x,[1,2]));
-    if any(nobsall ~= nobsall(1))
-        error('For max-correction, the total number of observations must be equal across all variables.')
-    end
+% Validate sample sizes
+nobsall = squeeze(sum(x,[1,2]));
+if any(nobsall ~= nobsall(1))
+    error('The total number of observations must be equal across all variables for multivariate permutations.')
 end
-nobs = sum(x(:,:,1),'all');
+nobs = nobsall(1);
 
 % Compute marginal sums
 rowsums = sum(x,2);
@@ -92,39 +98,36 @@ colsums = sum(x,1);
 expfreq = (rowsums.*colsums)./nobs;
 
 % Compute test statistic
-chi2 = squeeze(sum((x-expfreq).^2./expfreq,[1,2]))';
+chi2 = sum((x-expfreq).^2./expfreq,[1,2],nanflag);
+chi2 = chi2(:)';
 
 if nargout > 1
 
     % Generate random permutations
     rng(arg.seed);
 
-    % Reconstruct raw categorical vectors for all variables
+    % Vectorized reconstruction of raw categorical vectors
     vara = zeros(nobs,v);
     varb = zeros(nobs,v);
+    [I,J] = ndgrid(1:r,1:c);
     for k = 1:v
-        idx = 1;
-        for i = 1:r
-            for j = 1:c
-                count = x(i,j,k);
-                if count > 0
-                    vara(idx:idx+count-1,k) = i;
-                    varb(idx:idx+count-1,k) = j;
-                    idx = idx+count;
-                end
-            end
-        end
+        xk = x(:,:,k);
+        vara(:,k) = repelem(I(:),xk(:));
+        varb(:,k) = repelem(J(:),xk(:));
     end
 
-    % Estimate uncorrected sampling distribution
+    % Precompute subscript arrays for 3D accumarray
+    varK = repmat(1:v,nobs,1);
+    subs13 = [vara(:),varK(:)];
+
+    % Estimate sampling distribution
     dist = zeros(arg.nperm,v);
     for i = 1:arg.nperm
         randidx = randperm(nobs);
         varbperm = varb(randidx,:);
-        for k = 1:v
-            xperm = accumarray([vara(:,k),varbperm(:,k)],1,[r,c]);
-            dist(i,k) = sum((xperm-expfreq(:,:,k)).^2./expfreq(:,:,k),'all');
-        end
+        xperm = accumarray([subs13(:,1),varbperm(:),subs13(:,2)],1,[r,c,v]);
+        chi2perm = sum((xperm-expfreq).^2./expfreq,[1,2],nanflag);
+        dist(i,:) = chi2perm(:)';
     end
 
     % Apply max-correction if specified
@@ -139,8 +142,8 @@ if nargout > 1
     % Compute p-values
     switch arg.tail
         case 'both'
-            p = min(1,2*(min(sum(chi2>=distmin),...
-                sum(chi2<=distmax))+1)/(arg.nperm+1));
+            p = min(1,2*(min(sum(chi2>=distmin,1),...
+                sum(chi2<=distmax,1))+1)/(arg.nperm+1));
         case 'right'
             p = (sum(chi2<=distmax,1)+1)/(arg.nperm+1);
         case 'left'
