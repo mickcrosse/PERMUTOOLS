@@ -60,18 +60,18 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000 or all possible permutations for less
 %                   than 14 observations).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
+%       'matrix'    A numeric scalar (0,1) or logical indicating whether to 
+%                   return results as a matrix (default=0).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator. By default, the
-%                   generator is initialised based on the current time,
-%                   resulting in a different permutation on each call.
+%                   initialise the permutation generator (default=shuffle).
 %       'verbose'   A numeric scalar (0,1) or logical indicating whether to 
-%                   execute in verbose mode (default=1).
+%                   run in verbose mode (default=1).
 %
 %   See also CORR CORRCOEF PARTIALCORR TIEDRANK.
 %
@@ -124,10 +124,10 @@ end
 
 % Set up comparison
 if isempty(y)
-    warning('Comparing all columns of X in a correlation matrix...')
+    warning('Comparing all columns of X using two-tailed correlations...')
     [x,y] = ptpaircols(x);
     arg.tail = 'both';
-    arg.mat = true;
+    arg.matrix = true;
 end
 if size(x)~=size(y)
     error('X and Y must be the same size.')
@@ -225,7 +225,7 @@ if nargout > 1
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
-            case 'both'
+            case {'both','two'}
                 dist = max(abs(dist),[],2);
             case 'right'
                 dist = max(dist,[],2);
@@ -234,14 +234,14 @@ if nargout > 1
         end
     else
         switch arg.tail
-            case 'both'
+            case {'both','two'}
                 dist = abs(dist);
         end
     end
 
     % Compute p-value
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             p = (sum(abs(r)<=dist)+1)/(arg.nperm+1);
         case 'right'
             p = (sum(r<=dist)+1)/(arg.nperm+1);
@@ -254,7 +254,7 @@ end
 % Compute confidence interval
 if nargout > 2
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             crit = prctile(dist,100*(1-arg.alpha));
             ci = [max(-1,r-crit);min(1,r+crit)];
         case 'right'
@@ -273,7 +273,7 @@ if nargout > 3
 end
 
 % Arrange results in a matrix if specified
-if arg.mat
+if arg.matrix
     r = ptvec2mat(r);
     if nargout > 1
         p = ptvec2mat(p);

@@ -38,15 +38,15 @@ function [chi2,p,stats,tbl,dist] = permuchi2(x,varargin)
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'tail'      A string specifying the alternative hypothesis:
-%                       'right'     right-tailed test (default)
-%                       'left'      left-tailed test
-%                       'both'      two-tailed test
+%                       'both'      association is not equal to chance
+%                       'right'     association is greater than chance (default)
+%                       'left'      association is less than chance
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   control FWER using max correction (default=1).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also CROSSTAB CHI2GOF PERMUANOVA1 PERMUTTEST.
 %
@@ -141,7 +141,7 @@ if nargout > 1
 
     % Compute p-values
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             p = min(1,2*(min(sum(chi2>=distmin,1),...
                 sum(chi2<=distmax,1))+1)/(arg.nperm+1));
         case 'right'

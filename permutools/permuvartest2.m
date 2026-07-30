@@ -55,16 +55,16 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %                       'left'  variance of X is less than variance of Y
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
+%       'matrix'    A numeric scalar (0,1) or logical indicating whether to 
+%                   return results as a matrix (default=0).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator. By default, the
-%                   generator is initialised based on the current time,
-%                   resulting in a different permutation on each call.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also VARTEST2 PERMUTTEST2 BOOTEFFECTSIZE.
 %
@@ -108,10 +108,10 @@ end
 
 % Set up comparison
 if isempty(y)
-    warning('Comparing all columns of X using two-tailed test...')
+    warning('Comparing all columns of X using two-tailed tests...')
     [x,y] = ptpaircols(x);
     arg.tail = 'both';
-    arg.mat = true;
+    arg.matrix = true;
 end
 if size(x,2)~=size(y,2)
     error('X and Y must have the same number of variables.')
@@ -218,7 +218,7 @@ if nargout > 1
 
     % Compute p-value
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             p = min(1,2*(min(sum(f>=distmin),...
                 sum(f<=distmax))+1)/(arg.nperm+1));
         case 'right'
@@ -232,7 +232,7 @@ end
 % Compute confidence interval
 if nargout > 2
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             crit = [prctile(distmin,100*arg.alpha/2);...
                 prctile(distmax,100*(1-arg.alpha/2))];
             ci = f./crit;
@@ -253,7 +253,7 @@ if nargout > 3
 end
 
 % Arrange results in a matrix if specified
-if arg.mat
+if arg.matrix
     f = ptvec2mat(f);
     if nargout > 1
         p = ptvec2mat(p);

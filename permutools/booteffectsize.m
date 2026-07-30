@@ -48,8 +48,7 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                   in 1 to work along the columns (default), or 2 to work
 %                   along the rows. Applies to both X and Y.
 %       'paired'    A numeric scalar (0,1) or logical indicating whether
-%                   the data in X and Y are paired: pass in 1 for paired
-%                   samples (default), or 0 for unpaired samples.
+%                   the data in X and Y are paired (default=1).
 %       'effect'    A string specifying the effect size metric to compute:
 %                       'cohen'      standardised mean difference based on
 %                                    Cohen's d (default)
@@ -77,9 +76,8 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                   used to estimate the confidence intervals (default=
 %                   10,000).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
-%                   bias-correct the effect size and confidence interval
-%                   according to sample size (default=1). Note, this
-%                   only applies to standardised effect size measures.
+%                   correct for sample size by applying a bias factor
+%                   (default=1). Only applies to standardised measures.
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)

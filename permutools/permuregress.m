@@ -41,20 +41,20 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %       'type'      A string specifying the type of permutation to use:
 %                       'freedmanlane'  permutes reduced residuals (default)
 %                       'manly'         permutes raw data unrestricted
-%       'tail'      A string specifying the alternative hypothesis:
-%                       'both'      two-tailed test (default)
-%                       'right'     right-tailed test
-%                       'left'      left-tailed test
-%       'intercept' A numeric scalar (0,1) or logical specifying whether to
-%                   automatically include a constant intercept (default=1).
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
+%       'tail'      A string specifying the alternative hypothesis:
+%                       'both'      coefficient is not 0 (default)
+%                       'right'     coefficient is greater than 0
+%                       'left'      coefficient is less than 0
+%       'intercept' A numeric scalar (0,1) or logical specifying whether to
+%                   automatically include a constant intercept (default=1).
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   control FWER using max correction (default=1).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also FITLM REGRESS PERMUCORR PERMUANOVA1.
 %
@@ -62,11 +62,8 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
-if ~any(strcmpi(varargin,'type'))
+if isempty(arg.type)
     arg.type = 'freedmanlane';
-end
-if ~any(strcmpi(varargin,'intercept'))
-    arg.intercept = 1;
 end
 
 % Handle missing values (Listwise deletion)
@@ -151,7 +148,7 @@ if nargout > 1
         % Apply max-correction if specified
         if arg.correct
             switch arg.tail
-                case 'both'
+                case {'both','two'}
                     distj = max(abs(distj),[],2);
                 case 'right'
                     distj = max(distj,[],2);
@@ -160,14 +157,14 @@ if nargout > 1
             end
         else
             switch arg.tail
-                case 'both'
+                case {'both','two'}
                     distj = abs(distj);
             end
         end
 
         % Compute p-values
         switch arg.tail
-            case 'both'
+            case {'both','two'}
                 p(j,:) = (sum(abs(tstat(j,:))<=distj,1)+1)./(arg.nperm+1);
             case 'right'
                 p(j,:) = (sum(tstat(j,:)<=distj,1)+1)./(arg.nperm+1);
@@ -178,7 +175,7 @@ if nargout > 1
         % Compute confidence intervals
         if nargout > 2
             switch arg.tail
-                case 'both'
+                case {'both','two'}
                     crit=prctile(distj,100*(1-arg.alpha),1);
                     ci(1,:,j)=b(j,:)-crit.*se(j,:);
                     ci(2,:,j)=b(j,:)+crit.*se(j,:);

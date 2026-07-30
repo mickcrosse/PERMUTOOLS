@@ -44,16 +44,14 @@ function [chi2,p,ci,stats,dist] = bootvartest(x,v,varargin)
 %                       'left'      variance is less than V
 %       'nboot'     An integer scalar specifying the number of bootstraps
 %                   (default=10,000).
-%       'correct'   A numeric scalar (0,1) or logical indicating whether
-%                   to control FWER using max correction (default=1).
+%       'correct'   A numeric scalar (0,1) or logical indicating whether to
+%                   control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the bootstrap generator. By default, the
-%                   generator is initialised based on the current time,
-%                   resulting in a different bootstrap on each call.
+%                   initialise the bootstrap generator (default=shuffle).
 %
 %   See also VARTEST BOOTVARTEST2 BOOTEFFECTSIZE.
 %
@@ -163,7 +161,7 @@ if nargout > 1
 
     % Compute p-value
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             p = min(1,2*(min(sum(chi2<=pdmax),...
                 sum(chi2>=pdmin))+1)/(arg.nboot+1));
         case 'right'
@@ -176,7 +174,7 @@ end
 % Compute confidence interval
 if nargout > 2
     switch arg.tail
-        case 'both'
+        case {'both','two'}
             crit = [prctile(pdmax,100*(1-arg.alpha/2));...
                 prctile(pdmin,100*arg.alpha/2)];
             ci = sumsq./crit;
@@ -194,22 +192,4 @@ if nargout > 3
     varx = var(x,nanflag);
     stats.df = df;
     stats.varx = varx;
-end
-
-% Arrange results in a matrix if specified
-if arg.mat
-    chi2 = ptvec2mat(chi2);
-    if nargout > 1
-        p = ptvec2mat(p);
-    end
-    if nargout > 2
-        ciLwr = ptvec2mat(ci(1,:));
-        ciUpr = ptvec2mat(ci(2,:));
-        ci = cat(3,ciLwr,ciUpr);
-        ci = permute(ci,[3,1,2]);
-    end
-    if nargout > 3
-        stats.df = ptvec2mat(df);
-        stats.varx = ptvec2mat(varx);
-    end
 end
