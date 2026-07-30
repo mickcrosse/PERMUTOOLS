@@ -29,7 +29,7 @@ nobs = 30; nvar = 20;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = {'freedman-lane','manly'};
+type = {'freedmanlane','manly'};
 
 % Generate random data
 rng(42);
