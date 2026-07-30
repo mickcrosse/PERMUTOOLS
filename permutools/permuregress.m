@@ -1,20 +1,20 @@
 function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %PERMUREGRESS  Permutation-based multiple linear regression.
-%   B = PERMUREGRESS(X,Y) performs a permutation-based multiple linear 
-%   regression of the responses in Y on the predictors in X, and returns 
-%   the estimated coefficients. X is an N-by-P design matrix, Y is an 
-%   N-by-V matrix of dependent variables, and B is a P-by-V matrix of 
+%   B = PERMUREGRESS(X,Y) performs a permutation-based multiple linear
+%   regression of the responses in Y on the predictors in X, and returns
+%   the estimated coefficients. X is an N-by-P design matrix, Y is an
+%   N-by-V matrix of dependent variables, and B is a P-by-V matrix of
 %   coefficients.
 %
 %   PERMUREGRESS leverages the Freedman-Lane algorithm by default to
 %   isolate the unique variance of each predictor, properly controlling
 %   for collinearity among covariates during permutation.
-% 
-%   [B,P] = PERMUREGRESS(...) returns the probabilities (i.e. p-values) of 
-%   observing the given result by chance if the null hypothesis is true. As 
-%   the null distribution is generated empirically by permuting the data, 
-%   no assumption is made about the shape of the distribution that the data 
-%   come from. P-values are automatically adjusted for multiple comparisons 
+%
+%   [B,P] = PERMUREGRESS(...) returns the probabilities (i.e. p-values) of
+%   observing the given result by chance if the null hypothesis is true. As
+%   the null distribution is generated empirically by permuting the data,
+%   no assumption is made about the shape of the distribution that the data
+%   come from. P-values are automatically adjusted for multiple comparisons
 %   using the max correction method.
 %
 %   [B,P,CI] = PERMUREGRESS(...) returns the 100*(1-ALPHA)% confidence
@@ -102,7 +102,7 @@ if nargout > 1
 
     % Preallocate output arrays
     p = zeros(pnum,v);
-    if nargout>2
+    if nargout > 2
         ci = zeros(2,v,pnum);
     end
     if nargout > 4
@@ -115,8 +115,8 @@ if nargout > 1
     % Iterate across predictors
     for j = 1:pnum
 
-        % Define permutation target based on method
-        switch arg.tail
+        % Define permutation target
+        switch arg.type
             case 'freedmanlane'
                 xred = x;
                 xred(:,j) = [];
@@ -126,15 +126,14 @@ if nargout > 1
                     Hred = pinv(xred'*xred)*xred';
                     betared = Hred*y;
                     resred = y-xred*betared;
-            end
+                end
             case 'manly'
                 resred = y;
         end
 
+        % Estimate sampling distribution
         Hj = H(j,:);
         distj = zeros(arg.nperm,v);
-
-        % Permutation loop
         for i = 1:arg.nperm
             randidx = randperm(nobs);
             resperm = resred(randidx,:);
@@ -177,16 +176,13 @@ if nargout > 1
             switch arg.tail
                 case {'both','two'}
                     crit=prctile(distj,100*(1-arg.alpha),1);
-                    ci(1,:,j)=b(j,:)-crit.*se(j,:);
-                    ci(2,:,j)=b(j,:)+crit.*se(j,:);
+                    ci(:,:,j) = [b(j,:)-crit.*se(j,:);b(j,:)+crit.*se(j,:)];
                 case 'right'
                     crit=prctile(distj,100*(1-arg.alpha),1);
-                    ci(1,:,j)=b(j,:)-crit.*se(j,:);
-                    ci(2,:,j)=Inf;
+                    ci(:,:,j) = [b(j,:)-crit.*se(j,:);Inf(1,v)];
                 case 'left'
                     crit=prctile(distj,100*arg.alpha,1);
-                    ci(1,:,j)=-Inf;
-                    ci(2,:,j)=b(j,:)-crit.*se(j,:);
+                    ci(:,:,j) = [-Inf(1,v);b(j,:)-crit.*se(j,:)];
             end
         end
 
@@ -196,16 +192,15 @@ if nargout > 1
         end
 
     end
+
 end
 
-% Compute overall model fit statistics
+% Store statistics in a structure
 if nargout > 3
     sst = sum((y-mean(y,1)).^2,1);
     sse = sum(res.^2,1);
     r2 = 1-(sse./sst);
     fstat = (r2./(pnum-1))./((1-r2)./df);
-
-    % Store statistics in a structure
     stats.method = arg.type;
     stats.df = df;
     stats.se = se;
