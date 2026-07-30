@@ -82,10 +82,10 @@ function [d,ci,stats,dist] = booteffectsize(x,m,varargin)
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
-%       'seed'      A scalar integer specifying the seed used to initialise
-%                   the bootstrap generator. By default, the generator is
-%                   initialised based on the current time, resulting in a
-%                   different bootstrap on each call.
+%       'matrix'    A numeric scalar (0,1) or logical indicating whether to
+%                   return results as a matrix (default=0).
+%       'seed'      An integer scalar specifying the seed value used to
+%                   initialise the bootstrap generator (default=shuffle).
 %
 %   See also MEANEFFECTSIZE BOOTCI PERMUTTEST PERMUTTEST2 PERMUVARTEST2.
 %
@@ -137,7 +137,7 @@ if isempty(y)
         case 'pairwise'
             warning('Comparing all columns of X...')
             [x,y] = ptpaircols(x);
-            arg.mat = true;
+            arg.matrix = true;
     end
 else
     switch arg.compare
@@ -433,7 +433,7 @@ if arg.correct
 end
 
 % Arrange results in a matrix if specified
-if arg.mat
+if arg.matrix
     d = ptvec2mat(d);
     if nargout > 1
         ci = ptvec2mat(ci);
