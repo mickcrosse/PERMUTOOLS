@@ -25,7 +25,7 @@ validFcn = @(x) assert(x==1||x==2,errorMsg);
 addParameter(p,'dim',1,validFcn);
 
 % Alternative hypothesis
-tailOptions = {'left','both','right'};
+tailOptions = {'left','right','both','two'};
 validFcn = @(x) any(validatestring(x,tailOptions));
 addParameter(p,'tail','both',validFcn);
 
@@ -63,9 +63,9 @@ validFcn = @(x) assert(isnumeric(x),errorMsg);
 addParameter(p,'m',0,validFcn);
 
 % Comparison type
-compareOptions = {'one','pairwise'};
+compareOptions = {'zero','pairwise'};
 validFcn = @(x) any(validatestring(x,compareOptions));
-addParameter(p,'compare','one',validFcn);
+addParameter(p,'compare','zero',validFcn);
 
 % Variance equivalence
 vartypeOptions = {'equal','unequal'};
@@ -80,19 +80,20 @@ addParameter(p,'effect','cohen',validFcn);
 % Boolean arguments
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
 validFcn = @(x) assert(x==0||x==1||islogical(x),errorMsg);
-addParameter(p,'mat',false,validFcn); % matrix conversion
-addParameter(p,'correct',true,validFcn); % correction
-addParameter(p,'paired',true,validFcn); % paired samples
-addParameter(p,'verbose',true,validFcn); % verbose mode
+addParameter(p,'correct',true,validFcn); % control FWER via max correction
+addParameter(p,'intercept',true,validFcn); % include regression intercept
+addParameter(p,'paired',true,validFcn); % effect size for paired samples
+addParameter(p,'matrix',false,validFcn); % return results in a matrix
+addParameter(p,'verbose',true,validFcn); % run in verbose mode
 
 % Parse input arguments
 parse(p,varargin{1,1}{:});
 arg = p.Results;
 
 % Redefine partially matched strings
+arg.type = validatestring(arg.type,typeOptions);
 arg.tail = validatestring(arg.tail,tailOptions);
 arg.rows = validatestring(arg.rows,rowsOptions);
 arg.compare = validatestring(arg.compare,compareOptions);
 arg.vartype = validatestring(arg.vartype,vartypeOptions);
-arg.type = validatestring(arg.type,typeOptions);
 arg.effect = validatestring(arg.effect,effectOptions);
