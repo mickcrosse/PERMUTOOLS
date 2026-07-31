@@ -1,9 +1,9 @@
 function [f,p,ci,stats,tbl,dist] = permuranova2(x,varargin)
 %PERMURANOVA2  Permutation-based two-way repeated-measures ANOVA and Friedman test.
-%   F = PERMURANOVA2(X) performs a balanced permutation-based two-way 
-%   repeated-measures analysis of variance (ANOVA) for comparing the means 
-%   of data in a 3D matrix X (where rows represent subjects, columns 
-%   represent Factor A, and depth represents Factor B), and returns the 
+%   F = PERMURANOVA2(X) performs a balanced permutation-based two-way
+%   repeated-measures analysis of variance (ANOVA) for comparing the means
+%   of data in a 3D matrix X (where rows represent subjects, columns
+%   represent Factor A, and depth represents Factor B), and returns the
 %   test statistics for Factor A, Factor B, and the A x B interaction.
 %
 %   For non-normally distributed data, the raw data may be transformed
@@ -48,7 +48,7 @@ function [f,p,ci,stats,tbl,dist] = permuranova2(x,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also RANOVA FRIEDMAN FITRM PERMURANOVA1 PERMUANOVA2.
 %

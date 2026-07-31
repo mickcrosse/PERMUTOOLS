@@ -60,9 +60,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator. By default, the
-%                   generator is initialised based on the current time,
-%                   resulting in a different permutation on each call.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also ANOVA1 KRUSKALWALLIS PERMUANOVA2 PERMUTTEST2 BOOTEFFECTSIZE.
 %

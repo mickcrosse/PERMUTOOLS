@@ -54,7 +54,7 @@ function [f,p,ci,stats,tbl,dist] = permuranova1(x,varargin)
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000).
 %       'seed'      An integer scalar specifying the seed value used to
-%                   initialise the permutation generator.
+%                   initialise the permutation generator (default=shuffle).
 %
 %   See also RANOVA PERMUANOVA1 PERMUANOVA2 PERMUTTEST BOOTEFFECTSIZE.
 %
