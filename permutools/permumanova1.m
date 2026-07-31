@@ -8,15 +8,15 @@ function [lambda,p,ci,stats,tbl,dist] = permumanova1(x,group,varargin)
 %   (N-by-P-by-V), the test evaluates all V sets of variables
 %   simultaneously, and a vector of results is returned.
 %
-%   For non-normally distributed data, the raw data may be transformed
-%   to rank orders in order to compute a rank MANOVA test by setting the
+%   For non-normally distributed data, the raw data may be transformed to 
+%   rank orders in order to compute a rank MANOVA test by setting the
 %   'type' parameter to 'rank'.
 %
 %   PERMUMANOVA1 treats NaNs as missing values, and ignores them.
 %
 %   [LAMBDA,P] = PERMUMANOVA1(...) returns the probability (i.e. p-value)
 %   of observing the given result by chance if the null hypothesis is true.
-%   As the null distribution is generated empirically by permuting the
+%   As the null distribution is generated empirically by permuting the 
 %   data, no assumption is made about the shape of the distributions that
 %   the data come from, except that they have equal variances. P-values are
 %   automatically adjusted for multiple comparisons using the max
@@ -182,6 +182,7 @@ if nargout > 1
 
 end
 
+% Compute confidence interval
 if nargout > 2
     if arg.correct
         crit = prctile(distmin,100*arg.alpha);

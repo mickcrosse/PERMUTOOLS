@@ -1,13 +1,13 @@
 function run_permumanova1_examples
 %RUN_PERMUMANOVA1_EXAMPLES  Run permutation-based one-way MANOVA examples.
-%   Generates random multivariate data for 3 groups along the rows of X.
-%   X contains 20 sets of dependent variables (2 dimensions per set).
-%   The groups have identical multivariate means of 0 for most variables,
+%   Generates random multivariate data for 3 groups along the rows of X. X
+%   contains 20 sets of dependent variables (2 dimensions per set). The
+%   groups have identical multivariate means of 0 for most variables,
 %   except for the first 5 variables where Group 1 and Group 2 are shifted
 %   in different dimensions. Each group has 10 observations (30 total).
-%   Permutation-based one-way MANOVAs are performed on the datasets
-%   using standard and rank-transformed methods. The results are compared
-%   to those of the equivalent parametric statistical test (one-way MANOVA)
+%   Permutation-based one-way MANOVAs are performed on the datasets using
+%   standard and rank-transformed methods. The results are compared to
+%   those of the equivalent parametric statistical test (one-way MANOVA)
 %   using manova1.m.
 %
 %   See also PERMUMANOVA1 MANOVA1.
@@ -40,7 +40,7 @@ for t = 1:numel(type)
     figure('Name',['One-way (',type{t},')'],'NumberTitle','off')
     set(gcf,'color','w')
 
-    % Run native parametric MANOVA
+    % Run parametric MANOVA
     tic
     switch type{t}
         case 'manova1'
