@@ -17,11 +17,10 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   interaction effect, REPS must be greater than 1. REPS must be a scalar.
 %
 %   [F,P] = PERMUANOVA2(...) returns the probabilities (i.e. p-values) of
-%   observing the given results by chance if the null hypothesis (that the
-%   means of the groups are equal) is true. As the null distribution is
-%   generated empirically by permuting the data, no assumption is made
-%   about the shape of the distributions that the data come from, except
-%   that they have equal variances.
+%   observing the given results by chance if the null hypothesis is true. 
+%   As the null distribution is generated empirically by permuting the 
+%   data, no assumption is made about the shape of the distributions that 
+%   the data come from, except that they have equal variances.
 %
 %   [F,P,CI] = PERMUANOVA2(...) returns a 100*(1-ALPHA)% confidence
 %   intervals (CIs) for the true difference of population means.
