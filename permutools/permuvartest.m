@@ -1,34 +1,36 @@
-function [chi2,p,ci,stats,dist] = bootvartest(x,v,varargin)
-%BOOTVARTEST  Bootstrap-based one-sample test of variance.
-%   CHI2 = BOOTVARTEST(X,V) performs a one-sample bootstrap test based on
+function [chisq,p,ci,stats,dist] = permuvartest(x,v,varargin)
+%PERMUVARTEST  Bootstrap-based one-sample test of variance.
+%   CHISQ = PERMUVARTEST(X,V) performs a one-sample bootstrap test based on
 %   the Chi-squared statistic of the the null hypothesis that the data in X
 %   come from a distribution with variance V, and returns the test
 %   statistic. If X is a matrix, separate bootstrap tests are performed
 %   along each column of X, and a vector of results is returned. V must be
 %   a scalar.
 %
-%   BOOTVARTEST treats NaNs as missing values, and ignores them.
+%   PERMUVARTEST treats NaNs as missing values, and ignores them.
 %
-%   [CHI2,P] = BOOTVARTEST(...) returns the probability (i.e. p-value) of
+%   [CHISQ,P] = PERMUVARTEST(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true. As
 %   the null distribution is generated empirically by bootstrapping the
 %   data, no assumption is made about the shape of the distributions that
 %   the data come from. P-values are automatically adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [CHI2,P,CI] = BOOTVARTEST(...) returns a 100*(1-ALPHA)% confidence
+%   [CHISQ,P,CI] = PERMUVARTEST(...) returns a 100*(1-ALPHA)% confidence
 %   interval for the true variance. CIs are also adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [CHI2,P,CI,STATS] = BOOTVARTEST(...) returns a structure with the
+%   [CHISQ,P,CI,STATS] = PERMUVARTEST(...) returns a structure with the
 %   following fields:
+%       'chisqstat' -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
-%       'varx'      -- the estimated population variance of X
+%       'var'       -- the estimated population variance
+%       'method'    -- the statistical method used
 %
-%   [CHI2,P,CI,STATS,DIST] = BOOTVARTEST(...) returns the bootstrapped
+%   [CHISQ,P,CI,STATS,DIST] = PERMUVARTEST(...) returns the bootstrapped
 %   sampling distribution of the test statistic.
 %
-%   [...] = BOOTVARTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = PERMUVARTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -53,7 +55,7 @@ function [chi2,p,ci,stats,dist] = bootvartest(x,v,varargin)
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the bootstrap generator (default=shuffle).
 %
-%   See also VARTEST BOOTVARTEST2 BOOTEFFECTSIZE.
+%   See also VARTEST PERMUVARTEST2 PERMUEFFECTSIZE.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -105,27 +107,24 @@ else
     nanflag = 'includenan';
 end
 
-% Compute sum of squares
+% Compute observed statistics
 mu = sum(x,nanflag)./nobs;
 xdm = x-mu;
 sumsq = sum(xdm.^2,nanflag);
-
-% Compute test statistic
 if v > 0
-    chi2 = sumsq./v;
+    chisq = sumsq./v;
 else
-    chi2 = Inf(size(1,nvar),'like',sumsq);
-    chi2(sumsq==0) = NaN;
+    chisq = Inf(size(1,nvar),'like',sumsq);
+    chisq(sumsq==0) = NaN;
 end
 
 if nargout > 1
 
+    rng(arg.seed);
+
     % Compute sample variance using fast algo and scale to V
     varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)./df;
     xnull = xdm.*sqrt(v./varx);
-
-    % Generate random bootstraps
-    rng(arg.seed);
 
     % Estimate sampling distribution
     dist = zeros(arg.nboot,nvar);
@@ -162,13 +161,14 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case {'both','two'}
-            p = min(1,2*(min(sum(chi2<=pdmax),...
-                sum(chi2>=pdmin))+1)/(arg.nboot+1));
+            p = min(1,2*(min(sum(chisq<=pdmax),...
+                sum(chisq>=pdmin))+1)/(arg.nboot+1));
         case 'right'
-            p = (sum(chi2<=pdmax)+1)/(arg.nboot+1);
+            p = (sum(chisq<=pdmax)+1)/(arg.nboot+1);
         case 'left'
-            p = (sum(chi2>=pdmin)+1)/(arg.nboot+1);
+            p = (sum(chisq>=pdmin)+1)/(arg.nboot+1);
     end
+
 end
 
 % Compute confidence interval
@@ -189,7 +189,8 @@ end
 
 % Store statistics in a structure
 if nargout > 3
-    varx = var(x,nanflag);
+    stats.chisqstat = chisq;
     stats.df = df;
-    stats.varx = varx;
+    stats.var = varx;
+    stats.method = 'chisqtest';
 end

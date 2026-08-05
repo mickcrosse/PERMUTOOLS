@@ -1,5 +1,5 @@
-function run_bootvartest_examples
-%RUN_BOOTVARTEST_EXAMPLES  Run one-sample bootstrapped chi-squared test examples.
+function run_permuvartest_examples
+%RUN_PERMUVARTEST_EXAMPLES  Run one-sample bootstrapped chi-squared test examples.
 %   Generates random multivariate data for samples X. Each sample has 20
 %   variables, each with a standard deviation of 1, except for the first 10
 %   variables of X which have a standard deviation of 2. Each variable has
@@ -9,7 +9,7 @@ function run_bootvartest_examples
 %   equivalent parametric statistical tests (i.e. one-sample chi-squared
 %   tests) using vartest.m.
 
-%   See also BOOTVARTEST VARTEST.
+%   See also PERMUVARTEST VARTEST.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -39,7 +39,7 @@ figure('Name',['One-sample ',type,' test: variance & CIs'],...
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1,ci1] = vartest(x,v,'tail',tail{i});
-    [~,p2,ci2,stats2] = bootvartest(x,v,'tail',tail{i},'correct',0,...
+    [~,p2,ci2,stats2] = permuvartest(x,v,'tail',tail{i},'correct',0,...
         'verbose',0);
     subplot(3,2,i+i-1), hold on
     plot(xaxis,stats2.varx,'LineWidth',3)
@@ -57,7 +57,7 @@ for i = 1:numel(tail)
         legend('variance','95% CI (param.)','','95% CI (boot.)',...
             'Location','best')
     end
-    [~,p2,ci2,stats2] = bootvartest(x,v,'tail',tail{i},'correct',1,...
+    [~,p2,ci2,stats2] = permuvartest(x,v,'tail',tail{i},'correct',1,...
         'verbose',0);
     subplot(3,2,i+i), hold on
     plot(xaxis,stats2.varx,'LineWidth',3)
@@ -77,7 +77,7 @@ figure('Name',['One-sample ',type,' test: p-values'],'NumberTitle','off')
 set(gcf,'color','w')
 for i = 1:numel(tail)
     [~,p1] = vartest(x,v,'tail',tail{i});
-    [~,p2] = bootvartest(x,v,'tail',tail{i},'correct',0,'verbose',0);
+    [~,p2] = permuvartest(x,v,'tail',tail{i},'correct',0,'verbose',0);
     subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -91,7 +91,7 @@ for i = 1:numel(tail)
         legend('{\itp}-value (param.)','{\itp}-value (boot.)',...
             'Location','best')
     end
-    [~,p2] = bootvartest(x,v,'tail',tail{i},'correct',1,'verbose',0);
+    [~,p2] = permuvartest(x,v,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,1]), box on, grid on

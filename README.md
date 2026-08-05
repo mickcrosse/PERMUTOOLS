@@ -58,24 +58,24 @@ For usage, please see the example code provided in the [Examples](#examples) sec
 
 PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 
-| Function | Description |
-| --- | --- |
-| [**permuanova1()**](permutools/permuanova1.m) | One-way analysis of variance (ANOVA) and Kruskal-Wallis test|
-| [**permuanova2()**](permutools/permuanova2.m) | Two-way analysis of variance (ANOVA) and aligned rank transform (ART) test |
-| [**permuanovan()**](permutools/permuanovan.m) | N-way analysis of variance (ANOVA) and rank-transformed ANOVA test |
-| [**permuranova1()**](permutools/permuranova1.m) | One-way repeated-measures ANOVA and Friedman test|
-| [**permuranova2()**](permutools/permuranova2.m) | Two-way repeated-measures ANOVA and Friedman test|
-| [**permumanova1()**](permutools/permumanova1.m) | One-way multivariate ANOVA and rank-transformed MANOVA test|
-| [**permumanova2()**](permutools/permumanova2.m) | Two-way multivariate ANOVA and rank-transformed MANOVA test|
-| [**permuttest()**](permutools/permuttest.m) | One/paired-sample *t*-test and Wilcoxon signed-rank test with max correction |
-| [**permuttest2()**](permutools/permuttest2.m) | Two-sample *t*-test and Wilcoxon rank-sum / Mann-Whitney U test with max correction |
-| [**bootvartest()**](permutools/bootvartest.m) | One-sample test of variance with max correction |
-| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample test of variance and Conover squared-rank test with max correction |
-| [**permuztest()**](permutools/permuztest.m) | One-sample *Z*-test with max correction |
-| [**permuzchi2()**](permutools/permuzchi2.m) | Chi-square test of independence with max correction |
-| [**permucorr()**](permutools/permucorr.m) | Pearson, Spearman's rank and rankit correlation with max correction |
-| [**permuregress()**](permutools/permuregress.m) | Multiple linear regression with max correction |
-| [**booteffectsize()**](permutools/booteffectsize.m) | Effect size & confidence interval with bias correction |
+| Function | Standard Test | Rank Test |
+| --- | --- | --- |
+| [**permuanova1()**](permutools/permuanova1.m) | One-way analysis of variance (ANOVA) | Kruskal-Wallis test |
+| [**permuanova2()**](permutools/permuanova2.m) | Two-way analysis of variance (ANOVA) | Aligned rank transform (ART) test |
+| [**permuanovan()**](permutools/permuanovan.m) | N-way analysis of variance (ANOVA) | Rank-transformed N-way ANOVA |
+| [**permuranova1()**](permutools/permuranova1.m) | One-way repeated-measures ANOVA | One-way Friedman test |
+| [**permuranova2()**](permutools/permuranova2.m) | Two-way repeated-measures ANOVA | Two-way Friedman test |
+| [**permumanova1()**](permutools/permumanova1.m) | One-way multivariate ANOVA | One-way rank-transformed MANOVA |
+| [**permumanova2()**](permutools/permumanova2.m) | Two-way multivariate ANOVA | Two-way rank-transformed MANOVA |
+| [**permuttest()**](permutools/permuttest.m) | One/paired-sample *t*-test | Wilcoxon signed-rank test |
+| [**permuttest2()**](permutools/permuttest2.m) | Two-sample *t*-test | Wilcoxon rank-sum / Mann-Whitney U test |
+| [**permuvartest()**](permutools/permuvartest.m) | One-sample test of variance | N/A |
+| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample test of variance | Conover squared ranks test |
+| [**permuztest()**](permutools/permuztest.m) | One-sample *Z*-test | N/A |
+| [**permuchi2()**](permutools/permuchi2.m) | Chi-square test of independence | N/A |
+| [**permucorr()**](permutools/permucorr.m) | Pearson correlation coefficient | Spearman's rank correlation coefficient |
+| [**permuregress()**](permutools/permuregress.m) | Multiple linear regression | N/A |
+| [**booteffectsize()**](permutools/booteffectsize.m) | Cohen's *d*, Hedges' *g* and Glass' ∆ | Cliff's δ |
 
 ## Correction Features
 
