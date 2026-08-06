@@ -23,6 +23,8 @@ function run_permuttest2_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+close all; clc;
+
 % Set up experiment
 nobs = 30; nvar = 20;
 xaxis = 1:nvar; alpha = 0.05;
@@ -30,6 +32,7 @@ tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'ttest2','ranksum'};
 vartype = {'equal','unequal'};
+text = {'mean difference','median difference'};
 
 % Generate random data
 rng(42);
@@ -37,7 +40,15 @@ x = randn(nobs,nvar);
 y = randn(nobs,nvar);
 y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
 
+disp('Mean elapsed time:')
+
 for t = 1:numel(type)
+
+    disp(type{t})
+
+    toc1 = zeros(numel(tail)*2,1);
+    toc2 = zeros(numel(tail)*2,1);
+    toc3 = zeros(numel(tail)*2,1);
 
     for v = 1:numel(vartype)
 
@@ -46,31 +57,54 @@ for t = 1:numel(type)
             y = y*1.25;
         end
 
-        % Plot parametric & permutation CIs
+        % Parametric & permutation CIs
         figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
-            ' SD): mean difference & CIs'],'NumberTitle','off')
+            ' SD): ',text{t},' & CIs'],'NumberTitle','off')
         set(gcf,'color','w')
+
         for i = 1:numel(tail)
+
+            % Parametric test
+            tic
             switch type{t}
                 case 'ttest2'
-                    [~,p1,ci1] = ttest2(x,y,'tail',tail{i},'vartype',vartype{v});
-                    ylims = [-3,3];
+                    [~,p1,ci1,stats1] = ttest2(x,y,'tail',tail{i},...
+                        'vartype',vartype{v});
                 case 'ranksum'
                     p1 = zeros(nvar,1);
                     for j = 1:nvar
-                        p1(j) = ranksum(x(:,j),y(:,j),'tail',tail{i});
+                        [p1(j),~,stats1] = ranksum(x(:,j),y(:,j),...
+                            'tail',tail{i});
                     end
                     ci1 = nan(nvar,2);
-                    ylims = [-40,40];
             end
+            toc1(i) = toc;
+            
+            % Permutation test (uncorrected)
+            tic
             [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
                 'type',type{t},'vartype',vartype{v},'correct',0);
+            toc2(i) = toc;
+
+            % Permutation test (max-corrected)
+            tic
+            [~,p3,ci3,stats3] = permuttest2(x,y,'tail',tail{i},...
+                'type',type{t},'vartype',vartype{v},'correct',1);
+            toc3(i) = toc;
+
+            % Plot CIs
+            switch type{t}
+                case 'ttest2'
+                    ct = stats2.mean;
+                case 'ranksum'
+                    ct = stats2.median;
+            end
             subplot(3,2,i+i-1), hold on
-            plot(xaxis,stats2.mu,'LineWidth',3)
+            plot(xaxis,ct,'LineWidth',3)
             plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-            plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
-            plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-            xlim([0,nvar+1]), ylim(ylims), box on, grid on
+            plot(xaxis(p1<=alpha),ct(p1<=alpha),'ok','LineWidth',2)
+            plot(xaxis(p2<=alpha),ct(p2<=alpha),'xr','LineWidth',2)
+            xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
             if i == 1
                 title('Uncorrected')
             elseif i == 3
@@ -78,17 +112,20 @@ for t = 1:numel(type)
             end
             ylabel([label{i},'-tailed'])
             if i == 1
-                legend('mean difference','95% CI (param.)','','95% CI (perm.)',...
-                    'Location','best')
+                switch type{t}
+                    case 'ttest2'
+                        legend(text{t},'95% CI (param.)','',...
+                            '95% CI (perm.)','Location','best')
+                    case 'ranksum'
+                        legend('Median(x)','Median(y)','Location','best')
+                end
             end
-            [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
-                'type',type{t},'vartype',vartype{v},'correct',1);
             subplot(3,2,i+i), hold on
-            plot(xaxis,stats2.mu,'LineWidth',3)
-            plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-            plot(xaxis(p1<=alpha),stats2.mu(p1<=alpha),'ok','LineWidth',2)
-            plot(xaxis(p2<=alpha),stats2.mu(p2<=alpha),'xr','LineWidth',2)
-            xlim([0,nvar+1]), ylim(ylims), box on, grid on
+            plot(xaxis,ct,'LineWidth',3)
+            plot(xaxis,ci1,'k',xaxis,ci3,'--r')
+            plot(xaxis(p1<=alpha),ct(p1<=alpha),'ok','LineWidth',2)
+            plot(xaxis(p3<=alpha),ct(p3<=alpha),'xr','LineWidth',2)
+            xlim([0,nvar+1]), ylim([-3,3]), box on, grid on
             if i == 1
                 title('Max-corrected')
             elseif i == 3
@@ -100,18 +137,36 @@ for t = 1:numel(type)
         figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
             ' SD): p-values'],'NumberTitle','off')
         set(gcf,'color','w')
+
         for i = 1:numel(tail)
+
+            % Parametric test
+            tic
             switch type{t}
                 case 'ttest2'
-                    [~,p1] = ttest2(x,y,'tail',tail{i},'vartype',vartype{v});
+                    [~,p1] = ttest2(x,y,'tail',tail{i},...
+                        'vartype',vartype{v});
                 case 'ranksum'
                     p1 = zeros(nvar,1);
                     for j = 1:nvar
                         p1(j) = ranksum(x(:,j),y(:,j),'tail',tail{i});
                     end
             end
+            toc1(i+numel(tail)) = toc;
+
+            % Permutation test (uncorrected)
+            tic
             [~,p2] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
                 'vartype',vartype{v},'correct',0);
+            toc2(i+numel(tail)) = toc;
+
+            % Permutation test (max-corrected)
+            tic
+            [~,p3] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
+                'vartype',vartype{v},'correct',1);
+            toc3(i+numel(tail)) = toc;
+
+            % Plot p-values
             subplot(3,2,i+i-1), hold on
             plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
             xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -125,10 +180,8 @@ for t = 1:numel(type)
                 legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
                     'Location','best')
             end
-            [~,p2] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
-                'vartype',vartype{v},'correct',1);
             subplot(3,2,i+i), hold on
-            plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
+            plot(xaxis,p1,'k',xaxis,p3,'--r','LineWidth',2)
             xlim([0,nvar+1]), ylim([0,1]), box on, grid on
             if i == 1
                 title('Max-corrected')
@@ -138,5 +191,10 @@ for t = 1:numel(type)
         end
 
     end
+
+    fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
+    fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
+    fprintf('Permutation (max-corr.): %.1f ms\n',mean(toc3)*1e3)
+
 
 end

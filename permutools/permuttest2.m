@@ -1,6 +1,6 @@
-function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
+function [stat,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %PERMUTTEST2  Permutation-based two-sample t-test and Wilcoxon rank-sum test.
-%   T = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
+%   STAT = PERMUTTEST2(X,Y) performs a two-sample permutation test based on
 %   the t-statistic of the hypothesis that the data in X and Y come from
 %   distributions with equal means, and returns the test statistic. If X
 %   and Y are matrices, separate permutation tests are performed between
@@ -20,7 +20,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %
 %   PERMUTTEST2 treats NaNs as missing values, and ignores them.
 %
-%   [T,P] = PERMUTTEST2(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUTTEST2(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true.
 %   As the null distribution is generated empirically by permuting the
 %   data, no assumption is made about the shape of the distributions that
@@ -28,21 +28,32 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   automatically adjusted for multiple comparisons using the max
 %   correction method.
 %
-%   [T,P,CI] = PERMUTTEST2(...) returns a 100*(1-ALPHA)% confidence
-%   interval (CI) for the true difference of population means. CIs are also
-%   adjusted for multiple comparisons using the max correction method.
+%   [STAT,P,CI] = PERMUTTEST2(...) returns a 100*(1-ALPHA)% confidence
+%   interval (CI) for the true difference of population means. For rank-
+%   based tests ('type','ranksum'), CI returns NaNs. CIs are also adjusted
+%   for multiple comparisons using the max correction method.
 %
-%   [T,P,CI,STATS] = PERMUTTEST2(...) returns a structure with the
-%   following fields:
-%       'method'    -- the statistical method used
+%   [STAT,P,CI,STATS] = PERMUTTEST2(...) returns a structure with the
+%   following fields for standard tests ('type','ttest2'):
+%       'tstat'     -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
 %       'sd'        -- the pooled estimate of the population standard
 %                      deviation (equal variances) or a vector containing
 %                      the unpooled estimates of the population standard
 %                      deviations (unequal variance)
-%       'mu'        -- the estimated population mean of X-Y
+%       'mean'      -- the estimated population mean
+%       'method'    -- the statistical method used
 %
-%   [T,P,CI,STATS,DIST] = PERMUTTEST2(...) returns the permuted sampling
+%   For rank-based tests ('type','ranksum'), STATS contains:
+%       'zstat'     -- the value of the test statistic
+%       'iqr'       -- the pooled estimate of the population interquartile
+%                      range (equal variances) or a vector containing the
+%                      unpooled estimates of the population interquartile
+%                      ranges (unequal variance)
+%       'median'    -- the estimated population median
+%       'method'    -- the statistical method used
+%
+%   [STAT,P,CI,STATS,DIST] = PERMUTTEST2(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -104,7 +115,7 @@ function [t,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
-if nargin<2
+if nargin < 2
     y = [];
 end
 
@@ -112,6 +123,11 @@ end
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
     arg.type = 'ttest2';
+elseif strcmpi(arg.type,'rank')
+    arg.type = 'ranksum';
+end
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
 end
 
 % Validate input parameters
@@ -132,7 +148,7 @@ if isempty(y)
     arg.tail = 'both';
     arg.matrix = true;
 end
-if size(x,2)~=size(y,2)
+if size(x,2) ~= size(y,2)
     error('X and Y must have the same number of variables.')
 end
 
@@ -148,18 +164,6 @@ end
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
 
-% Transform raw data to rank orders if specified
-switch arg.type
-    case 'ttest2'
-    case {'ranksum','rank'}
-        xy = tiedrank([x;y]);
-        nobsxtmp = size(x,1);
-        x = xy(1:nobsxtmp,:);
-        y = xy(nobsxtmp+1:end,:);
-    otherwise
-        error('The TYPE parameter value must be TTEST2, or RANKSUM.')
-end
-
 % Compute degrees of freedom
 dfx = nobsx-1;
 dfy = nobsy-1;
@@ -169,6 +173,22 @@ if any(isnan(x(:))) || any(isnan(y(:)))
     nanflag = 'omitnan';
 else
     nanflag = 'includenan';
+end
+
+% Transform raw data to rank orders if specified
+switch arg.type
+    case 'ttest2'
+    case 'ranksum'
+        if nargout > 3
+            iqrx = [iqr(x);iqr(y)];
+            medx = [median(x,nanflag);median(y,nanflag)];
+        end
+        xy = tiedrank([x;y]);
+        nobsxtmp = size(x,1);
+        x = xy(1:nobsxtmp,:);
+        y = xy(nobsxtmp+1:end,:);
+    otherwise
+        error('The TYPE parameter value must be TTEST2, or RANKSUM.')
 end
 
 % Compute sample variance using fast algo
@@ -182,7 +202,7 @@ x = [x;y];
 nobs = sum(~isnan(x));
 sqrtn = sqrt(nobs./(nobsx.*nobsy));
 
-% Compute standard error
+% Compute standard error based on variance equivalence
 switch arg.vartype
     case 'equal'
         df = nobs-2;
@@ -196,16 +216,15 @@ switch arg.vartype
         se = sqrt(se2x+se2y);
 end
 
-% Compute mean difference
+% Compute observed statistics
 mu = sumx./nobsx-sumy./nobsy;
-
-% Compute test statistic
-t = mu./se;
+stat = mu./se;
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
+
+    % Generate random permutations
     maxnobs = size(x,1);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
     i1 = idx(1:maxnobsx,:);
@@ -260,7 +279,7 @@ if nargout > 1
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
-            case {'both','two'}
+            case 'both'
                 dist = max(abs(dist),[],2);
             case 'right'
                 dist = max(dist,[],2);
@@ -269,49 +288,62 @@ if nargout > 1
         end
     else
         switch arg.tail
-            case {'both','two'}
+            case 'both'
                 dist = abs(dist);
         end
     end
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = (sum(abs(t)<=dist)+1)/(arg.nperm+1);
+        case 'both'
+            p = (sum(abs(stat)<=dist)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(t<=dist)+1)/(arg.nperm+1);
+            p = (sum(stat<=dist)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(t>=dist)+1)/(arg.nperm+1);
+            p = (sum(stat>=dist)+1)/(arg.nperm+1);
     end
 
 end
 
 % Compute confidence interval
 if nargout > 2
-    switch arg.tail
-        case {'both','two'}
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
-            ci = [mu-crit;mu+crit];
-        case 'right'
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
-            ci = [mu-crit;Inf(1,nvar)];
-        case 'left'
-            crit = prctile(-dist,100*(1-arg.alpha)).*se;
-            ci = [-Inf(1,nvar);mu+crit];
+    switch arg.type
+        case 'ttest2'
+            switch arg.tail
+                case 'both'
+                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    ci = [mu-crit;mu+crit];
+                case 'right'
+                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    ci = [mu-crit;Inf(1,nvar)];
+                case 'left'
+                    crit = prctile(-dist,100*(1-arg.alpha)).*se;
+                    ci = [-Inf(1,nvar);mu+crit];
+            end
+        case 'ranksum'
+            ci = NaN(2,nvar);
     end
 end
 
 % Store statistics in a structure
 if nargout > 3
+    switch arg.type
+        case 'ttest2'
+            stats.tstat = stat;
+            stats.df = df;
+            stats.sd = sd;
+            stats.mean = mu;
+        case 'ranksum'
+            stats.zstat = stat;
+            stats.iqr = iqrx;
+            stats.median = medx;
+    end
     stats.method = arg.type;
-    stats.df = df;
-    stats.sd = sd;
-    stats.mu = mu;
 end
 
 % Arrange results in a matrix if specified
 if arg.matrix
-    t = ptvec2mat(t);
+    stat = ptvec2mat(stat);
     if nargout > 1
         p = ptvec2mat(p);
     end
@@ -322,8 +354,16 @@ if arg.matrix
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        stats.df = ptvec2mat(df);
-        stats.sd = ptvec2mat(sd);
-        stats.mu = ptvec2mat(mu);
+        switch arg.type
+            case 'ttest2'
+                stats.tstat = stat;
+                stats.df = ptvec2mat(df);
+                stats.sd = ptvec2mat(sd);
+                stats.mean = ptvec2mat(mu);
+            case 'ranksum'
+                stats.zstat = stat;
+                stats.iqr = ptvec2mat(iqrx);
+                stats.median = ptvec2mat(medx);
+        end
     end
 end

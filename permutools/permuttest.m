@@ -1,7 +1,7 @@
-function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
+function [stat,p,ci,stats,dist] = permuttest(x,m,varargin)
 %PERMUTTEST  Permutation-based one/paired-sample t-test and Wilcoxon signed-rank test.
-%   T = PERMUTTEST(X) performs a one-sample permutation test based on the
-%   t-statistic of the hypothesis that the data in X come from a
+%   STAT = PERMUTTEST(X) performs a one-sample permutation test based on
+%   the t-statistic of the hypothesis that the data in X come from a
 %   distribution with mean zero, and returns the test statistic. If X is a
 %   matrix, separate permutation tests are performed along each column of
 %   X, and a vector of results is returned. If the 'compare' parameter is
@@ -14,38 +14,48 @@ function [t,p,ci,stats,dist] = permuttest(x,m,varargin)
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %
-%   T = PERMUTTEST(X,M) returns the results of a one-sample permutation
+%   STAT = PERMUTTEST(X,M) returns the results of a one-sample permutation
 %   test of the hypothesis that the data in X come from a distribution with
 %   mean M. M must be a scalar.
 %
-%   T = PERMUTTEST(X,Y) returns the results of a paired-sample permutation
-%   test between dependent samples X and Y of the hypothesis that the data
-%   in X and Y come from distributions with equal means. X and Y must have
-%   the same length. If X and Y are matrices, separate permutation tests
-%   are performed between each corresponding pair of columns in X and Y,
-%   and a vector of results is returned.
+%   STAT = PERMUTTEST(X,Y) returns the results of a paired-sample
+%   permutation test between dependent samples X and Y of the hypothesis
+%   that the data in X and Y come from distributions with equal means. X
+%   and Y must have the same length. If X and Y are matrices, separate
+%   permutation tests are performed between each corresponding pair of
+%   columns in X and Y, and a vector of results is returned.
 %
-%   [T,P] = PERMUTTEST(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUTTEST(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true. As
 %   the null distribution is generated empirically by permuting the data,
 %   no assumption is made about the shape of the distribution that the data
 %   come from. P-values are automatically adjusted for multiple comparisons
 %   using the max correction method.
 %
-%   [T,P,CI] = PERMUTTEST(...) returns a 100*(1-ALPHA)% confidence interval
-%   (CI) for the true mean of X, or of X-Y for a paired test. CIs are also
+%   [STAT,P,CI] = PERMUTTEST(...) returns a 100*(1-ALPHA)% confidence
+%   interval (CI) for the true mean of X, or of X-Y for a paired test.
+%   For rank-based tests ('type','signrank'), CI returns NaNs. CIs are also
 %   adjusted for multiple comparisons using the max correction method.
 %
-%   [T,P,CI,STATS] = PERMUTTEST(...) returns a structure with the following
-%   fields:
-%       'method'    -- the statistical method used
+%   [STAT,P,CI,STATS] = PERMUTTEST(...) returns a structure with the
+%   following fields for standard tests ('type','ttest'):
+%       'tstat'     -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
-%       'sd'        -- the estimated population standard deviation of X, or
-%                      of X-Y for a paired test
-%       'mu'        -- the estimated population mean of X, or of X-Y for a
-%                      paired test
+%       'sd'        -- the estimated population standard deviation based on
+%                      X, or on X-Y for a paired test
+%       'mean'      -- the estimated population mean based on X, or on X-Y
+%                      for a paired test
+%       'method'    -- the statistical method used
 %
-%   [T,P,CI,STATS,DIST] = PERMUTTEST(...) returns the permuted sampling
+%   For rank-based tests ('type','signrank'), STATS contains:
+%       'zstat'     -- the value of the test statistic
+%       'iqr'       -- the estimated population interquartile range based
+%                      on X, or on X-Y for a paired test
+%       'median'    -- the estimated population median based on X, or on
+%                      X-Y for a paired test
+%       'method'    -- the statistical method used
+%
+%   [STAT,P,CI,STATS,DIST] = PERMUTTEST(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUTTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -121,6 +131,11 @@ end
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
     arg.type = 'ttest';
+elseif strcmpi(arg.type,'rank')
+    arg.type = 'signrank';
+end
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
 end
 
 % Validate input parameters
@@ -158,15 +173,6 @@ end
 % Compute difference between samples
 x = x-y;
 
-% Transform raw data to signed ranks if specified
-switch arg.type
-    case 'ttest'
-    case {'signrank','rank'}
-        x = sign(x).*tiedrank(abs(x));
-    otherwise
-        error('The TYPE parameter value must be TTEST, or SIGNRANK.')
-end
-
 % Use only rows with no NaN values if specified
 switch arg.rows
     case 'complete'
@@ -177,9 +183,6 @@ end
 [maxnobs,nvar] = size(x);
 nobs = sum(~isnan(x));
 
-% Compute degrees of freedom
-df = nobs-1;
-
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
     nanflag = 'omitnan';
@@ -187,42 +190,59 @@ else
     nanflag = 'includenan';
 end
 
-% Compute standard deviation
-sd = std(x,nanflag);
-
-% Compute mean difference
-mu = sum(x,nanflag)./nobs;
-
-% Compute test statistic
-se = sd./sqrt(nobs);
-t = mu./se;
+% Compute observed statistics
+switch arg.type
+    case 'ttest'
+        df = nobs-1;
+        sd = std(x,nanflag);
+        mu = sum(x,nanflag)./nobs;
+        se = sd./sqrt(nobs);
+        stat = mu./se;
+    case 'signrank'
+        if nargout > 3
+            iqrx = iqr(x);
+            medx = median(x,nanflag);
+        end
+        [r,tieadj] = tiedrank(abs(x));
+        x = sign(x).*r;
+        w = sum(x,1,nanflag);
+        varw = (nobs.*(nobs+1).*(2.*nobs+1))/6-(tieadj/6);
+        stat = w./sqrt(varw);
+    otherwise
+        error('The TYPE parameter value must be TTEST, or SIGNRANK.')
+end
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
+
+    % Generate random permutations
     signx = randi([0,1],maxnobs,arg.nperm,'int8')*2-1;
 
     % Estimate sampling distribution
-    sumsq = sum(x.^2,nanflag);
-    switch nanflag
-        case 'omitnan'
-            % Dynamic N-tracking for missing data
-            dist = zeros(arg.nperm,nvar);
-            for i = 1:arg.nperm
-                xp = x.*repmat(signx(:,i),1,nvar);
-                np = sum(~isnan(xp));
-                sump = sum(xp,nanflag);
-                varp = (sumsq-(sump.^2)./np)./(np-1);
-                sep = sqrt(varp./np);
-                dist(i,:) = (sump./np)./sep;
+    xz = x; xz(isnan(x)) = 0;
+    switch arg.type
+        case 'ttest'
+            sumsq = sum(x.^2,nanflag);
+            switch nanflag
+                case 'omitnan'
+                    sump = double(signx)'*xz;
+                    varp = (sumsq-(sump.^2)./nobs)./df;
+                    dist = (sump./nobs)./sqrt(varp./nobs);
+                case 'includenan'
+                    xp = double(signx)'*x;
+                    varp = (sumsq-(xp.^2)./nobs)./df;
+                    sep = sqrt(varp./nobs);
+                    dist = (xp./nobs)./sep;
             end
-        case 'includenan'
-            % Fast vectorized calculation for complete data
-            xp = double(signx)'*x;
-            varp = (sumsq-(xp.^2)./nobs)./df;
-            sep = sqrt(varp./nobs);
-            dist = (xp./nobs)./sep;
+        case 'signrank'
+            switch nanflag
+                case 'omitnan'
+                    dist = (double(signx)'*xz)./sqrt(varw);
+                case 'includenan'
+                    xp = double(signx)'*x;
+                    dist = xp./sqrt(varw);
+            end
     end
 
     % Add negative values
@@ -236,7 +256,7 @@ if nargout > 1
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
-            case {'both','two'}
+            case 'both'
                 dist = max(abs(dist),[],2);
             case 'right'
                 dist = max(dist,[],2);
@@ -245,49 +265,62 @@ if nargout > 1
         end
     else
         switch arg.tail
-            case {'both','two'}
+            case 'both'
                 dist = abs(dist);
         end
     end
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = (sum(abs(t)<=dist)+1)/(arg.nperm+1);
+        case 'both'
+            p = (sum(abs(stat)<=dist)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(t<=dist)+1)/(arg.nperm+1);
+            p = (sum(stat<=dist)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(t>=dist)+1)/(arg.nperm+1);
+            p = (sum(stat>=dist)+1)/(arg.nperm+1);
     end
 
 end
 
 % Compute confidence interval
 if nargout > 2
-    switch arg.tail
-        case {'both','two'}
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
-            ci = [mu-crit;mu+crit];
-        case 'right'
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
-            ci = [mu-crit;Inf(1,nvar)];
-        case 'left'
-            crit = prctile(-dist,100*(1-arg.alpha)).*se;
-            ci = [-Inf(1,nvar);mu+crit];
+    switch arg.type
+        case 'ttest'
+            switch arg.tail
+                case 'both'
+                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    ci = [mu-crit;mu+crit];
+                case 'right'
+                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    ci = [mu-crit;Inf(1,nvar)];
+                case 'left'
+                    crit = prctile(-dist,100*(1-arg.alpha)).*se;
+                    ci = [-Inf(1,nvar);mu+crit];
+            end
+        case 'signrank'
+            ci = NaN(2,nvar);
     end
 end
 
 % Store statistics in a structure
 if nargout > 3
+    switch arg.type
+        case 'ttest'
+            stats.tstat = stat;
+            stats.df = df;
+            stats.sd = sd;
+            stats.mean = mu;
+        case 'signrank'
+            stats.zstat = stat;
+            stats.iqr = iqrx;
+            stats.median = medx;
+    end
     stats.method = arg.type;
-    stats.df = df;
-    stats.sd = sd;
-    stats.mu = mu;
 end
 
 % Arrange results in a matrix if specified
 if arg.matrix
-    t = ptvec2mat(t);
+    stat = ptvec2mat(stat);
     if nargout > 1
         p = ptvec2mat(p);
     end
@@ -298,8 +331,16 @@ if arg.matrix
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        stats.df = ptvec2mat(df);
-        stats.sd = ptvec2mat(sd);
-        stats.mu = ptvec2mat(mu);
+        switch arg.type
+            case 'ttest'
+                stats.tstat = stat;
+                stats.df = ptvec2mat(df);
+                stats.sd = ptvec2mat(sd);
+                stats.mean = ptvec2mat(mu);
+            case 'signrank'
+                stats.zstat = stat;
+                stats.iqr = ptvec2mat(iqrx);
+                stats.median = ptvec2mat(medx);
+        end
     end
 end
