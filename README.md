@@ -58,6 +58,19 @@ For usage, please see the example code provided in the [Examples](#examples) sec
 
 PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 
+### Hypothesis Tests
+
+| Function | Standard Test | Rank Test |
+| --- | --- | --- |
+| [**permuttest()**](permutools/permuttest.m) | One/paired-sample *t*-test | Wilcoxon signed-rank test |
+| [**permuttest2()**](permutools/permuttest2.m) | Two-sample *t*-test | Wilcoxon rank-sum / Mann-Whitney U test |
+| [**permuvartest()**](permutools/permuvartest.m) | One-sample test of variance | N/A |
+| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample test of variance | Conover squared ranks test |
+| [**permuztest()**](permutools/permuztest.m) | One-sample *Z*-test | N/A |
+| [**permuchi2()**](permutools/permuchi2.m) | Chi-square test of independence | N/A |
+
+### Analysis of Variance (ANOVA)
+
 | Function | Standard Test | Rank Test |
 | --- | --- | --- |
 | [**permuanova1()**](permutools/permuanova1.m) | One-way analysis of variance (ANOVA) | Kruskal-Wallis test |
@@ -67,12 +80,11 @@ PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 | [**permuranova2()**](permutools/permuranova2.m) | Two-way repeated-measures ANOVA | Two-way Friedman test |
 | [**permumanova1()**](permutools/permumanova1.m) | One-way multivariate ANOVA | One-way rank-transformed MANOVA |
 | [**permumanova2()**](permutools/permumanova2.m) | Two-way multivariate ANOVA | Two-way rank-transformed MANOVA |
-| [**permuttest()**](permutools/permuttest.m) | One/paired-sample *t*-test | Wilcoxon signed-rank test |
-| [**permuttest2()**](permutools/permuttest2.m) | Two-sample *t*-test | Wilcoxon rank-sum / Mann-Whitney U test |
-| [**permuvartest()**](permutools/permuvartest.m) | One-sample test of variance | N/A |
-| [**permuvartest2()**](permutools/permuvartest2.m) | Two-sample test of variance | Conover squared ranks test |
-| [**permuztest()**](permutools/permuztest.m) | One-sample *Z*-test | N/A |
-| [**permuchi2()**](permutools/permuchi2.m) | Chi-square test of independence | N/A |
+
+### Association and Effect Size Measures
+
+| Function | Standard Test | Rank Test |
+| --- | --- | --- |
 | [**permucorr()**](permutools/permucorr.m) | Pearson correlation coefficient | Spearman's rank correlation coefficient |
 | [**permuregress()**](permutools/permuregress.m) | Multiple linear regression | N/A |
 | [**booteffectsize()**](permutools/booteffectsize.m) | Cohen's *d*, Hedges' *g* and Glass' ∆ | Cliff's δ |
