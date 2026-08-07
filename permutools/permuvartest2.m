@@ -28,9 +28,10 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %
 %   [F,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
 %   following fields:
-%       'method'    -- the statistical method used
+%       'fstat'     -- the value of the test statistic
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'       -- the denominator degrees of freedom of each test
+%       'method'    -- the statistical method used
 %
 %   [F,P,CI,STATS,DIST] = PERMUVARTEST2(...) returns the permuted sampling
 %   distribution of the test statistic.
@@ -61,7 +62,7 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
-%       'matrix'    A numeric scalar (0,1) or logical indicating whether to 
+%       'matrix'    A numeric scalar (0,1) or logical indicating whether to
 %                   return results as a matrix (default=0).
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the permutation generator (default=shuffle).
@@ -153,24 +154,21 @@ switch arg.type
         error('The TYPE parameter value must be FTEST, or SQUARERANK.')
 end
 
-% Compute sample variance using fast algo
+% Compute observed statistics
 varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
 vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
-
-% Compute test statistic
 f = varx./vary;
 
 if nargout > 1
 
-    % Demean samples
+    rng(arg.seed);
+
+    % Demean and concatenate samples
     x = x-sum(x,nanflag)./nobsx;
     y = y-sum(y,nanflag)./nobsy;
-
-    % Concatenate centered samples
     x = [x;y];
 
     % Generate random permutations
-    rng(arg.seed);
     maxnobs = size(x,1);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
     idx1 = idx(1:maxnobsx,:);
@@ -247,9 +245,10 @@ end
 
 % Store statistics in a structure
 if nargout > 3
-    stats.method = arg.type;
+    stats.fstat = f;
     stats.df1 = df1;
     stats.df2 = df2;
+    stats.method = arg.type;
 end
 
 % Arrange results in a matrix if specified
@@ -265,6 +264,7 @@ if arg.matrix
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
+        stats.fstat = ptvec2mat(f);
         stats.df1 = ptvec2mat(df1);
         stats.df2 = ptvec2mat(df2);
     end
