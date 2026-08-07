@@ -17,9 +17,9 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   interaction effect, REPS must be greater than 1. REPS must be a scalar.
 %
 %   [F,P] = PERMUANOVA2(...) returns the probabilities (i.e. p-values) of
-%   observing the given results by chance if the null hypothesis is true. 
-%   As the null distribution is generated empirically by permuting the 
-%   data, no assumption is made about the shape of the distributions that 
+%   observing the given results by chance if the null hypothesis is true.
+%   As the null distribution is generated empirically by permuting the
+%   data, no assumption is made about the shape of the distributions that
 %   the data come from, except that they have equal variances.
 %
 %   [F,P,CI] = PERMUANOVA2(...) returns a 100*(1-ALPHA)% confidence
@@ -28,7 +28,6 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %   [F,P,CI,STATS] = PERMUANOVA2(...) returns a structure with the
 %   following fields:
 %       'source'    -- the function used to compute the ANOVA
-%       'method'    -- the statistical method used
 %       'sigmasq'   -- the error mean square
 %       'colmeans'  -- the column means
 %       'coln'      -- the column sample sizes
@@ -37,6 +36,7 @@ function [f,p,ci,stats,tbl,dist] = permuanova2(x,reps,varargin)
 %       'inter'     -- the inclusion of an interaction term
 %       'pval'      -- the interaction p-value
 %       'df'        -- the error degrees of freedom
+%       'method'    -- the statistical method used
 %
 %   [F,P,CI,STATS,TBL] = PERMUANOVA2(...) returns the ANOVA table contents
 %   as a cell array.
@@ -101,74 +101,74 @@ end
 % Get data dimensions
 shapex = size(x);
 nobs = numel(x);
-[rows,cols] = size(x);
+[nrow,ncol] = size(x);
 if reps > 1
-    grows = rows/reps;
+    grows = nrow/reps;
 else
-    grows = rows;
+    grows = nrow;
 end
 
-% Aligned rank transform (ART) data prep
+% Transform raw data to rank orders if specified
 switch arg.type
     case 'anova2'
         % Use same raw data for all three effects
         xc = x; xr = x; xi = x;
-    case {'alignrank', 'rank'}
+    case {'alignrank','rank'}
         % Calculate cell, column, and row means
         gm = mean(x,'all');
-        MC = repmat(mean(x,1),rows,1);
+        mc = repmat(mean(x,1),nrow,1);
         if reps > 1
-            MR = zeros(rows,cols);
-            MCR = zeros(rows,cols);
+            mr = zeros(nrow,ncol);
+            mcr = zeros(nrow,ncol);
             for i = 1:grows
                 idx = reps*(i-1)+(1:reps);
-                MR(idx,:) = mean(x(idx,:),'all');
-                MCR(idx,:) = repmat(mean(x(idx,:),1),reps,1);
+                mr(idx,:) = mean(x(idx,:),'all');
+                mcr(idx,:) = repmat(mean(x(idx,:),1),reps,1);
             end
         else
-            MR = repmat(mean(x,2),1,cols);
-            MCR = x;
+            mr = repmat(mean(x,2),1,ncol);
+            mcr = x;
         end
         % Align and rank data
-        YC = x-MCR+MC;
-        YR = x-MCR+MR;
-        YCR = x-MC-MR+2*gm;
-        xc = reshape(tiedrank(YC(:)),rows,cols);
-        xr = reshape(tiedrank(YR(:)),rows,cols);
-        xi = reshape(tiedrank(YCR(:)),rows,cols);
+        yc = x-mcr+mc;
+        yr = x-mcr+mr;
+        ycr = x-mc-mr+2*gm;
+        xc = reshape(tiedrank(yc(:)),nrow,ncol);
+        xr = reshape(tiedrank(yr(:)),nrow,ncol);
+        xi = reshape(tiedrank(ycr(:)),nrow,ncol);
     otherwise
         error('The TYPE parameter value must be ANOVA2, or ALIGNRANK.')
 end
 
 % Stack datasets into 3D array
-X3 = cat(3,xc,xr,xi);
+x3 = cat(3,xc,xr,xi);
 
 % Compute block means for 3D array if reps > 1
 if reps > 1
-    X3m = zeros(grows,cols,3);
+    x3m = zeros(grows,ncol,3);
     for i = 1:grows
         idx = reps*(i-1)+(1:reps);
-        X3m(i,:,:) = mean(X3(idx,:,:),1);
+        x3m(i,:,:) = mean(x3(idx,:,:),1);
     end
 else
-    X3m = X3;
+    x3m = x3;
 end
 
 % Compute group sample sizes
 coln = reps*grows;
-rown = reps*cols;
+rown = reps*ncol;
 
 % Compute global 3D means and factors
-gm3 = sum(X3m,[1,2])/nobs;
+gm3 = sum(x3m,[1,2])/nobs;
 factor3 = nobs*gm3.^2;
 
 % Compute sum of squares across 3rd dimension
-colmeans3 = mean(X3m,1);
+colmeans3 = mean(x3m,1);
 css3 = coln*sum((colmeans3-gm3).^2,[1,2]);
-rowmeans3 = mean(X3m,2);
+rowmeans3 = mean(x3m,2);
 rss3 = rown*sum((rowmeans3-gm3).^2,[1,2]);
-iss3 = reps*sum(X3m.^2,[1,2])-css3-rss3-factor3;
-tss3 = sum(X3.^2,[1,2])-factor3;
+iss3 = reps*sum(x3m.^2,[1,2])-css3-rss3-factor3;
+tss3 = sum(x3.^2,[1,2])-factor3;
 
 % Compute error SS
 if reps > 1
@@ -185,24 +185,22 @@ ess = ess3(3);
 
 % Compute degrees of freedom
 dft = nobs-1;
-dfc = cols-1;
+dfc = ncol-1;
 dfr = grows-1;
 if reps > 1
-    dfe = (reps-1)*cols*grows;
+    dfe = (reps-1)*ncol*grows;
 else
-    dfe = dfc*(rows-1);
+    dfe = dfc*(nrow-1);
 end
 dfi = dfc*dfr;
 
-% Compute mean squares using effect-specific error SS
+% Compute observed statistics
 msc = css/dfc;
 msr = rss/dfr;
 msi = iss/dfi;
 msec = ess3(1)/dfe;
 mser = ess3(2)/dfe;
 msei = ess3(3)/dfe;
-
-% Compute F-statistics
 fc = msc/msec;
 fr = msr/mser;
 fi = msi/msei;
@@ -214,13 +212,14 @@ end
 
 if nargout > 1
 
+    rng(arg.seed);
+
     % Concatenate groups
     xc = xc(:);
     xr = xr(:);
     xi = xi(:);
 
     % Generate random permutations
-    rng(arg.seed);
     [~,idx] = sort(rand(nobs,arg.nperm));
 
     % Estimate sampling distributions
@@ -243,7 +242,7 @@ if nargout > 1
 
         % Compute block means for 3D array
         if reps > 1
-            X3mp = zeros(grows,cols,3);
+            X3mp = zeros(grows,ncol,3);
             for j = 1:grows
                 idxp = reps*(j-1)+(1:reps);
                 X3mp(j,:,:) = mean(X3p(idxp,:,:),1);
@@ -277,8 +276,8 @@ if nargout > 1
         distc(i) = (css3p(1)/dfc)/msecp;
         distr(i) = (rss3p(2)/dfr)/mserp;
         if reps > 1
-            mse_ip = ess3p(3)/dfe;
-            disti(i) = (iss3p(3)/dfi)/mse_ip;
+            mseip = ess3p(3)/dfe;
+            disti(i) = (iss3p(3)/dfi)/mseip;
         end
 
     end
@@ -313,7 +312,6 @@ end
 % Store statistics in a structure
 if nargout > 3
     stats.source = 'permuanova2';
-    stats.method = arg.type;
     stats.sigmasq = mse;
     stats.colmeans = colmeans;
     stats.coln = coln;
@@ -322,6 +320,7 @@ if nargout > 3
     stats.inter = reps>1;
     stats.pval = pint;
     stats.df = dfe;
+    stats.method = arg.type;
 end
 
 % Create ANOVA table
