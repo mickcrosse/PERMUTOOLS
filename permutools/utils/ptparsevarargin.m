@@ -37,6 +37,11 @@ typeOptions = {'','rank','anova1','kruskalwallis','anova2','alignrank',...
 validFcn = @(x) any(validatestring(x,typeOptions));
 addParameter(p,'type','',validFcn);
 
+% Distribution type
+distributionOptions = {'normal','binomial','poisson'};
+validFcn = @(x) any(validatestring(x,distributionOptions));
+addParameter(p,'distribution','normal',validFcn);
+
 % Number of permutations
 errorMsg = 'It must be a positive integer scalar.';
 validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
