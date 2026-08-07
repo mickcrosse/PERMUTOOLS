@@ -31,8 +31,8 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %
 %   [R,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
 %   fields:
-%       'method'    -- the correlation method used
 %       'df'        -- the degrees of freedom of each measure
+%       'method'    -- the correlation method used
 %
 %   [R,P,CI,STATS,DIST] = PERMUCORR(...) returns the permuted sampling
 %   distribution of the test statistic.
@@ -66,11 +66,11 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                   missing values (NaNs):
 %                       'all'       use all rows, even with NaNs (default)
 %                       'complete'  use only rows with no NaNs
-%       'matrix'    A numeric scalar (0,1) or logical indicating whether to 
+%       'matrix'    A numeric scalar (0,1) or logical indicating whether to
 %                   return results as a matrix (default=0).
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the permutation generator (default=shuffle).
-%       'verbose'   A numeric scalar (0,1) or logical indicating whether to 
+%       'verbose'   A numeric scalar (0,1) or logical indicating whether to
 %                   run in verbose mode (default=1).
 %
 %   See also CORR CORRCOEF PARTIALCORR TIEDRANK.
@@ -173,7 +173,7 @@ switch arg.type
         error('The TYPE parameter value must be PEARSON, SPEARMAN, or RANKIT.')
 end
 
-% Compute test statistic
+% Compute observed statistics
 sdxy = sqrt((sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)...
     .*(sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobs));
 mu = sum(x,nanflag).*sum(y,nanflag)./nobs;
@@ -181,8 +181,9 @@ r = (sum(x.*y,nanflag)-mu)./sdxy;
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
+
+    % Generate random permutations
     if maxnobs < 8
         arg.nperm = factorial(maxnobs);
         idx = perms(1:maxnobs)';
@@ -268,8 +269,8 @@ end
 
 % Store statistics in a structure
 if nargout > 3
-    stats.method = arg.type;
     stats.df = df;
+    stats.method = arg.type;
 end
 
 % Arrange results in a matrix if specified
