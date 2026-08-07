@@ -20,9 +20,15 @@ function [chi2,p,stats,tbl,dist] = permuchi2(x,varargin)
 %
 %   [CHI2,P,STATS] = PERMUCHI2(...) returns a structure with the following
 %   fields:
-%       'method'    -- the statistical method used
-%       'df'        -- the degrees of freedom
-%       'expfreq'   -- the expected frequencies matrix
+%       'chi2stat'              -- the value of the test statistic
+%       'df'                    -- the degrees of freedom
+%       'O'                     -- the observed count in each cell
+%       'E'                     -- the expected count in each cell
+%       'cramersv'              -- Cramer's V effect size (strength of association)
+%       'oddsratio'             -- the odds ratio (for 2x2 tables only)
+%       'oddsratioci'           -- the asymptotic confidence interval for
+%                                  the odds ratio (for 2x2 tables only)
+%       'method'                -- the statistical method used
 %
 %   [CHI2,P,STATS,TBL] = PERMUCHI2(...) returns the table contents as a
 %   cell array.
@@ -69,19 +75,17 @@ end
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
 
-% Handle explicit NaNs
+% Replace NaNs with zeros
 if any(isnan(x(:)))
     x(isnan(x)) = 0;
-    nanflag = 'omitnan';
-else
-    nanflag = 'includenan';
+    warning('Replacing NaN values with 0 assuming they represent empty categories.');
 end
 
 % Get data dimensions
-[r,c,v] = size(x);
+[nrow,ncol,nvar] = size(x);
 
 % Compute degrees of freedom
-df = (r-1)*(c-1);
+df = (nrow-1)*(ncol-1);
 
 % Validate sample sizes
 nobsall = squeeze(sum(x,[1,2]));
@@ -90,43 +94,39 @@ if any(nobsall ~= nobsall(1))
 end
 nobs = nobsall(1);
 
-% Compute marginal sums
+% Compute observed statistics
 rowsums = sum(x,2);
 colsums = sum(x,1);
-
-% Compute expected frequencies
-expfreq = (rowsums.*colsums)./nobs;
-
-% Compute test statistic
-chi2 = sum((x-expfreq).^2./expfreq,[1,2],nanflag);
+E = (rowsums.*colsums)./nobs;
+chi2 = sum((x-E).^2./E,[1,2]);
 chi2 = chi2(:)';
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
 
     % Vectorized reconstruction of raw categorical vectors
-    vara = zeros(nobs,v);
-    varb = zeros(nobs,v);
-    [I,J] = ndgrid(1:r,1:c);
-    for k = 1:v
+    vara = zeros(nobs,nvar);
+    varb = zeros(nobs,nvar);
+    [I,J] = ndgrid(1:nrow,1:ncol);
+    for k = 1:nvar
         xk = x(:,:,k);
         vara(:,k) = repelem(I(:),xk(:));
         varb(:,k) = repelem(J(:),xk(:));
     end
 
     % Precompute subscript arrays for 3D accumarray
-    varK = repmat(1:v,nobs,1);
-    subs13 = [vara(:),varK(:)];
+    vark = repmat(1:nvar,nobs,1);
+    subs13 = [vara(:),vark(:)];
 
     % Estimate sampling distribution
-    dist = zeros(arg.nperm,v);
+    dist = zeros(arg.nperm,nvar);
     for i = 1:arg.nperm
         randidx = randperm(nobs);
         varbperm = varb(randidx,:);
-        xperm = accumarray([subs13(:,1),varbperm(:),subs13(:,2)],1,[r,c,v]);
-        chi2perm = sum((xperm-expfreq).^2./expfreq,[1,2],nanflag);
+        xperm = accumarray([subs13(:,1),varbperm(:),subs13(:,2)],1,...
+            [nrow,ncol,nvar]);
+        chi2perm = sum((xperm-E).^2./E,[1,2],nanflag);
         dist(i,:) = chi2perm(:)';
     end
 
@@ -154,21 +154,41 @@ end
 
 % Store statistics in a structure
 if nargout > 2
-    stats.method = arg.type;
+    stats.chi2stat = chi2;
     stats.df = df;
-    stats.expfreq = expfreq;
+    stats.O = x;
+    stats.E = E;
+    stats.cramersv = sqrt(chi2./(nobs*(min(nrow,ncol)-1)));
+    stats.oddsratio = NaN(1,nvar);
+    stats.oddsratioci = NaN(2,nvar);
+    stats.method = 'chi2test';
+    if nrow == 2 && ncol == 2
+        stats.oddsratio = squeeze((x(1,1,:).*x(2,2,:))./(x(1,2,:).*...
+            x(2,1,:)))';
+        z = norminv(1-arg.alpha/2);
+        for k = 1:nvar
+            if any(x(:,:,k) == 0, 'all')
+                stats.oddsratioci(:, k) = [-Inf;Inf];
+            else
+                selogor = sqrt(sum(1./x(:,:,k),'all'));
+                logor = log(stats.oddsratio(k));
+                stats.oddsratioci(1,k) = exp(logor-z*selogor);
+                stats.oddsratioci(2,k) = exp(logor+z*selogor);
+            end
+        end
+    end
 end
 
 % Create Chi-square table
 if nargout > 3
-    if v == 1
+    if nvar == 1
         tbl = {
             'Statistic','df','Value','Prob>Chi2';
             'Pearson Chi2',df,chi2(1),p(1)};
     else
-        tbl = cell(v+1,4);
+        tbl = cell(nvar+1,4);
         tbl(1,:) = {'Statistic','df','Value','Prob>Chi2'};
-        for k = 1:v
+        for k = 1:nvar
             tbl(k+1,:) = {['Variable ',num2str(k)],df,chi2(k),p(k)};
         end
     end
