@@ -27,9 +27,9 @@ function [f,p,ci,stats,tbl,dist] = permuanovan(x,group,varargin)
 %   [F,P,CI,STATS] = PERMUANOVAN(...) returns a structure with the
 %   following fields:
 %       'source'    -- the function used to compute the ANOVA
-%       'method'    -- the statistical method used
 %       'gnames'    -- the group names for all factors
 %       'df'        -- the degrees of freedom [Factors 1 to G, Error]
+%       'method'    -- the statistical method used
 %
 %   [F,P,CI,STATS,TBL] = PERMUANOVAN(...) returns the ANOVA table
 %   contents as a cell array.
@@ -163,7 +163,7 @@ f = zeros(nfactors,v);
 R = cell(1,nfactors);
 SSfactors = zeros(nfactors,v);
 
-% Compute true F-statistics and isolate residuals
+% Compute observed statistics
 SSE = sum((MF*x).^2,1);
 MSE = SSE/dfE;
 for i = 1:nfactors
@@ -176,7 +176,6 @@ end
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
 
     % Estimate sampling distribution
@@ -192,7 +191,7 @@ if nargout > 1
         end
     end
 
-    % Apply max-correction if specified
+    % Apply max correction if specified
     if arg.correct
         distmax = max(dist,[],3);
     else
@@ -226,9 +225,9 @@ end
 % Store statistics in a structure
 if nargout > 3
     stats.source = 'permuanovan';
-    stats.method = arg.type;
     stats.gnames = gnames;
     stats.df = [dfF,dfE];
+    stats.method = arg.type;
 end
 
 % Create ANOVA table
