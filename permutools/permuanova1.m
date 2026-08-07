@@ -30,12 +30,12 @@ function [f,p,ci,stats,tbl,dist] = permuanova1(x,group,varargin)
 %   [F,P,CI,STATS] = PERMUANOVA1(...) returns a structure with the
 %   following fields:
 %       'source'    -- the function used to compute the ANOVA
-%       'method'    -- the statistical method used
 %       'gnames'    -- the group names
 %       'n'         -- the group sample sizes
 %       'means'     -- the group means
 %       'df'        -- the error degrees of freedom
 %       's'         -- the root mean square
+%       'method'    -- the statistical method used
 %
 %   [F,P,CI,STATS,TBL] = PERMUANOVA1(...) returns the ANOVA table contents
 %   as a cell array.
@@ -108,16 +108,22 @@ nobs = sum(~isnan(x),'all');
 switch arg.type
     case 'anova1'
     case {'kruskalwallis','rank'}
-        x = reshape(tiedrank(x(:)),shapex);
+        [x,tieadj] = tiedrank(x(:));
+        x = reshape(tiedrank(x),shapex);
     otherwise
         error('The TYPE parameter value must be ANOVA1, or KRUSKALWALLIS.')
 end
+
+% Compute degrees of freedom
+groups = unique(group)';
+dft = nobs-1;
+dfr = numel(groups)-1;
+dfe = dft-dfr;
 
 % Compute grand mean
 gm = sum(x,'all',nanflag)/nobs;
 
 % Compute within and between-group sum of squares
-groups = unique(group)';
 n = zeros(1,numel(groups));
 means = zeros(1,numel(groups));
 ess = 0; rss = 0;
@@ -129,28 +135,20 @@ for i = groups
     rss = rss + n(i)*sum((means(i)-gm).^2,'all',nanflag);
 end
 
-% Compute total sum of squares
+% Compute observed statistics
 tss = ess+rss;
-
-% Compute degrees of freedom
-dft = nobs-1;
-dfr = numel(groups)-1;
-dfe = dft-dfr;
-
-% Compute mean squares
 msr = rss/dfr;
 mse = ess/dfe;
-
-% Compute F-statistic
 f = msr/mse;
 
 if nargout > 1
+
+    rng(arg.seed);
 
     % Concatenate groups
     x = x(:);
 
     % Generate random permutations
-    rng(arg.seed);
     maxnobs = numel(x);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
 
@@ -184,12 +182,18 @@ end
 % Store statistics in a structure
 if nargout > 3
     stats.source = 'permuanova1';
-    stats.method = arg.type;
     stats.gnames = gnames;
     stats.n = n;
-    stats.means = means;
-    stats.df = dfe;
-    stats.s = sqrt(mse);
+    switch arg.type
+        case 'anova1'
+            stats.means = means;
+            stats.df = dfe;
+            stats.s = sqrt(mse);
+        case 'kruskalwallis'
+            stats.meanranks = means;
+            stats.sumt = 2*tieadj;
+    end
+    stats.method = arg.type;
 end
 
 % Create ANOVA table
