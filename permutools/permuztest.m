@@ -22,8 +22,10 @@ function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %
 %   [Z,P,CI,STATS] = PERMUZTEST(...) returns a structure with the following
 %   fields:
-%       'sd'        -- the estimated population standard deviation of X
-%       'mu'        -- the estimated population mean of X
+%       'zstat'     -- the value of the test statistic
+%       'sd'        -- the estimated population standard deviation
+%       'mu'        -- the estimated population mean
+%       'method'    -- the statistical method used
 %
 %   [Z,P,CI,STATS,DIST] = PERMUZTEST(...) returns the permuted sampling
 %   distribution of the test statistic.
@@ -52,7 +54,7 @@ function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %                       'complete'  use only rows with no NaNs
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the permutation generator (default=shuffle).
-%       'verbose'   A numeric scalar (0,1) or logical indicating whether to 
+%       'verbose'   A numeric scalar (0,1) or logical indicating whether to
 %                   run in verbose mode (default=1).
 %
 %   See also ZTEST PERMUTTEST BOOTEFFECTSIZE.
@@ -104,17 +106,16 @@ else
     nanflag = 'includenan';
 end
 
-% Compute mean value
+% Compute observed statistics
 mu = sum(x,nanflag)./nobs;
-
-% Compute test statistic
 se = sigma./sqrt(nobs);
 z = (mu-m)./se;
 
 if nargout > 1
 
-    % Generate random permutations
     rng(arg.seed);
+
+    % Generate random permutations
     signx = sign(rand(maxnobs,arg.nperm)-0.5);
 
     % Estimate sampling distribution
@@ -189,6 +190,8 @@ end
 
 % Store statistics in a structure
 if nargout > 3
+    stats.zstat = z;
     stats.sd = std(x,nanflag);
     stats.mu = mu;
+    stats.method = 'ztest';
 end
