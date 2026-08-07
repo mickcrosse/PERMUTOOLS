@@ -87,7 +87,7 @@ for t = 1:numel(type)
             case 'ttest'
                 ct = stats2.mean;
             case 'signrank'
-                ct = stats2.zstat;
+                ct = stats2.median;
         end
         subplot(3,2,i+i-1), hold on
         plot(xaxis,ct,'LineWidth',3)
@@ -102,8 +102,14 @@ for t = 1:numel(type)
         end
         ylabel([label{i},'-tailed'])
         if i == 1
-            legend(text{t},'95% CI (param.)','','95% CI (perm.)',...
-                'Location','best')
+            switch type{t}
+                case 'ttest'
+                    legend(text{t},'95% CI (param.)','','95% CI (perm.)',...
+                        'Location','best')
+                case 'signrank'
+                    legend(text{t},'Location','best')
+            end
+            
         end
         subplot(3,2,i+i), hold on
         plot(xaxis,ct,'LineWidth',3)
