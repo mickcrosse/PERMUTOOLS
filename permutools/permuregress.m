@@ -19,7 +19,7 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %
 %   [B,P,CI] = PERMUREGRESS(...) returns the 100*(1-ALPHA)% confidence
 %   intervals (CI) for the regression coefficients. CI is a 2-by-V-by-P
-%   array. CIs are adjusted for multiple comparisons using max-correction.
+%   array. CIs are adjusted for multiple comparisons using max correction.
 %
 %   [B,P,CI,STATS] = PERMUREGRESS(...) returns a structure with the
 %   following fields:
@@ -41,6 +41,7 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %       'type'      A string specifying the type of permutation to use:
 %                       'freedmanlane'  permutes reduced residuals (default)
 %                       'manly'         permutes raw data unrestricted
+%                       'rank'          rank-transformed Freedman-Lane
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'tail'      A string specifying the alternative hypothesis:
@@ -60,17 +61,35 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
+%   References:
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2024) PERMUTOOLS: A MATLAB
+%           Package for Multivariate Permutation Testing. arXiv 2401.09401.
+
+%   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
+%   CNL, Albert Einstein College of Medicine, NY.
+%   TCBE, Trinity College Dublin, Ireland.
+
 % Parse input arguments
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
     arg.type = 'freedmanlane';
 end
 
-% Handle missing values (Listwise deletion)
+% Handle missing values
 nanidx = any(isnan(x),2) | any(isnan(y),2);
 if any(nanidx(:))
     x(nanidx,:) = [];
     y(nanidx,:) = [];
+end
+
+% Transform raw data to rank orders if specified
+switch arg.type
+    case {'freedmanlane','manly'}
+        % use raw data
+    case 'rank'
+        y = tiedrank(y);
+    otherwise
+        error('The TYPE parameter value must be FREEDMANLANE, MANLY, or RANK.')
 end
 
 % Append intercept if requested and missing
@@ -79,9 +98,9 @@ if arg.intercept && ~any(all(x==1,1))
 end
 
 % Get data dimensions
-[nobs,pnum] = size(x);
-v = size(y,2);
-df = nobs-pnum;
+[nobs,npred] = size(x);
+nvar = size(y,2);
+df = nobs-npred;
 
 % Compute projection matrices
 H = pinv(x'*x)*x';
@@ -101,23 +120,23 @@ if nargout > 1
     rng(arg.seed);
 
     % Preallocate output arrays
-    p = zeros(pnum,v);
+    p = zeros(npred,nvar);
     if nargout > 2
-        ci = zeros(2,v,pnum);
+        ci = zeros(2,nvar,npred);
     end
     if nargout > 4
-        dist = zeros(arg.nperm,v,pnum);
+        dist = zeros(arg.nperm,nvar,npred);
     end
 
     % Precompute full model identity projection
     IdH = eye(nobs)-x*H;
 
     % Iterate across predictors
-    for j = 1:pnum
-
+    for j = 1:npred
+        
         % Define permutation target
         switch arg.type
-            case 'freedmanlane'
+            case {'freedmanlane','rank'}
                 xred = x;
                 xred(:,j) = [];
                 if isempty(xred)
@@ -133,15 +152,15 @@ if nargout > 1
 
         % Estimate sampling distribution
         Hj = H(j,:);
-        distj = zeros(arg.nperm,v);
+        distj = zeros(arg.nperm,nvar);
         for i = 1:arg.nperm
             randidx = randperm(nobs);
             resperm = resred(randidx,:);
-            bstar_j = Hj*resperm;
+            bstarj = Hj*resperm;
             resstar = IdH*resperm;
             msestar = sum(resstar.^2,1)./df;
             sestar = sqrt(D(j).*msestar);
-            distj(i,:) = bstar_j./sestar;
+            distj(i,:) = bstarj./sestar;
         end
 
         % Apply max-correction if specified
@@ -179,10 +198,10 @@ if nargout > 1
                     ci(:,:,j) = [b(j,:)-crit.*se(j,:);b(j,:)+crit.*se(j,:)];
                 case 'right'
                     crit=prctile(distj,100*(1-arg.alpha),1);
-                    ci(:,:,j) = [b(j,:)-crit.*se(j,:);Inf(1,v)];
+                    ci(:,:,j) = [b(j,:)-crit.*se(j,:);Inf(1,nvar)];
                 case 'left'
                     crit=prctile(distj,100*arg.alpha,1);
-                    ci(:,:,j) = [-Inf(1,v);b(j,:)-crit.*se(j,:)];
+                    ci(:,:,j) = [-Inf(1,nvar);b(j,:)-crit.*se(j,:)];
             end
         end
 
@@ -200,7 +219,7 @@ if nargout > 3
     sst = sum((y-mean(y,1)).^2,1);
     sse = sum(res.^2,1);
     r2 = 1-(sse./sst);
-    fstat = (r2./(pnum-1))./((1-r2)./df);
+    fstat = (r2./(npred-1))./((1-r2)./df);
     stats.method = arg.type;
     stats.df = df;
     stats.se = se;
