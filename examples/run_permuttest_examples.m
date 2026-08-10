@@ -44,13 +44,18 @@ for t = 1:numel(type)
 
     disp(type{t})
 
-    toc1 = zeros(numel(tail)*2,1);
-    toc2 = zeros(numel(tail)*2,1);
-    toc3 = zeros(numel(tail)*2,1);
+    toc1 = zeros(numel(tail),1);
+    toc2 = zeros(numel(tail),1);
+    toc3 = zeros(numel(tail),1);
 
-    % Parametric & permutation CIs
-    figure('Name',['Paired ',type{t},' test: ',text{t},' & CIs'],...
-        'NumberTitle','off')
+    f0 = figure('Name',['Paired ',type{t},' test: test statistic'],...
+        'NumberTitle','off');
+    set(gcf,'color','w')
+    f1 = figure('Name',['Paired ',type{t},' test: ',text{t},' & CIs'],...
+        'NumberTitle','off');
+    set(gcf,'color','w')
+    f2 = figure('Name',['Paired ',type{t},' test: p-values'],...
+        'NumberTitle','off');
     set(gcf,'color','w')
 
     for i = 1:numel(tail)
@@ -62,9 +67,11 @@ for t = 1:numel(type)
                 [~,p1,ci1,stats1] = ttest(x,y,'tail',tail{i});
             case 'signrank'
                 p1 = zeros(nvar,1);
+                zval = zeros(nvar,1);
                 for j = 1:nvar
                     [p1(j),~,stats1] = signrank(x(:,j),y(:,j),...
                         'tail',tail{i});
+                    zval(j) = stats1.zval;
                 end
                 ci1 = nan(2,nvar);
         end
@@ -75,14 +82,39 @@ for t = 1:numel(type)
         [~,p2,ci2,stats2] = permuttest(x,y,'tail',tail{i},'correct',0,...
             'verbose',0,'type',type{t});
         toc2(i) = toc;
-        
+
         % Permutation test (max-corrected)
         tic
         [~,p3,ci3,stats3] = permuttest(x,y,'tail',tail{i},'correct',1,...
             'verbose',0,'type',type{t});
         toc3(i) = toc;
 
+        % Plot test statistic
+        figure(f0)
+        switch type{t}
+            case 'ttest'
+                stat1 = stats1.tstat;
+                stat2 = stats2.tstat;
+            case 'signrank'
+                stat1 = zval;
+                stat2 = stats2.zstat;
+        end
+        if i == 1
+            subplot(1,2,1), hold on
+            plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
+            xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
+            title('Uncorrected')
+            xlabel('variable')
+            ylabel('test statistic')
+            subplot(1,2,2), hold on
+            plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
+            xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
+            title('Max-corrected')
+            xlabel('variable')
+        end
+
         % Plot CIs
+        figure(f1)
         switch type{t}
             case 'ttest'
                 ct = stats2.mean;
@@ -109,7 +141,6 @@ for t = 1:numel(type)
                 case 'signrank'
                     legend(text{t},'Location','best')
             end
-            
         end
         subplot(3,2,i+i), hold on
         plot(xaxis,ct,'LineWidth',3)
@@ -123,40 +154,8 @@ for t = 1:numel(type)
             xlabel('variable')
         end
 
-    end
-
-    % Parametric & permutation p-values
-    figure('Name',['Paired ',type{t},' test: p-values'],'NumberTitle','off')
-    set(gcf,'color','w')
-
-    for i = 1:numel(tail)
-
-        % Parametric test
-        tic
-        switch type{t}
-            case 'ttest'
-                [~,p1] = ttest(x,y,'tail',tail{i});
-            case 'signrank'
-                p1 = zeros(nvar,1);
-                for j = 1:nvar
-                    p1(j) = signrank(x(:,j),y(:,j),'tail',tail{i});
-                end
-        end
-        toc1(i+numel(tail)) = toc;
-
-        % Permutation test (uncorrected)
-        tic
-        [~,p2] = permuttest(x,y,'tail',tail{i},'correct',0,'verbose',0,...
-            'type',type{t});
-        toc2(i+numel(tail)) = toc;
-
-        % Permutation test (max-corrected)
-        tic
-        [~,p3] = permuttest(x,y,'tail',tail{i},'correct',1,'verbose',0,...
-            'type',type{t});
-        toc3(i+numel(tail)) = toc;
-
         % Plot p-values
+        figure(f2)
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on
