@@ -9,7 +9,7 @@ function run_permuttest2_examples
 %   samples of equal and unequal variances. The results are compared to
 %   those of the equivalent parametric statistical tests (i.e. two-sample
 %   t-tests) using ttest2.m, and non-parametric statistical tests (i.e.
-%   Mann-Whitney U / Wilcoxon rank-sum tests) using ranksum.m.
+%   Wilcoxon rank-sum / Mann-Whitney U tests) using ranksum.m.
 %
 %   See also PERMUTTEST2 TTEST2 RANKSUM.
 %
@@ -57,9 +57,14 @@ for t = 1:numel(type)
             y = y*1.25;
         end
 
-        % Parametric & permutation CIs
-        figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
-            ' SD): ',text{t},' & CIs'],'NumberTitle','off')
+        f0 = figure('Name',['Unpaired ',type{t},' test: (',vartype{v},...
+            ' var.): test statistic'],'NumberTitle','off');
+        set(gcf,'color','w')
+        f1 = figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
+            ' var.): ',text{t},' & CIs'],'NumberTitle','off');
+        set(gcf,'color','w')
+        f2 = figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
+            ' var.): p-values'],'NumberTitle','off');
         set(gcf,'color','w')
 
         for i = 1:numel(tail)
@@ -72,14 +77,16 @@ for t = 1:numel(type)
                         'vartype',vartype{v});
                 case 'ranksum'
                     p1 = zeros(nvar,1);
+                    zval = zeros(nvar,1);
                     for j = 1:nvar
                         [p1(j),~,stats1] = ranksum(x(:,j),y(:,j),...
                             'tail',tail{i});
+                        zval(j) = stats1.zval;
                     end
                     ci1 = nan(nvar,2);
             end
             toc1(i) = toc;
-            
+
             % Permutation test (uncorrected)
             tic
             [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
@@ -92,7 +99,32 @@ for t = 1:numel(type)
                 'type',type{t},'vartype',vartype{v},'correct',1);
             toc3(i) = toc;
 
+            % Plot test statistic
+            figure(f0)
+            switch type{t}
+                case 'ttest2'
+                    stat1 = stats1.tstat;
+                    stat2 = stats2.tstat;
+                case 'ranksum'
+                    stat1 = zval;
+                    stat2 = stats2.zstat;
+            end
+            if i == 1
+                subplot(1,2,1), hold on
+                plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
+                xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
+                title('Uncorrected')
+                xlabel('variable')
+                ylabel('test statistic')
+                subplot(1,2,2), hold on
+                plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
+                xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
+                title('Max-corrected')
+                xlabel('variable')
+            end
+
             % Plot CIs
+            figure(f1)
             switch type{t}
                 case 'ttest2'
                     ct = stats2.mean;
@@ -117,7 +149,7 @@ for t = 1:numel(type)
                         legend(text{t},'95% CI (param.)','',...
                             '95% CI (perm.)','Location','best')
                     case 'ranksum'
-                        legend('Median(x)','Median(y)','Location','best')
+                        legend('median(x)','median(y)','Location','best')
                 end
             end
             subplot(3,2,i+i), hold on
@@ -131,42 +163,9 @@ for t = 1:numel(type)
             elseif i == 3
                 xlabel('variable')
             end
-        end
-
-        % Plot parametric & permutation p-values
-        figure('Name',['Unpaired ',type{t},' test (',vartype{v},...
-            ' SD): p-values'],'NumberTitle','off')
-        set(gcf,'color','w')
-
-        for i = 1:numel(tail)
-
-            % Parametric test
-            tic
-            switch type{t}
-                case 'ttest2'
-                    [~,p1] = ttest2(x,y,'tail',tail{i},...
-                        'vartype',vartype{v});
-                case 'ranksum'
-                    p1 = zeros(nvar,1);
-                    for j = 1:nvar
-                        p1(j) = ranksum(x(:,j),y(:,j),'tail',tail{i});
-                    end
-            end
-            toc1(i+numel(tail)) = toc;
-
-            % Permutation test (uncorrected)
-            tic
-            [~,p2] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
-                'vartype',vartype{v},'correct',0);
-            toc2(i+numel(tail)) = toc;
-
-            % Permutation test (max-corrected)
-            tic
-            [~,p3] = permuttest2(x,y,'tail',tail{i},'type',type{t},...
-                'vartype',vartype{v},'correct',1);
-            toc3(i+numel(tail)) = toc;
 
             % Plot p-values
+            figure(f2)
             subplot(3,2,i+i-1), hold on
             plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
             xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -195,6 +194,5 @@ for t = 1:numel(type)
     fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
     fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
     fprintf('Permutation (max-corr.): %.1f ms\n',mean(toc3)*1e3)
-
 
 end
