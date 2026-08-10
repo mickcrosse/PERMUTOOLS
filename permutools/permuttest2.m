@@ -9,14 +9,14 @@ function [stat,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   pair of columns in X are performed, and a matrix of results is
 %   returned. X and Y can have different lengths.
 %
-%   For non-normally distributed samples, the raw data may be transformed
-%   to rank orders in order to compute a Wilcoxon rank-sum / Mann-Whitney U
-%   test by setting the 'type' parameter to 'ranksum' or 'rank'.
-%
 %   For samples of unequal size or variance, Welch's t-statistic may be
 %   used by setting the 'vartype' parameter to 'unequal' as it is less
 %   sensitive to differences in variance (but also less sensitive to
 %   differences in means).
+%
+%   For non-normally distributed samples, the raw data may be transformed
+%   to rank orders in order to compute a Wilcoxon rank-sum / Mann-Whitney U
+%   test by setting the 'type' parameter to 'ranksum' or 'rank'.
 %
 %   PERMUTTEST2 treats NaNs as missing values, and ignores them.
 %
@@ -175,50 +175,53 @@ else
     nanflag = 'includenan';
 end
 
-% Transform raw data to rank orders if specified
+% Compute variance using fast algo
 switch arg.type
     case 'ttest2'
+        sumx = sum(x,nanflag); sumy = sum(y,nanflag);
+        varx = (sum(x.^2,nanflag)-(sumx.^2)./nobsx)./dfx;
+        vary = (sum(y.^2,nanflag)-(sumy.^2)./nobsy)./dfy;
     case 'ranksum'
         if nargout > 3
             iqrx = [iqr(x);iqr(y)];
             medx = [median(x,nanflag);median(y,nanflag)];
         end
-        xy = tiedrank([x;y]);
-        nobsxtmp = size(x,1);
-        x = xy(1:nobsxtmp,:);
-        y = xy(nobsxtmp+1:end,:);
-    otherwise
-        error('The TYPE parameter value must be TTEST2, or RANKSUM.')
 end
-
-% Compute sample variance using fast algo
-sumx = sum(x,nanflag);
-sumy = sum(y,nanflag);
-varx = (sum(x.^2,nanflag)-(sumx.^2)./nobsx)./dfx;
-vary = (sum(y.^2,nanflag)-(sumy.^2)./nobsy)./dfy;
 
 % Concatenate samples
 x = [x;y];
 nobs = sum(~isnan(x));
 sqrtn = sqrt(nobs./(nobsx.*nobsy));
 
-% Compute standard error based on variance equivalence
-switch arg.vartype
-    case 'equal'
-        df = nobs-2;
-        sd = sqrt((dfx.*varx+dfy.*vary)./df);
-        se = sd.*sqrtn;
-    case 'unequal'
-        se2x = varx./nobsx;
-        se2y = vary./nobsy;
-        df = (se2x+se2y).^2./(se2x.^2./dfx+se2y.^2./dfy);
-        sd = sqrt([varx;vary]);
-        se = sqrt(se2x+se2y);
-end
-
 % Compute observed statistics
-mu = sumx./nobsx-sumy./nobsy;
-stat = mu./se;
+switch arg.type
+    case 'ttest2'
+        switch arg.vartype
+            case 'equal'
+                df = nobs-2;
+                sd = sqrt((dfx.*varx+dfy.*vary)./df);
+                se = sd.*sqrtn;
+            case 'unequal'
+                se2x = varx./nobsx;
+                se2y = vary./nobsy;
+                df = (se2x+se2y).^2./(se2x.^2./dfx+se2y.^2./dfy);
+                sd = sqrt([varx;vary]);
+                se = sqrt(se2x+se2y);
+        end
+        mu = sumx./nobsx-sumy./nobsy;
+        stat = mu./se;
+    case 'ranksum'
+        df = nobs-2;
+        [r,tieadj] = tiedrank(x);
+        rx = r(1:maxnobsx,:);
+        w = sum(rx,1,nanflag);
+        meanw = (nobsx.*(nobsx+nobsy+1))./2;
+        varw = (nobsx.*nobsy)./12.*((nobsx+nobsy+1)-tieadj./...
+            ((nobsx+nobsy).*(nobsx+nobsy-1)));
+        stat = (w-meanw)./sqrt(varw);
+    otherwise
+        error('The TYPE parameter value must be TTEST2, or RANKSUM.')
+end
 
 if nargout > 1
 
@@ -231,49 +234,77 @@ if nargout > 1
     i2 = idx(maxnobsx+1:maxnobs,:);
 
     % Estimate sampling distribution
-    switch nanflag
-        case 'omitnan'
-            % Dynamic N-tracking for missing data
-            dist = zeros(arg.nperm,nvar);
-            for i = 1:arg.nperm
-                x1 = x(i1(:,i),:);
-                x2 = x(i2(:,i),:);
-                nobs1 = sum(~isnan(x1));
-                nobs2 = sum(~isnan(x2));
-                df1 = nobs1-1;
-                df2 = nobs2-1;
-                sum1 = sum(x1,nanflag);
-                sum2 = sum(x2,nanflag);
-                var1 = (sum(x1.^2,nanflag)-(sum1.^2)./nobs1)./df1;
-                var2 = (sum(x2.^2,nanflag)-(sum2.^2)./nobs2)./df2;
-                switch arg.vartype
-                    case 'equal'
-                        sep = sqrt((df1.*var1+df2.*var2)./(nobs1+nobs2-2)).*...
-                            sqrt((nobs1+nobs2)./(nobs1.*nobs2));
-                    case 'unequal'
-                        sep = sqrt(var1./nobs1+var2./nobs2);
-                end
-                dist(i,:) = (sum1./nobs1-sum2./nobs2)./sep;
+    switch arg.type
+        case 'ttest2'
+            switch nanflag
+                case 'omitnan'
+                    % Dynamic N-tracking for missing data
+                    dist = zeros(arg.nperm,nvar);
+                    for i = 1:arg.nperm
+                        x1 = x(i1(:,i),:);
+                        x2 = x(i2(:,i),:);
+                        nobs1 = sum(~isnan(x1));
+                        nobs2 = sum(~isnan(x2));
+                        df1 = nobs1-1;
+                        df2 = nobs2-1;
+                        sum1 = sum(x1,nanflag);
+                        sum2 = sum(x2,nanflag);
+                        var1 = (sum(x1.^2,nanflag)-(sum1.^2)./nobs1)./df1;
+                        var2 = (sum(x2.^2,nanflag)-(sum2.^2)./nobs2)./df2;
+                        switch arg.vartype
+                            case 'equal'
+                                sep = sqrt((df1.*var1+df2.*var2)./...
+                                    (nobs1+nobs2-2)).*...
+                                    sqrt((nobs1+nobs2)./(nobs1.*nobs2));
+                            case 'unequal'
+                                sep = sqrt(var1./nobs1+var2./nobs2);
+                        end
+                        dist(i,:) = (sum1./nobs1-sum2./nobs2)./sep;
+                    end
+                case 'includenan'
+                    % Fast vectorized calculation for complete data
+                    I = zeros(maxnobs,arg.nperm);
+                    colidx = repmat(1:arg.nperm,maxnobsx,1);
+                    linidx = sub2ind([maxnobs,arg.nperm],i1,colidx);
+                    I(linidx) = 1;
+                    sum1 = I'*x;
+                    sum2 = sum(x,1)-sum1;
+                    sumsq1 = I'*(x.^2);
+                    sumsq2 = sum(x.^2,1)-sumsq1;
+                    var1 = (sumsq1-(sum1.^2)./nobsx)./dfx;
+                    var2 = (sumsq2-(sum2.^2)./nobsy)./dfy;
+                    switch arg.vartype
+                        case 'equal'
+                            sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
+                        case 'unequal'
+                            sep = sqrt(var1./nobsx+var2./nobsy);
+                    end
+                    dist = (sum1./nobsx-sum2./nobsy)./sep;
             end
-        case 'includenan'
-            % Fast vectorized calculation for complete data
-            I = zeros(maxnobs,arg.nperm);
-            col_idx = repmat(1:arg.nperm,maxnobsx,1);
-            lin_idx = sub2ind([maxnobs,arg.nperm],i1,col_idx);
-            I(lin_idx) = 1;
-            sum1 = I'*x;
-            sum2 = sum(x,1)-sum1;
-            sumsq1 = I'*(x.^2);
-            sumsq2 = sum(x.^2,1)-sumsq1;
-            var1 = (sumsq1-(sum1.^2)./nobsx)./dfx;
-            var2 = (sumsq2-(sum2.^2)./nobsy)./dfy;
-            switch arg.vartype
-                case 'equal'
-                    sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
-                case 'unequal'
-                    sep = sqrt(var1./nobsx+var2./nobsy);
+        case 'ranksum'
+            switch nanflag
+                case 'omitnan'
+                    % Dynamic N-tracking for missing data
+                    dist = zeros(arg.nperm,nvar);
+                    for i = 1:arg.nperm
+                        r1 = r(i1(:,i),:);
+                        wp = sum(r1,1,nanflag);
+                        nobs1p = sum(~isnan(r1));
+                        nobs2p = nobs-nobs1p;
+                        meanwp = nobs1p.*(nobs+1)./2;
+                        varwp = (nobs1p.*nobs2p)./12.*((nobs+1)-tieadj./...
+                            (nobs.*(nobs-1)));
+                        dist(i,:) = (wp-meanwp)./sqrt(varwp);
+                    end
+                case 'includenan'
+                    % Fast vectorized calculation for complete data
+                    I = zeros(maxnobs,arg.nperm);
+                    colidx = repmat(1:arg.nperm,maxnobsx,1);
+                    linidx = sub2ind([maxnobs,arg.nperm],i1,colidx);
+                    I(linidx) = 1;
+                    wp = I'*r;
+                    dist = (wp-meanw)./sqrt(varw);
             end
-            dist = (sum1./nobsx-sum2./nobsy)./sep;
     end
 
     % Apply max correction if specified
