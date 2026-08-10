@@ -1,5 +1,5 @@
 function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
-%PERMUVARTEST2  Permutation-based two-sample test of variance and Conover squared-rank test.
+%PERMUVARTEST2  Permutation-based two-sample test of variance and Conover squared ranks test.
 %   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
 %   the F-statistic of the null hypothesis that the data in X and Y come
 %   from distributions with equal variances, and returns the test
@@ -10,7 +10,7 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %   X are performed, and a matrix of results is returned.
 %
 %   For non-normally distributed samples, the raw data may be transformed
-%   to squared ranks in order to compute a Conover squared-rank test by
+%   to squared ranks in order to compute a Conover squared ranks test by
 %   setting the 'type' parameter to 'squarerank' or 'rank'.
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
@@ -44,7 +44,7 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %       'type'      A string specifying the type of permutation test to
 %                   perform:
 %                       'ftest'         two-sample F-test (default)
-%                       'squarerank'    Conover squared-rank test
+%                       'squarerank'    Conover squared ranks test
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -94,6 +94,8 @@ end
 arg = ptparsevarargin(varargin);
 if isempty(arg.type)
     arg.type = 'ftest';
+elseif strcmpi(arg.type,'rank')
+    arg.type = 'squarerank';
 end
 
 % Validate input parameters
