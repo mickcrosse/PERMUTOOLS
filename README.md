@@ -83,7 +83,7 @@ PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 
 ### Association and Effect Size Measures
 
-| Function | Standard Test | Rank Test |
+| Function | Standard Measure | Rank/Ordinal Measure |
 | --- | --- | --- |
 | [**permucorr()**](permutools/permucorr.m) | Pearson correlation coefficient | Spearman's rank correlation coefficient |
 | [**permuregress()**](permutools/permuregress.m) | Multiple linear regression | N/A |
