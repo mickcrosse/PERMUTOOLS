@@ -8,7 +8,7 @@
 
 PERMUTOOLS is a statistical software package for multivariate permutation testing and effect size measurement. It is optimised for multivariate data and uses efficient vectorised implementations of resampling algorithms to generate the sampling distribution empirically, providing distribution-free nonparametric hypothesis testing and effect size analysis.
 
-PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way, N-way), **Kruskal-Wallis test**, **aligned rank transform (ART) test**, **repeated-measures ANOVA** (one-way, two-way), **Friedman test** (one-way, two-way), ***multivariate ANOVA (one-way, two-way)**, ***t*-test** (one/paired-sample, two-sample), **Wilcoxon signed-rank test**, **Wilcoxon rank-sum / Mann-Whitney U test**, **Test of variance** (one-sample, two-sample), **Conover squared-rank test**, ***Z*-test**, **Chi-square test of independence**, **correlation coefficient** (Pearson, Spearman, rankit), and **multiple linear regression** (Freedman-Lane, Manly). Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
+PERMUTOOLS offers permutation-based hypothesis testing and confidence interval estimation for a range of statistical tests, including the **ANOVA** (one-way, two-way, N-way), **Kruskal-Wallis test**, **aligned rank transform (ART) test**, **repeated-measures ANOVA** (one-way, two-way), **Friedman test** (one-way, two-way), ***multivariate ANOVA** (one-way, two-way), ***t*-test** (one/paired-sample, two-sample), **Wilcoxon signed-rank test**, **Wilcoxon rank-sum / Mann-Whitney U test**, **test of variance** (one-sample, two-sample), **Conover squared ranks test**, ***Z*-test**, **Chi-square test of independence**, **correlation coefficient** (Pearson, Spearman, rankit), **multiple linear regression** (Freedman-Lane, Manly) and **generalized linear models**. Multiple comparison correction is automatically applied using the ***max correction*** method, which is less prone to type II errors than conventional methods.
 
 PERMUTOOLS also offers effect size measurement and bootstrapped confidence interval estimation for a range of standardised and unstandardised effect sizes, including **Cohen's *d***, **Hedges' *g***, **Glass' *Δ***, **Cliff's *d***, **unstandardised mean difference** and **unstandardised median difference**. Inflation of standardised effect size measures and their CIs due to sample size is controlled by applying a ***bias correction factor***.
 
@@ -87,6 +87,7 @@ PERMUTOOLS consists of the following permutation/bootstrapped-based functions:
 | --- | --- | --- |
 | [**permucorr()**](permutools/permucorr.m) | Pearson correlation coefficient | Spearman's rank correlation coefficient |
 | [**permuregress()**](permutools/permuregress.m) | Multiple linear regression | N/A |
+| [**permuglm()**](permutools/permuglm.m) | Generalized linear model | N/A |
 | [**booteffectsize()**](permutools/booteffectsize.m) | Cohen's *d*, Hedges' *g* and Glass' ∆ | Cliff's δ |
 
 ## Correction Features
