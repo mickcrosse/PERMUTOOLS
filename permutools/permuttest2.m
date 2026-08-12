@@ -304,27 +304,24 @@ if nargout > 1
     if arg.correct
         switch arg.tail
             case 'both'
-                dist = max(abs(dist),[],2);
+                refdist = max(abs(dist),[],2);
             case 'right'
-                dist = max(dist,[],2);
+                refdist = max(dist,[],2);
             case 'left'
-                dist = min(dist,[],2);
+                refdist = min(dist,[],2);
         end
     else
-        switch arg.tail
-            case 'both'
-                dist = abs(dist);
-        end
+        refdist = dist;
     end
 
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = (sum(abs(stat)<=dist)+1)/(arg.nperm+1);
+            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(stat<=dist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=dist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
     end
 
 end
@@ -335,13 +332,13 @@ if nargout > 2
         case 'ttest2'
             switch arg.tail
                 case 'both'
-                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    crit = prctile(abs(refdist),100*(1-arg.alpha)).*se;
                     ci = [mu-crit;mu+crit];
                 case 'right'
-                    crit = prctile(dist,100*(1-arg.alpha)).*se;
+                    crit = prctile(refdist,100*(1-arg.alpha)).*se;
                     ci = [mu-crit;Inf(1,nvar)];
                 case 'left'
-                    crit = prctile(-dist,100*(1-arg.alpha)).*se;
+                    crit = prctile(-refdist,100*(1-arg.alpha)).*se;
                     ci = [-Inf(1,nvar);mu+crit];
             end
         case 'ranksum'
@@ -349,7 +346,7 @@ if nargout > 2
     end
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 3
     switch arg.type
         case 'ttest2'
@@ -367,6 +364,13 @@ if nargout > 3
             stats.median = medx;
     end
     stats.method = arg.type;
+end
+
+% Format sampling distribution
+if nargout > 4
+    if arg.correct
+        dist = refdist;
+    end
 end
 
 % Arrange results in a matrix if specified
