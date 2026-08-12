@@ -1,14 +1,14 @@
-function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
+function [stat,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %PERMUZTEST  Permutation-based one-sample Z-test.
-%   Z = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test based
-%   on the Z-statistic of the null hypothesis that the data in X come from
-%   a distribution with mean M, and returns the test statistic. M and SIGMA
-%   must be scalars. If X is a matrix, separate permutation tests are
+%   STAT = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test
+%   based on the Z-statistic of the null hypothesis that the data in X come
+%   from a distribution with mean M, and returns the test statistic. M and
+%   SIGMA must be scalars. If X is a matrix, separate permutation tests are
 %   performed along each column of X, and a vector of results is returned.
 %
 %   PERMUZTEST treats NaNs as missing values, and ignores them.
 %
-%   [Z,P] = PERMUZTEST(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUZTEST(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true. As
 %   the null distribution is generated empirically by permuting the data,
 %   no assumption is made about the shape of the distribution that the data
@@ -16,18 +16,18 @@ function [z,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %   automatically adjusted for multiple comparisons using the max
 %   correction method.
 %
-%   [Z,P,CI] = PERMUZTEST(...) returns a 100*(1-ALPHA)% confidence interval
-%   (CI) for the true mean. CIs are also adjusted for multiple comparisons
-%   using the max correction method.
+%   [STAT,P,CI] = PERMUZTEST(...) returns a 100*(1-ALPHA)% confidence
+%   interval (CI) for the true mean. CIs are also adjusted for multiple
+%   comparisons using the max correction method.
 %
-%   [Z,P,CI,STATS] = PERMUZTEST(...) returns a structure with the following
-%   fields:
+%   [STAT,P,CI,STATS] = PERMUZTEST(...) returns a structure with the
+%   following fields:
 %       'zstat'     -- the value of the test statistic
 %       'sd'        -- the estimated population standard deviation
-%       'mu'        -- the estimated population mean
+%       'mean'      -- the estimated population mean
 %       'method'    -- the statistical method used
 %
-%   [Z,P,CI,STATS,DIST] = PERMUZTEST(...) returns the permuted sampling
+%   [STAT,P,CI,STATS,DIST] = PERMUZTEST(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUZTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -80,6 +80,9 @@ narginchk(3,Inf);
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
@@ -109,32 +112,26 @@ end
 % Compute observed statistics
 mu = sum(x,nanflag)./nobs;
 se = sigma./sqrt(nobs);
-z = (mu-m)./se;
+stat = (mu-m)./se;
 
 if nargout > 1
 
     rng(arg.seed);
 
     % Generate random permutations
-    signx = sign(rand(maxnobs,arg.nperm)-0.5);
+    signx = double(randi([0,1],arg.nperm,maxnobs,'int8')*2-1);
 
     % Estimate sampling distribution
-    xdm = x-m;
-    sen = se.*nobs;
+    xdmu = x-mu;
     switch nanflag
         case 'omitnan'
-            % Dynamic loop for missing data
-            dist = zeros(arg.nperm,nvar);
-            for i = 1:arg.nperm
-                xp = xdm.*repmat(signx(:,i),1,nvar);
-                sump = sum(xp,nanflag);
-                dist(i,:) = sump./sen;
-            end
-        case 'includenan'
-            % Fast vectorized calculation for complete data
-            sump = double(signx)'*xdm;
-            dist = sump./sen;
+            xdmu(isnan(xdmu)) = 0;
     end
+    sd = std(x,nanflag);
+    xdmu = xdmu.*(sigma./sd);
+    sump = signx*xdmu;
+    sen = se.*nobs;
+    dist = sump./sen;
 
     % Add negative values
     dist(arg.nperm+1:2*arg.nperm,:) = -dist;
@@ -147,28 +144,25 @@ if nargout > 1
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
-            case {'both','two'}
-                dist = max(abs(dist),[],2);
+            case 'both'
+                refdist = max(abs(dist),[],2);
             case 'right'
-                dist = max(dist,[],2);
+                refdist = max(dist,[],2);
             case 'left'
-                dist = min(dist,[],2);
+                refdist = min(dist,[],2);
         end
     else
-        switch arg.tail
-            case {'both','two'}
-                dist = abs(dist);
-        end
+        refdist = dist;
     end
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = (sum(abs(z)<=dist)+1)/(arg.nperm+1);
+        case 'both'
+            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(z<=dist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(z>=dist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
     end
 
 end
@@ -176,22 +170,29 @@ end
 % Compute confidence interval
 if nargout > 2
     switch arg.tail
-        case {'both','two'}
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
+        case 'both'
+            crit = prctile(abs(refdist),100*(1-arg.alpha)).*se;
             ci = [mu-crit;mu+crit];
         case 'right'
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            crit = prctile(refdist,100*(1-arg.alpha)).*se;
             ci = [mu-crit;Inf(1,nvar)];
         case 'left'
-            crit = prctile(dist,100*(1-arg.alpha)).*se;
+            crit = prctile(-refdist,100*(1-arg.alpha)).*se;
             ci = [-Inf(1,nvar);mu+crit];
     end
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 3
-    stats.zstat = z;
-    stats.sd = std(x,nanflag);
-    stats.mu = mu;
+    stats.zstat = stat;
+    stats.sd = sd;
+    stats.mean = mu;
     stats.method = 'ztest';
+end
+
+% Format sampling distribution
+if nargout > 4
+    if arg.correct
+        dist = refdist;
+    end
 end
