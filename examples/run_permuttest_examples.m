@@ -25,18 +25,24 @@ function run_permuttest_examples
 close all; clc;
 
 % Set up experiment
+insert_nan = false;
 nobs = 30; nvar = 20;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'ttest','signrank'};
-text = {'mean difference','median difference'};
+test_metric = {'t-value','z-value'};
+ct_metric = {'mean','median'};
+var_metric = {'SD','IQR'};
 
 % Generate random data
 rng(42);
 x = randn(nobs,nvar);
 y = randn(nobs,nvar);
 y(:,1:round(nvar/2)) = y(:,1:round(nvar/2))-1;
+if insert_nan
+    x(1,1) = NaN;
+end
 
 disp('Mean elapsed time:')
 
@@ -48,13 +54,10 @@ for t = 1:numel(type)
     toc2 = zeros(numel(tail),1);
     toc3 = zeros(numel(tail),1);
 
-    f0 = figure('Name',['Paired ',type{t},' test: test statistic'],...
+    f1 = figure('Name',['Paired ',type{t},': ',ct_metric{t},' & CIs'],...
         'NumberTitle','off');
     set(gcf,'color','w')
-    f1 = figure('Name',['Paired ',type{t},' test: ',text{t},' & CIs'],...
-        'NumberTitle','off');
-    set(gcf,'color','w')
-    f2 = figure('Name',['Paired ',type{t},' test: p-values'],...
+    f2 = figure('Name',['Paired ',type{t},': p-values'],...
         'NumberTitle','off');
     set(gcf,'color','w')
 
@@ -67,11 +70,13 @@ for t = 1:numel(type)
                 [~,p1,ci1,stats1] = ttest(x,y,'tail',tail{i});
             case 'signrank'
                 p1 = zeros(nvar,1);
-                zval = zeros(nvar,1);
+                zval1 = zeros(nvar,1);
+                iqr1 = zeros(nvar,1);
                 for j = 1:nvar
                     [p1(j),~,stats1] = signrank(x(:,j),y(:,j),...
                         'tail',tail{i});
-                    zval(j) = stats1.zval;
+                    zval1(j) = stats1.zval;
+                    iqr1(j) = iqr(x(:,j)-y(:,j));
                 end
                 ci1 = nan(2,nvar);
         end
@@ -89,31 +94,7 @@ for t = 1:numel(type)
             'verbose',0,'type',type{t});
         toc3(i) = toc;
 
-        % Plot test statistic
-        figure(f0)
-        switch type{t}
-            case 'ttest'
-                stat1 = stats1.tstat;
-                stat2 = stats2.tstat;
-            case 'signrank'
-                stat1 = zval;
-                stat2 = stats2.zstat;
-        end
-        if i == 1
-            subplot(1,2,1), hold on
-            plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
-            xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
-            title('Uncorrected')
-            xlabel('variable')
-            ylabel('test statistic')
-            subplot(1,2,2), hold on
-            plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',3)
-            xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
-            title('Max-corrected')
-            xlabel('variable')
-        end
-
-        % Plot CIs
+        % Plot CT & CIs
         figure(f1)
         switch type{t}
             case 'ttest'
@@ -122,7 +103,7 @@ for t = 1:numel(type)
                 ct = stats2.median;
         end
         subplot(3,2,i+i-1), hold on
-        plot(xaxis,ct,'LineWidth',3)
+        plot(xaxis,ct,'LineWidth',2)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),ct(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),ct(p2<=alpha),'xr','LineWidth',2)
@@ -136,14 +117,14 @@ for t = 1:numel(type)
         if i == 1
             switch type{t}
                 case 'ttest'
-                    legend(text{t},'95% CI (param.)','','95% CI (perm.)',...
+                    legend(ct_metric{t},'95% CI (param.)','','95% CI (perm.)',...
                         'Location','best')
                 case 'signrank'
-                    legend(text{t},'Location','best')
+                    legend(ct_metric{t},'Location','best')
             end
         end
         subplot(3,2,i+i), hold on
-        plot(xaxis,ct,'LineWidth',3)
+        plot(xaxis,ct,'LineWidth',2)
         plot(xaxis,ci1,'k',xaxis,ci3,'--r')
         plot(xaxis(p1<=alpha),ct(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p3<=alpha),ct(p3<=alpha),'xr','LineWidth',2)
@@ -179,6 +160,36 @@ for t = 1:numel(type)
         end
 
     end
+
+    % Plot descriptive statistics
+    figure('Name',['Paired ',type{t},': descriptive statistics'],...
+    'NumberTitle','off');
+    set(gcf,'color','w')
+    switch type{t}
+        case 'ttest'
+            stat1 = stats1.tstat;
+            stat2 = stats2.tstat;
+            var1 = stats1.sd;
+            var2 = stats2.sd;
+        case 'signrank'
+            stat1 = zval1;
+            stat2 = stats2.zstat;
+            var1 = iqr1;
+            var2 = stats2.iqr;
+    end
+    subplot(2,2,1), hold on
+    plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',2)
+    xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
+    title('Test Statistic')
+    xlabel('variable')
+    ylabel(test_metric{t})
+    legend('param.','perm.','Location','best')
+    subplot(2,2,2), hold on
+    plot(xaxis,var1,xaxis,var2,'--r','LineWidth',2)
+    xlim([0,nvar+1]), ylim([0,3]), box on, grid on
+    title('Variance')
+    xlabel('variable')
+    ylabel(var_metric{t})
 
     fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
     fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
