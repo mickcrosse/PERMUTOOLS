@@ -205,7 +205,6 @@ switch arg.type
                 se2x = varx./nobsx;
                 se2y = vary./nobsy;
                 df = (se2x+se2y).^2./(se2x.^2./dfx+se2y.^2./dfy);
-                sd = sqrt([varx;vary]);
                 se = sqrt(se2x+se2y);
         end
         mu = sumx./nobsx-sumy./nobsy;
@@ -360,6 +359,10 @@ end
 if nargout > 3
     switch arg.type
         case 'ttest2'
+            switch arg.vartype
+                case 'unequal'
+                    sd = [sqrt(varx);sqrt(vary)];
+            end
             stats.tstat = stat;
             stats.df = df;
             stats.sd = sd;
