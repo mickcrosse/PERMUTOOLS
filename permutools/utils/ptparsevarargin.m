@@ -11,51 +11,38 @@ function arg = ptparsevarargin(varargin)
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+% Define valid string options
+strOpts.tail = {'both','left','right','two'};
+strOpts.type = {'','rank','anova1','kruskalwallis','anova2','alignrank',...
+    'anovan','ranova1','ranova2','friedman','manova1','manova2',...
+    'ttest','signrank','ttest2','ranksum','ftest','squarerank',...
+    'pearson','spearman','rankit','freedmanlane','manly'};
+strOpts.distribution = {'normal','binomial','poisson'};
+strOpts.rows = {'all','complete'};
+strOpts.compare = {'zero','pairwise'};
+strOpts.vartype = {'equal','unequal'};
+strOpts.effect = {'cohen','glass','cliff','meandiff','mediandiff'};
+
 % Create parser object
 p = inputParser;
+p.CaseSensitive = false;
 
 % Alpha level
 errorMsg = 'It must be a scalar between 0 and 1.';
-validFcn = @(x) assert(x>0&&x<1,errorMsg);
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0&&x<1,errorMsg);
 addParameter(p,'alpha',0.05,validFcn);
 
 % Dimension to work along
 errorMsg = 'It must be a positive integer scalar within indexing range.';
-validFcn = @(x) assert(x==1||x==2,errorMsg);
+validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&(x==1||x==2),errorMsg);
 addParameter(p,'dim',1,validFcn);
 
-% Alternative hypothesis
-tailOptions = {'left','right','both','two'};
-validFcn = @(x) any(validatestring(x,tailOptions));
-addParameter(p,'tail','both',validFcn);
-
-% Test type
-typeOptions = {'','rank','anova1','kruskalwallis','anova2','alignrank',...
-    'anovan','ranova1','ranova2','friedman','manova1','manova2',...
-    'ttest','signrank','ttest2','ranksum','ftest','squarerank',...
-    'pearson','spearman','rankit','freedmanlane','manly'};
-validFcn = @(x) any(validatestring(x,typeOptions));
-addParameter(p,'type','',validFcn);
-
-% Distribution type
-distributionOptions = {'normal','binomial','poisson'};
-validFcn = @(x) any(validatestring(x,distributionOptions));
-addParameter(p,'distribution','normal',validFcn);
-
-% Number of permutations
+% Resampling counts
 errorMsg = 'It must be a positive integer scalar.';
-validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
-addParameter(p,'nperm',1e4,validFcn);
-
-% Number of bootstraps
-errorMsg = 'It must be a positive integer scalar.';
-validFcn = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0,errorMsg);
-addParameter(p,'nboot',1e4,validFcn);
-
-% Rows to use if NaNs
-rowsOptions = {'all','complete'};
-validFcn = @(x) any(validatestring(x,rowsOptions));
-addParameter(p,'rows','all',validFcn);
+validCount = @(x) assert(isnumeric(x)&&isscalar(x)&&x>0&&mod(x,1)==0,...
+    errorMsg);
+addParameter(p,'nperm',1e4,validCount);
+addParameter(p,'nboot',1e4,validCount);
 
 % Permutation generator seed
 errorMsg = 'It must be an integer scalar.';
@@ -67,38 +54,31 @@ errorMsg = 'It must be a numeric scalar or row vector.';
 validFcn = @(x) assert(isnumeric(x),errorMsg);
 addParameter(p,'m',0,validFcn);
 
-% Comparison type
-compareOptions = {'zero','pairwise'};
-validFcn = @(x) any(validatestring(x,compareOptions));
-addParameter(p,'compare','zero',validFcn);
+% String options
+addParameter(p,'type','',@(x) any(validatestring(x,strOpts.type)));
+addParameter(p,'distribution','normal',@(x) any(validatestring(x,strOpts.distribution)));
+addParameter(p,'tail','both',@(x) any(validatestring(x,strOpts.tail)));
+addParameter(p,'rows','all',@(x) any(validatestring(x,strOpts.rows)));
+addParameter(p,'compare','zero',@(x) any(validatestring(x,strOpts.compare)));
+addParameter(p,'vartype','equal',@(x) any(validatestring(x,strOpts.vartype)));
+addParameter(p,'effect','cohen',@(x) any(validatestring(x,strOpts.effect)));
 
-% Variance equivalence
-vartypeOptions = {'equal','unequal'};
-validFcn = @(x) any(validatestring(x,vartypeOptions));
-addParameter(p,'vartype','equal',validFcn);
-
-% Effect size measure
-effectOptions = {'cohen','glass','cliff','meandiff','mediandiff'};
-validFcn = @(x) any(validatestring(x,effectOptions));
-addParameter(p,'effect','cohen',validFcn);
-
-% Boolean arguments
+% Boolean flags
 errorMsg = 'It must be a numeric scalar (0,1) or logical.';
 validFcn = @(x) assert(x==0||x==1||islogical(x),errorMsg);
 addParameter(p,'correct',true,validFcn); % control FWER via max correction
 addParameter(p,'intercept',true,validFcn); % include regression intercept
-addParameter(p,'paired',true,validFcn); % effect size for paired samples
+addParameter(p,'paired',true,validFcn); % compute effect size for paired samples
 addParameter(p,'matrix',false,validFcn); % return results in a matrix
 addParameter(p,'verbose',true,validFcn); % run in verbose mode
 
-% Parse input arguments
+% Parse input
 parse(p,varargin{1,1}{:});
 arg = p.Results;
 
-% Redefine partially matched strings
-arg.type = validatestring(arg.type,typeOptions);
-arg.tail = validatestring(arg.tail,tailOptions);
-arg.rows = validatestring(arg.rows,rowsOptions);
-arg.compare = validatestring(arg.compare,compareOptions);
-arg.vartype = validatestring(arg.vartype,vartypeOptions);
-arg.effect = validatestring(arg.effect,effectOptions);
+% Normalize all string options to canonical lowercase
+fields = fieldnames(strOpts);
+for i = 1:numel(fields)
+    fn = fields{i};
+    arg.(fn) = validatestring(arg.(fn), strOpts.(fn));
+end
