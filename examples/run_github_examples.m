@@ -20,6 +20,8 @@ function run_github_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+close all; clc;
+
 % Generate random data
 rng(42);
 x = randn(30,20);
@@ -48,8 +50,8 @@ histogram(distu(:,3),100,'FaceAlpha',0.5)
 h = histogram(distc,100,'FaceAlpha',0.5,'FaceAlpha', 0.5);
 uistack(h, 'top')
 plot([t,t],[0,500],'--k','LineWidth',2)
-xlim([0,5]), ylim([0,500]), box on, grid on
-title('Permutation Distribution'), xlabel('{\itt}-statistic'), ylabel('frequency')
+xlim([-5,5]), ylim([0,500]), box on, grid on
+title('Permutation Distribution'), xlabel('{\itt}-value'), ylabel('frequency')
 legend(['uncorrected ({\itp} = ',num2str(round(pu(3),3)),')'],...
     ['max-corrected ({\itp} = ',num2str(round(pc(3),2)),')'],...
     ['test statistic ({\itt} = ',num2str(round(t,2)),')'],...
@@ -127,20 +129,20 @@ alpha = 0.05;
 
 % Plot parametric & uncorrected permutation CIs
 subplot(2,2,1), hold on
-plot(xaxis,stats.mu,'LineWidth',3)
+plot(xaxis,stats.mean,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,ciu,'--r','LineWidth',1)
-plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
-plot(xaxis(pu<=alpha),stats.mu(pu<=alpha),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mean(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pu<=alpha),stats.mean(pu<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
 title('Uncorrected'), ylabel('X−Y')
 legend('mean difference','parametric CI','','permutation CI','Location','southwest')
 
 % Plot parametric & corrected permutation CIs
 subplot(2,2,2), hold on
-plot(xaxis,stats.mu,'LineWidth',3)
+plot(xaxis,stats.mean,'LineWidth',3)
 plot(xaxis,ci,'k',xaxis,cic,'--r','LineWidth',1)
-plot(xaxis(p<=alpha),stats.mu(p<=alpha),'ok','LineWidth',2)
-plot(xaxis(pc<=alpha),stats.mu(pc<=alpha),'xr','LineWidth',2)
+plot(xaxis(p<=alpha),stats.mean(p<=alpha),'ok','LineWidth',2)
+plot(xaxis(pc<=alpha),stats.mean(pc<=alpha),'xr','LineWidth',2)
 xlim([0,21]), ylim([-3,3]), box on, grid on
 title('Max-corrected')
 
