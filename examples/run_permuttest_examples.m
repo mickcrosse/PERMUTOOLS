@@ -163,7 +163,7 @@ for t = 1:numel(type)
 
     % Plot descriptive statistics
     figure('Name',['Paired ',type{t},': descriptive statistics'],...
-    'NumberTitle','off');
+        'NumberTitle','off');
     set(gcf,'color','w')
     switch type{t}
         case 'ttest'
