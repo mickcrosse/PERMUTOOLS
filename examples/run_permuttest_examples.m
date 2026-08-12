@@ -94,7 +94,7 @@ for t = 1:numel(type)
             'verbose',0,'type',type{t});
         toc3(i) = toc;
 
-        % Plot CT & CIs
+        % Plot central tendancy & CIs
         figure(f1)
         switch type{t}
             case 'ttest'
