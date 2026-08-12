@@ -108,7 +108,7 @@ for t = 1:numel(type)
                 'type',type{t},'vartype',vartype{v},'correct',1);
             toc3((v-1)*3+i) = toc;
 
-            % Plot CT & CIs
+            % Plot central tendancy & CIs
             figure(f1)
             switch type{t}
                 case 'ttest2'
