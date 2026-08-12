@@ -230,7 +230,12 @@ if nargout > 1
     maxnobs = size(x,1);
     [~,idx] = sort(rand(maxnobs,arg.nperm));
     i1 = idx(1:maxnobsx,:);
-    i2 = idx(maxnobsx+1:maxnobs,:);
+
+    % Fast vectorized permutation matrix
+    I = zeros(maxnobs,arg.nperm);
+    colidx = repmat(1:arg.nperm,maxnobsx,1);
+    linidx = sub2ind([maxnobs,arg.nperm],i1,colidx);
+    I(linidx) = 1;
 
     % Estimate sampling distribution
     switch arg.type
@@ -238,37 +243,32 @@ if nargout > 1
             switch nanflag
                 case 'omitnan'
                     % Dynamic N-tracking for missing data
-                    dist = zeros(arg.nperm,nvar);
-                    for i = 1:arg.nperm
-                        x1 = x(i1(:,i),:);
-                        x2 = x(i2(:,i),:);
-                        nobs1 = sum(~isnan(x1));
-                        nobs2 = sum(~isnan(x2));
-                        df1 = nobs1-1;
-                        df2 = nobs2-1;
-                        sum1 = sum(x1,nanflag);
-                        sum2 = sum(x2,nanflag);
-                        var1 = (sum(x1.^2,nanflag)-(sum1.^2)./nobs1)./df1;
-                        var2 = (sum(x2.^2,nanflag)-(sum2.^2)./nobs2)./df2;
-                        switch arg.vartype
-                            case 'equal'
-                                sep = sqrt((df1.*var1+df2.*var2)./...
-                                    (nobs1+nobs2-2)).*...
-                                    sqrt((nobs1+nobs2)./(nobs1.*nobs2));
-                            case 'unequal'
-                                sep = sqrt(var1./nobs1+var2./nobs2);
-                        end
-                        dist(i,:) = (sum1./nobs1-sum2./nobs2)./sep;
+                    valid = double(~isnan(x));
+                    x(isnan(x)) = 0;
+                    xsq = x.^2;
+                    sum1 = I'*x;
+                    sumsq1 = I'*xsq;
+                    nobs1 = I'*valid;
+                    sum2 = sum(x,1)-sum1;
+                    sumsq2 = sum(xsq,1)-sumsq1;
+                    nobs2 = nobs-nobs1;
+                    df1 = nobs1-1;
+                    df2 = nobs2-1;
+                    var1 = (sumsq1-(sum1.^2)./nobs1)./df1;
+                    var2 = (sumsq2-(sum2.^2)./nobs2)./df2;
+                    switch arg.vartype
+                        case 'equal'
+                            sep = sqrt((df1.*var1+df2.*var2)./(nobs1+nobs2-2)).*...
+                                sqrt((nobs1+nobs2)./(nobs1.*nobs2));
+                        case 'unequal'
+                            sep = sqrt(var1./nobs1+var2./nobs2);
                     end
+                    dist = (sum1./nobs1-sum2./nobs2)./sep;
                 case 'includenan'
                     % Fast vectorized calculation for complete data
-                    I = zeros(maxnobs,arg.nperm);
-                    colidx = repmat(1:arg.nperm,maxnobsx,1);
-                    linidx = sub2ind([maxnobs,arg.nperm],i1,colidx);
-                    I(linidx) = 1;
                     sum1 = I'*x;
-                    sum2 = sum(x,1)-sum1;
                     sumsq1 = I'*(x.^2);
+                    sum2 = sum(x,1)-sum1;
                     sumsq2 = sum(x.^2,1)-sumsq1;
                     var1 = (sumsq1-(sum1.^2)./nobsx)./dfx;
                     var2 = (sumsq2-(sum2.^2)./nobsy)./dfy;
@@ -276,7 +276,7 @@ if nargout > 1
                         case 'equal'
                             sep = sqrt((dfx.*var1+dfy.*var2)./df).*sqrtn;
                         case 'unequal'
-                            sep = sqrt(var1./nobsx+var2./nobsy);
+                            sep = sqrt(var1./nobsx + var2./nobsy);
                     end
                     dist = (sum1./nobsx-sum2./nobsy)./sep;
             end
@@ -284,23 +284,17 @@ if nargout > 1
             switch nanflag
                 case 'omitnan'
                     % Dynamic N-tracking for missing data
-                    dist = zeros(arg.nperm,nvar);
-                    for i = 1:arg.nperm
-                        r1 = r(i1(:,i),:);
-                        wp = sum(r1,1,nanflag);
-                        nobs1p = sum(~isnan(r1));
-                        nobs2p = nobs-nobs1p;
-                        meanwp = nobs1p.*(nobs+1)./2;
-                        varwp = (nobs1p.*nobs2p)./12.*((nobs+1)-tieadj./...
-                            (nobs.*(nobs-1)));
-                        dist(i,:) = (wp-meanwp)./sqrt(varwp);
-                    end
+                    valid = double(~isnan(r));
+                    r(isnan(r)) = 0;
+                    wp = I'*r;
+                    nobs1p = I'*valid;
+                    nobs2p = nobs-nobs1p;
+                    meanwp = nobs1p.*(nobs+1)./2;
+                    varwp = (nobs1p.*nobs2p)./12.*((nobs+1)-tieadj./...
+                        (nobs.*(nobs-1)));
+                    dist = (wp-meanwp)./sqrt(varwp);
                 case 'includenan'
                     % Fast vectorized calculation for complete data
-                    I = zeros(maxnobs,arg.nperm);
-                    colidx = repmat(1:arg.nperm,maxnobsx,1);
-                    linidx = sub2ind([maxnobs,arg.nperm],i1,colidx);
-                    I(linidx) = 1;
                     wp = I'*r;
                     dist = (wp-meanw)./sqrt(varw);
             end
