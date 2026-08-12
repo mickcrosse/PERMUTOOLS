@@ -217,32 +217,21 @@ if nargout > 1
     rng(arg.seed);
 
     % Generate random permutations
-    signx = randi([0,1],maxnobs,arg.nperm,'int8')*2-1;
+    signp = double(randi([0,1],arg.nperm,maxnobs,'int8')*2-1);
 
     % Estimate sampling distribution
-    xz = x; xz(isnan(x)) = 0;
+    switch nanflag
+        case 'omitnan'
+            x(isnan(x)) = 0;
+    end
+    sump = signp*x;
     switch arg.type
         case 'ttest'
             sumsq = sum(x.^2,nanflag);
-            switch nanflag
-                case 'omitnan'
-                    sump = double(signx)'*xz;
-                    varp = (sumsq-(sump.^2)./nobs)./df;
-                    dist = (sump./nobs)./sqrt(varp./nobs);
-                case 'includenan'
-                    xp = double(signx)'*x;
-                    varp = (sumsq-(xp.^2)./nobs)./df;
-                    sep = sqrt(varp./nobs);
-                    dist = (xp./nobs)./sep;
-            end
+            varp = (sumsq-(sump.^2)./nobs)./df;
+            dist = (sump./nobs)./sqrt(varp./nobs);
         case 'signrank'
-            switch nanflag
-                case 'omitnan'
-                    dist = (double(signx)'*xz)./sqrt(varw);
-                case 'includenan'
-                    xp = double(signx)'*x;
-                    dist = xp./sqrt(varw);
-            end
+            dist = sump./sqrt(varw);
     end
 
     % Add negative values
