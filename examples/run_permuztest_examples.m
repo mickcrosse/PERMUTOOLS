@@ -145,14 +145,14 @@ figure('Name',['One-sample ',type,': descriptive statistics'],...
     'NumberTitle','off');
 set(gcf,'color','w')
 subplot(2,2,1), hold on
-plot(xaxis,zval1,xaxis,stats2.zstat,'--r','LineWidth',2)
+plot(xaxis,zval1,xaxis,stats2.zstat,'--','LineWidth',2)
 xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
 title('Test Statistic')
 xlabel('variable')
 ylabel('z-value')
 legend('param.','perm.','Location','best')
 subplot(2,2,2), hold on
-plot(xaxis,sd1,xaxis,stats2.sd,'--r','LineWidth',2)
+plot(xaxis,sd1,xaxis,stats2.sd,'--','LineWidth',2)
 xlim([0,nvar+1]), ylim([0,2]), box on, grid on
 title('Variance')
 xlabel('variable')
