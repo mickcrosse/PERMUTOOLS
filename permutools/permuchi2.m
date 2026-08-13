@@ -128,22 +128,23 @@ if nargout > 1
         end
     end
 
+    % Generate random permutations
+    [~,randidx] = sort(rand(nobs,arg.nperm));
+
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
     if exist('pagemtimes','builtin')||exist('pagemtimes','file')
         % New optimized 3D matrix multiplication
         for i = 1:arg.nperm
-            randidx = randperm(nobs);
-            xp = pagemtimes(A,'transpose',B(randidx,:,:),'none');
+            xp = pagemtimes(A,'transpose',B(randidx(:,i),:,:),'none');
             chi2p = sum((xp-E).^2.*Einv,[1,2]);
             dist(i,:) = chi2p(:)';
         end
     else
         % Legacy optimized 2D matrix multiplication
         for i = 1:arg.nperm
-            randidx = randperm(nobs);
             for k = 1:nvar
-                xp = A(:,:,k)'*B(randidx,:,k);
+                xp = A(:,:,k)'*B(randidx(:,i),:,k);
                 dist(i,k) = sum((xp-E(:,:,k)).^2.*Einv(:,:,k),'all');
             end
         end
@@ -187,7 +188,7 @@ if nargout > 2
         z = norminv(1-arg.alpha/2);
         for k = 1:nvar
             if any(x(:,:,k) == 0, 'all')
-                stats.oddsratioci(:, k) = [-Inf;Inf];
+                stats.oddsratioci(:, k) = [0;Inf];
             else
                 selogor = sqrt(sum(1./x(:,:,k),'all'));
                 logor = log(stats.oddsratio(k));
