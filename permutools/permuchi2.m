@@ -1,6 +1,6 @@
-function [chi2,p,stats,tbl,dist] = permuchi2(x,varargin)
+function [stat,p,stats,tbl,dist] = permuchi2(x,varargin)
 %PERMUCHI2  Permutation-based Chi-square test of independence.
-%   CHI2 = PERMUCHI2(X) performs a permutation test of independence based
+%   STAT = PERMUCHI2(X) performs a permutation test of independence based
 %   on the Chi-square statistic for the contingency table X, and returns
 %   the test statistic. If X is a 3D matrix (Rows x Columns x Variables),
 %   the test evaluates all variables simultaneously, and a vector of
@@ -11,29 +11,29 @@ function [chi2,p,stats,tbl,dist] = permuchi2(x,varargin)
 %   permuting the raw data preserves the table's marginal totals to
 %   empirically model the exact probability space.
 %
-%   [CHI2,P] = PERMUCHI2(...) returns the probabilities (i.e. p-values)
+%   [STAT,P] = PERMUCHI2(...) returns the probabilities (i.e. p-values)
 %   of observing the given results by chance if the null hypothesis is
 %   true. As the null distribution is generated empirically by permuting
 %   the data, no assumption is made about the distribution that the data
 %   come from. P-values are automatically adjusted for multiple comparisons
 %   using the max correction method.
 %
-%   [CHI2,P,STATS] = PERMUCHI2(...) returns a structure with the following
+%   [STAT,P,STATS] = PERMUCHI2(...) returns a structure with the following
 %   fields:
-%       'chi2stat'              -- the value of the test statistic
-%       'df'                    -- the degrees of freedom
-%       'O'                     -- the observed count in each cell
-%       'E'                     -- the expected count in each cell
-%       'cramersv'              -- Cramer's V effect size (strength of association)
-%       'oddsratio'             -- the odds ratio (for 2x2 tables only)
-%       'oddsratioci'           -- the asymptotic confidence interval for
-%                                  the odds ratio (for 2x2 tables only)
-%       'method'                -- the statistical method used
+%       'chi2stat'      -- the value of the test statistic
+%       'df'            -- the degrees of freedom
+%       'O'             -- the observed count in each cell
+%       'E'             -- the expected count in each cell
+%       'cramersv'      -- Cramer's V effect size (strength of association)
+%       'oddsratio'     -- the odds ratio (for 2x2 tables only)
+%       'oddsratioci'   -- the asymptotic confidence interval for the odds
+%                          ratio (for 2x2 tables only)
+%       'method'        -- the statistical method used
 %
-%   [CHI2,P,STATS,TBL] = PERMUCHI2(...) returns the table contents as a
+%   [STAT,P,STATS,TBL] = PERMUCHI2(...) returns the table contents as a
 %   cell array.
 %
-%   [CHI2,P,STATS,TBL,DIST] = PERMUCHI2(...) returns the permuted sampling
+%   [STAT,P,STATS,TBL,DIST] = PERMUCHI2(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUCHI2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -71,6 +71,9 @@ arg = ptparsevarargin(varargin);
 if ~any(strcmpi(varargin,'tail'))
     arg.tail = 'right';
 end
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
@@ -98,36 +101,52 @@ nobs = nobsall(1);
 rowsums = sum(x,2);
 colsums = sum(x,1);
 E = (rowsums.*colsums)./nobs;
-chi2 = sum((x-E).^2./E,[1,2]);
-chi2 = chi2(:)';
+Einv = 1./E;
+Einv(isinf(Einv)) = 0;
+stat = sum((x-E).^2.*Einv,[1,2]);
+stat = stat(:)';
 
 if nargout > 1
 
     rng(arg.seed);
 
-    % Vectorized reconstruction of raw categorical vectors
-    vara = zeros(nobs,nvar);
-    varb = zeros(nobs,nvar);
-    [I,J] = ndgrid(1:nrow,1:ncol);
+    % Reconstruct data into one-hot encoded binary matrices
+    A = zeros(nobs,nrow,nvar);
+    B = zeros(nobs,ncol,nvar);
     for k = 1:nvar
         xk = x(:,:,k);
-        vara(:,k) = repelem(I(:),xk(:));
-        varb(:,k) = repelem(J(:),xk(:));
+        idx = 1;
+        for r = 1:nrow
+            for c = 1:ncol
+                count = xk(r,c);
+                if count > 0
+                    A(idx:idx+count-1,r,k) = 1;
+                    B(idx:idx+count-1,c,k) = 1;
+                    idx = idx+count;
+                end
+            end
+        end
     end
-
-    % Precompute subscript arrays for 3D accumarray
-    vark = repmat(1:nvar,nobs,1);
-    subs13 = [vara(:),vark(:)];
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    for i = 1:arg.nperm
-        randidx = randperm(nobs);
-        varbperm = varb(randidx,:);
-        xperm = accumarray([subs13(:,1),varbperm(:),subs13(:,2)],1,...
-            [nrow,ncol,nvar]);
-        chi2perm = sum((xperm-E).^2./E,[1,2],nanflag);
-        dist(i,:) = chi2perm(:)';
+    if exist('pagemtimes','builtin')||exist('pagemtimes','file')
+        % New optimized 3D matrix multiplication
+        for i = 1:arg.nperm
+            randidx = randperm(nobs);
+            xp = pagemtimes(A,'transpose',B(randidx,:,:),'none');
+            chi2p = sum((xp-E).^2.*Einv,[1,2]);
+            dist(i,:) = chi2p(:)';
+        end
+    else
+        % Legacy optimized 2D matrix multiplication
+        for i = 1:arg.nperm
+            randidx = randperm(nobs);
+            for k = 1:nvar
+                xp = A(:,:,k)'*B(randidx,:,k);
+                dist(i,k) = sum((xp-E(:,:,k)).^2.*Einv(:,:,k),'all');
+            end
+        end
     end
 
     % Apply max-correction if specified
@@ -141,24 +160,24 @@ if nargout > 1
 
     % Compute p-values
     switch arg.tail
-        case {'both','two'}
-            p = min(1,2*(min(sum(chi2>=distmin,1),...
-                sum(chi2<=distmax,1))+1)/(arg.nperm+1));
+        case 'both'
+            p = min(1,2*(min(sum(stat>=distmin,1),...
+                sum(stat<=distmax,1))+1)/(arg.nperm+1));
         case 'right'
-            p = (sum(chi2<=distmax,1)+1)/(arg.nperm+1);
+            p = (sum(stat<=distmax,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(chi2>=distmin,1)+1)/(arg.nperm+1);
+            p = (sum(stat>=distmin,1)+1)/(arg.nperm+1);
     end
 
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 2
-    stats.chi2stat = chi2;
+    stats.chi2stat = stat;
     stats.df = df;
     stats.O = x;
     stats.E = E;
-    stats.cramersv = sqrt(chi2./(nobs*(min(nrow,ncol)-1)));
+    stats.cramersv = sqrt(stat./(nobs*(min(nrow,ncol)-1)));
     stats.oddsratio = NaN(1,nvar);
     stats.oddsratioci = NaN(2,nvar);
     stats.method = 'chi2test';
@@ -184,12 +203,24 @@ if nargout > 3
     if nvar == 1
         tbl = {
             'Statistic','df','Value','Prob>Chi2';
-            'Pearson Chi2',df,chi2(1),p(1)};
+            'Pearson Chi2',df,stat(1),p(1)};
     else
         tbl = cell(nvar+1,4);
         tbl(1,:) = {'Statistic','df','Value','Prob>Chi2'};
         for k = 1:nvar
-            tbl(k+1,:) = {['Variable ',num2str(k)],df,chi2(k),p(k)};
+            tbl(k+1,:) = {['Variable ',num2str(k)],df,stat(k),p(k)};
+        end
+    end
+end
+
+% Format sampling distribution
+if nargout > 4
+    if arg.correct
+        switch arg.tail
+            case {'both','right'}
+                dist = distmax;
+            case 'left'
+                dist = distmin;
         end
     end
 end
