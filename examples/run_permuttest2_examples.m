@@ -191,7 +191,7 @@ for t = 1:numel(type)
                 var2 = stats2.iqr;
         end
         subplot(2,2,1), hold on
-        plot(xaxis,stat1,xaxis,stat2,'--r','LineWidth',2)
+        plot(xaxis,stat1,xaxis,stat2,'--','LineWidth',2)
         xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
         title('Test Statistic')
         xlabel('variable')
@@ -199,7 +199,7 @@ for t = 1:numel(type)
         legend('param.','perm.','Location','best')
         subplot(2,2,2), hold on
         plot(xaxis,var1,'color',cmap(1,:),'LineWidth',2)
-        plot(xaxis,var2,'--r','LineWidth',2)
+        plot(xaxis,var2,'--','color',cmap(2,:),'LineWidth',2)
         xlim([0,nvar+1]), ylim([0,2.5]), box on, grid on
         title('Variance')
         xlabel('variable')
