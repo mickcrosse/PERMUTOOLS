@@ -98,14 +98,14 @@ for t = 1:numel(type)
 
             % Permutation test (uncorrected)
             tic
-            [~,p2,ci2,stats2] = permuttest2(x,y,'tail',tail{i},...
-                'type',type{t},'vartype',vartype{v},'correct',0);
+            [~,p2,ci2,stats2] = permuttest2(x,y,'type',type{t},...
+                'tail',tail{i},'vartype',vartype{v},'correct',0);
             toc2((v-1)*3+i) = toc;
 
             % Permutation test (max-corrected)
             tic
-            [~,p3,ci3,stats3] = permuttest2(x,y,'tail',tail{i},...
-                'type',type{t},'vartype',vartype{v},'correct',1);
+            [~,p3,ci3,stats3] = permuttest2(x,y,'type',type{t},...
+                'tail',tail{i},'vartype',vartype{v},'correct',1);
             toc3((v-1)*3+i) = toc;
 
             % Plot central tendancy & CIs
