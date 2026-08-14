@@ -1,9 +1,9 @@
 function run_permuvartest_examples
-%RUN_PERMUVARTEST_EXAMPLES  Run one-sample bootstrapped chi-squared test examples.
+%RUN_PERMUVARTEST_EXAMPLES  Run one-sample bootstrap chi-squared test examples.
 %   Generates random multivariate data for samples X. Each sample has 20
 %   variables, each with a standard deviation of 1, except for the first 10
 %   variables of X which have a standard deviation of 2. Each variable has
-%   30 observations. One-sample bootstrapped tests based on the chi-squared
+%   30 observations. One-sample bootstrap tests based on the chi-squared
 %   statistic are performed on each variables of X for two-tailed, right-
 %   tailed and left-tailed tests. The results are compared to those of the
 %   equivalent parametric statistical tests (i.e. one-sample chi-squared
@@ -21,31 +21,63 @@ function run_permuvartest_examples
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
 
+close all; clc;
+
 % Set up experiment
+insert_nan = false;
 nobs = 30; nvar = 20; v = 2;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = 'chi2';
+type = 'chisqtest';
+test_metric = 'chisq-value';
 
 % Generate random data
 rng(42);
 x = randn(nobs,nvar);
 x(:,1:round(nvar/2)) = x(:,1:round(nvar/2))*sqrt(v);
+if insert_nan
+    x(1,1) = NaN;
+end
 
-% Plot parametric & bootstrapped CIs
-figure('Name',['One-sample ',type,' test: variance & CIs'],...
-    'NumberTitle','off')
+f1 = figure('Name',['One-sample ',type,': variance & CIs'],...
+    'NumberTitle','off');
 set(gcf,'color','w')
+f2 = figure('Name',['One-sample ',type,': p-values'],'NumberTitle','off');
+set(gcf,'color','w')
+
+disp(type)
+
+toc1 = zeros(numel(tail),1);
+toc2 = zeros(numel(tail),1);
+toc3 = zeros(numel(tail),1);
+
 for i = 1:numel(tail)
-    [~,p1,ci1] = vartest(x,v,'tail',tail{i});
+
+    % Parametric test
+    tic
+    [~,p1,ci1,stats1] = vartest(x,v,'tail',tail{i});
+    toc1(i) = toc;
+
+    % Permutation test (uncorrected)
+    tic
     [~,p2,ci2,stats2] = permuvartest(x,v,'tail',tail{i},'correct',0,...
         'verbose',0);
+    toc2(i) = toc;
+
+    % Permutation test (max-corrected)
+    tic
+    [~,p3,ci3,stats3] = permuvartest(x,v,'tail',tail{i},'correct',1,...
+        'verbose',0);
+    toc3(i) = toc;
+
+    % Plot variance & CIs
+    figure(f1)
     subplot(3,2,i+i-1), hold on
-    plot(xaxis,stats2.varx,'LineWidth',3)
+    plot(xaxis,stats2.var,'LineWidth',2)
     plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(p1<=alpha),stats2.varx(p1<=alpha),'ok','LineWidth',2)
-    plot(xaxis(p2<=alpha),stats2.varx(p2<=alpha),'xr','LineWidth',2)
+    plot(xaxis(p1<=alpha),stats2.var(p1<=alpha),'ok','LineWidth',2)
+    plot(xaxis(p2<=alpha),stats2.var(p2<=alpha),'xr','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,10]), box on, grid on
     if i == 1
         title('Uncorrected')
@@ -57,27 +89,20 @@ for i = 1:numel(tail)
         legend('variance','95% CI (param.)','','95% CI (boot.)',...
             'Location','best')
     end
-    [~,p2,ci2,stats2] = permuvartest(x,v,'tail',tail{i},'correct',1,...
-        'verbose',0);
     subplot(3,2,i+i), hold on
-    plot(xaxis,stats2.varx,'LineWidth',3)
-    plot(xaxis,ci1,'k',xaxis,ci2,'--r')
-    plot(xaxis(p1<=alpha),stats2.varx(p1<=alpha),'ok','LineWidth',2)
-    plot(xaxis(p2<=alpha),stats2.varx(p2<=alpha),'xr','LineWidth',2)
+    plot(xaxis,stats3.var,'LineWidth',2)
+    plot(xaxis,ci1,'k',xaxis,ci3,'--r')
+    plot(xaxis(p1<=alpha),stats2.var(p1<=alpha),'ok','LineWidth',2)
+    plot(xaxis(p3<=alpha),stats2.var(p3<=alpha),'xr','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,10]), box on, grid on
     if i == 1
         title('Max-corrected')
     elseif i == 3
         xlabel('variable')
     end
-end
 
-% Plot parametric & bootstrapped p-values
-figure('Name',['One-sample ',type,' test: p-values'],'NumberTitle','off')
-set(gcf,'color','w')
-for i = 1:numel(tail)
-    [~,p1] = vartest(x,v,'tail',tail{i});
-    [~,p2] = permuvartest(x,v,'tail',tail{i},'correct',0,'verbose',0);
+    % Plot p-values
+    figure(f2)
     subplot(3,2,i+i-1), hold on
     plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -91,13 +116,28 @@ for i = 1:numel(tail)
         legend('{\itp}-value (param.)','{\itp}-value (boot.)',...
             'Location','best')
     end
-    [~,p2] = permuvartest(x,v,'tail',tail{i},'correct',1,'verbose',0);
     subplot(3,2,i+i), hold on
-    plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
+    plot(xaxis,p1,'k',xaxis,p3,'--r','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,1]), box on, grid on
     if i == 1
         title('Max-corrected')
     elseif i == 3
         xlabel('variable')
     end
+
 end
+
+% Plot descriptive statistics
+figure('Name',['Paired ',type,': descriptive statistics'],...
+    'NumberTitle','off');
+set(gcf,'color','w')
+plot(xaxis,stats1.chisqstat,xaxis,stats3.chisqstat,'--','LineWidth',2)
+xlim([0,nvar+1]), box on, grid on
+title('Test Statistic')
+xlabel('variable')
+ylabel(test_metric)
+legend('param.','perm.','Location','best')
+
+fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
+fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
+fprintf('Permutation (max-corr.): %.1f ms\n',mean(toc3)*1e3)
