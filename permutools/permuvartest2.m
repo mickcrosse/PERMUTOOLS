@@ -1,7 +1,7 @@
-function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
+function [stat,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %PERMUVARTEST2  Permutation-based two-sample test of variance and Conover squared ranks test.
-%   F = PERMUVARTEST2(X,Y) performs a two-sample permutation test based on
-%   the F-statistic of the null hypothesis that the data in X and Y come
+%   STAT = PERMUVARTEST2(X,Y) performs a two-sample permutation test based
+%   on the F-statistic of the null hypothesis that the data in X and Y come
 %   from distributions with equal variances, and returns the test
 %   statistic. X and Y can have different lengths. If X and Y are matrices,
 %   separate permutation tests are performed between each corresponding
@@ -15,26 +15,33 @@ function [f,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %
-%   [F,P] = PERMUVARTEST2(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUVARTEST2(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true. As
 %   the null distribution is generated empirically by permuting the data,
 %   no assumption is made about the shape of the distributions that the
 %   data come from. P-values are automatically adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [F,P,CI] = PERMUVARTEST2(...) returns a 100*(1-ALPHA)% confidence
-%   interval for the true ratio of sample variances. CIs are also adjusted
-%   for multiple comparisons using the max correction method.
+%   [STAT,P,CI] = PERMUVARTEST2(...) returns a 100*(1-ALPHA)% confidence
+%   interval for the true ratio of population variances. CIs are also
+%   adjusted for multiple comparisons using the max correction method.
 %
-%   [F,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
+%   [STAT,P,CI,STATS] = PERMUVARTEST2(...) returns a structure with the
 %   following fields:
 %       'fstat'     -- the value of the test statistic
 %       'df1'       -- the numerator degrees of freedom of each test
 %       'df2'       -- the denominator degrees of freedom of each test
+%       'var'       -- the estimated population variance
 %       'method'    -- the statistical method used
 %
-%   [F,P,CI,STATS,DIST] = PERMUVARTEST2(...) returns the permuted sampling
-%   distribution of the test statistic.
+%   For rank-based tests ('type','squarerank'), STATS contains:
+%       'tstat'     -- the value of the test statistic
+%       'median'    -- the estimated population median
+%       'iqr'       -- the estimated population interquartile range
+%       'method'    -- the statistical method used
+%
+%   [STAT,P,CI,STATS,DIST] = PERMUVARTEST2(...) returns the permuted
+%   sampling distribution of the test statistic.
 %
 %   [...] = PERMUVARTEST2(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -97,6 +104,9 @@ if isempty(arg.type)
 elseif strcmpi(arg.type,'rank')
     arg.type = 'squarerank';
 end
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
@@ -131,8 +141,6 @@ end
 [maxnobsx,nvar] = size(x);
 nobsx = sum(~isnan(x));
 nobsy = sum(~isnan(y));
-
-% Compute degrees of freedom
 df1 = nobsx-1;
 df2 = nobsy-1;
 
@@ -143,23 +151,31 @@ else
     nanflag = 'includenan';
 end
 
-% Transform raw data to squared ranks if specified
+% Compute observed statistics
 switch arg.type
     case 'ftest'
-    case {'squarerank','rank'}
-        devx = x-sum(x,nanflag)./nobsx;
-        devy = y-sum(y,nanflag)./nobsy;
-        devxy = tiedrank(abs([devx;devy]));
+        varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
+        vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
+        stat = varx./vary;
+    case 'squarerank'
+        if nargout > 3
+            iqrxy = [iqr(x);iqr(y)];
+        end
+        medx = median(x,1,nanflag);
+        medy = median(y,1,nanflag);
+        devxy = tiedrank(abs([x-medx;y-medy]));
         x = devxy(1:size(x,1),:).^2;
         y = devxy(size(x,1)+1:end,:).^2;
+        mux = sum(x,nanflag)./nobsx;
+        muy = sum(y,nanflag)./nobsy;
+        varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
+        vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
+        sp2 = (df1.*varx+df2.*vary)./(nobsx + nobsy - 2);
+        se = sqrt(sp2.*(1./nobsx+1./nobsy));
+        stat = (mux-muy)./se;
     otherwise
-        error('The TYPE parameter value must be FTEST, or SQUARERANK.')
+        error('The TYPE parameter value must be FTEST or SQUARERANK.')
 end
-
-% Compute observed statistics
-varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
-vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
-f = varx./vary;
 
 if nargout > 1
 
@@ -181,30 +197,64 @@ if nargout > 1
     switch nanflag
         case 'omitnan'
             % Dynamic N-tracking for missing data
-            for i = 1:arg.nperm
-                x1 = x(idx1(:,i),:);
-                x2 = x(idx2(:,i),:);
-                nobs1 = sum(~isnan(x1));
-                nobs2 = sum(~isnan(x2));
-                var1 = (sum(x1.^2,nanflag)-...
-                    (sum(x1,nanflag).^2)./nobs1)./(nobs1-1);
-                var2 = (sum(x2.^2,nanflag)-...
-                    (sum(x2,nanflag).^2)./nobs2)./(nobs2-1);
-                dist(i,:) = var1./var2;
+            switch arg.type
+                case 'ftest'
+                    for i = 1:arg.nperm
+                        x1 = x(idx1(:,i),:);
+                        x2 = x(idx2(:,i),:);
+                        nobs1 = sum(~isnan(x1));
+                        nobs2 = sum(~isnan(x2));
+                        var1 = (sum(x1.^2,nanflag)-...
+                            (sum(x1,nanflag).^2)./nobs1)./(nobs1-1);
+                        var2 = (sum(x2.^2,nanflag)-...
+                            (sum(x2,nanflag).^2)./nobs2)./(nobs2-1);
+                        dist(i,:) = var1./var2;
+                    end
+                case 'squarerank'
+                    for i = 1:arg.nperm
+                        x1 = x(idx1(:,i),:);
+                        x2 = x(idx2(:,i),:);
+                        nobs1 = sum(~isnan(x1));
+                        nobs2 = sum(~isnan(x2));
+                        df1p = nobs1-1;
+                        df2p = nobs2-1;
+                        mu1 = sum(x1,nanflag)./nobs1;
+                        mu2 = sum(x2,nanflag)./nobs2;
+                        var1 = (sum(x1.^2,nanflag)-...
+                            (sum(x1,nanflag).^2)./nobs1)./df1p;
+                        var2 = (sum(x2.^2,nanflag)-...
+                            (sum(x2,nanflag).^2)./nobs2)./df2p;
+                        sp2 = (df1p.*var1+df2p.*var2)./(nobs1+nobs2-2);
+                        se = sqrt(sp2.*(1./nobs1+1./nobs2));
+                        dist(i,:) = (mu1-mu2)./se;
+                    end
             end
         case 'includenan'
             % Fast vectorized calculation for complete data
             I = zeros(maxnobs,arg.nperm);
-            col_idx = repmat(1:arg.nperm,maxnobsx,1);
-            lin_idx = sub2ind([maxnobs,arg.nperm],idx1,col_idx);
-            I(lin_idx) = 1;
+            colidx = repmat(1:arg.nperm,maxnobsx,1);
+            linidx = sub2ind([maxnobs,arg.nperm],idx1,colidx);
+            I(linidx) = 1;
             sum1 = I'*x;
             sum2 = sum(x,1)-sum1;
-            sumsq1 = I'*(x.^2);
-            sumsq2 = sum(x.^2,1)-sumsq1;
-            var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
-            var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
-            dist = var1./var2;
+            switch arg.type
+                case 'ftest'
+                    sumsq1 = I'*(x.^2);
+                    sumsq2 = sum(x.^2,1)-sumsq1;
+                    var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
+                    var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
+                    dist = var1./var2;
+                case 'squarerank'
+                    mu1 = sum1./nobsx;
+                    mu2 = sum2./nobsy;
+                    sumsq1 = I'*(x.^2);
+                    sumsq2 = sum(x.^2,1)-sumsq1;
+                    var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
+                    var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
+                    sp2 = (df1.*var1+df2.*var2)./(nobsx+nobsy-2);
+                    se = sqrt(sp2.*(1./nobsx+1./nobsy));
+                    dist = (mu1-mu2)./se;
+            end
     end
 
     % Apply max correction if specified
@@ -218,44 +268,57 @@ if nargout > 1
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = min(1,2*(min(sum(f>=distmin),...
-                sum(f<=distmax))+1)/(arg.nperm+1));
+        case 'both'
+            p = min(1,2*(min(sum(stat>=distmin),...
+                sum(stat<=distmax))+1)/(arg.nperm+1));
         case 'right'
-            p = (sum(f<=distmax)+1)/(arg.nperm+1);
+            p = (sum(stat<=distmax)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(f>=distmin)+1)/(arg.nperm+1);
+            p = (sum(stat>=distmin)+1)/(arg.nperm+1);
     end
 
 end
 
 % Compute confidence interval
 if nargout > 2
-    switch arg.tail
-        case {'both','two'}
-            crit = [prctile(distmin,100*arg.alpha/2);...
-                prctile(distmax,100*(1-arg.alpha/2))];
-            ci = f./crit;
-        case 'right'
-            crit = prctile(distmax,100*(1-arg.alpha));
-            ci = [f./crit;Inf(1,nvar)];
-        case 'left'
-            crit = prctile(distmin,100*arg.alpha);
-            ci = [zeros(1,nvar);f./crit];
+    switch arg.type
+        case 'ftest'
+            switch arg.tail
+                case 'both'
+                    crit = [prctile(distmin,100*arg.alpha/2);...
+                        prctile(distmax,100*(1-arg.alpha/2))];
+                    ci = stat./crit;
+                case 'right'
+                    crit = prctile(distmax,100*(1-arg.alpha));
+                    ci = [stat./crit;Inf(1,nvar)];
+                case 'left'
+                    crit = prctile(distmin,100*arg.alpha);
+                    ci = [zeros(1,nvar);stat./crit];
+            end
+        case 'squarerank'
+            ci = NaN(2,nvar);
     end
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 3
-    stats.fstat = f;
-    stats.df1 = df1;
-    stats.df2 = df2;
+    switch arg.type
+        case 'ftest'
+            stats.fstat = stat;
+            stats.df1 = df1;
+            stats.df2 = df2;
+            stats.var = [varx;vary];
+        case 'squarerank'
+            stats.tstat = stat;
+            stats.median = [medx;medy];
+            stats.iqr = iqrxy;
+    end
     stats.method = arg.type;
 end
 
 % Arrange results in a matrix if specified
 if arg.matrix
-    f = ptvec2mat(f);
+    stat = ptvec2mat(stat);
     if nargout > 1
         p = ptvec2mat(p);
     end
@@ -266,8 +329,16 @@ if arg.matrix
         ci = permute(ci,[3,1,2]);
     end
     if nargout > 3
-        stats.fstat = ptvec2mat(f);
-        stats.df1 = ptvec2mat(df1);
-        stats.df2 = ptvec2mat(df2);
+        switch arg.type
+            case 'ftest'
+                stats.fstat = stat;
+                stats.df1 = ptvec2mat(df1);
+                stats.df2 = ptvec2mat(df2);
+                stats.var = ptvec2mat([varx;vary]);
+            case 'squarerank'
+                stats.tstat = stat;
+                stats.median = ptvec2mat([medx;medy]);
+                stats.iqr = ptvec2mat(iqrxy);
+        end
     end
 end
