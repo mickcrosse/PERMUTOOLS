@@ -1,6 +1,6 @@
-function [chisq,p,ci,stats,dist] = permuvartest(x,v,varargin)
+function [stat,p,ci,stats,dist] = permuvartest(x,v,varargin)
 %PERMUVARTEST  Bootstrap-based one-sample test of variance.
-%   CHISQ = PERMUVARTEST(X,V) performs a one-sample bootstrap test based on
+%   STAT = PERMUVARTEST(X,V) performs a one-sample bootstrap test based on
 %   the Chi-squared statistic of the the null hypothesis that the data in X
 %   come from a distribution with variance V, and returns the test
 %   statistic. If X is a matrix, separate bootstrap tests are performed
@@ -9,25 +9,25 @@ function [chisq,p,ci,stats,dist] = permuvartest(x,v,varargin)
 %
 %   PERMUVARTEST treats NaNs as missing values, and ignores them.
 %
-%   [CHISQ,P] = PERMUVARTEST(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUVARTEST(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true. As
 %   the null distribution is generated empirically by bootstrapping the
 %   data, no assumption is made about the shape of the distributions that
 %   the data come from. P-values are automatically adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [CHISQ,P,CI] = PERMUVARTEST(...) returns a 100*(1-ALPHA)% confidence
+%   [STAT,P,CI] = PERMUVARTEST(...) returns a 100*(1-ALPHA)% confidence
 %   interval for the true variance. CIs are also adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [CHISQ,P,CI,STATS] = PERMUVARTEST(...) returns a structure with the
+%   [STAT,P,CI,STATS] = PERMUVARTEST(...) returns a structure with the
 %   following fields:
 %       'chisqstat' -- the value of the test statistic
 %       'df'        -- the degrees of freedom of each test
 %       'var'       -- the estimated population variance
 %       'method'    -- the statistical method used
 %
-%   [CHISQ,P,CI,STATS,DIST] = PERMUVARTEST(...) returns the bootstrapped
+%   [STAT,P,CI,STATS,DIST] = PERMUVARTEST(...) returns the bootstrapped
 %   sampling distribution of the test statistic.
 %
 %   [...] = PERMUVARTEST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -78,6 +78,9 @@ narginchk(2,Inf);
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
+end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
@@ -97,9 +100,6 @@ end
 [maxnobs,nvar] = size(x);
 nobs = sum(~isnan(x));
 
-% Compute degrees of freedom
-df = nobs-1;
-
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
     nanflag = 'omitnan';
@@ -108,14 +108,15 @@ else
 end
 
 % Compute observed statistics
+df = nobs-1;
 mu = sum(x,nanflag)./nobs;
 xdm = x-mu;
 sumsq = sum(xdm.^2,nanflag);
 if v > 0
-    chisq = sumsq./v;
+    stat = sumsq./v;
 else
-    chisq = Inf(size(1,nvar),'like',sumsq);
-    chisq(sumsq==0) = NaN;
+    stat = Inf(size(1,nvar),'like',sumsq);
+    stat(sumsq==0) = NaN;
 end
 
 if nargout > 1
@@ -126,47 +127,62 @@ if nargout > 1
     varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)./df;
     xnull = xdm.*sqrt(v./varx);
 
-    % Estimate sampling distribution
+    % Estimate sampling distribution (bias-corrected)
     dist = zeros(arg.nboot,nvar);
-    try
-        idx = randi(maxnobs,maxnobs,arg.nboot,'uint32');
-        for i = 1:nvar
-            xcol = xnull(:,i);
-            xp = xcol(idx);
-            nobsp = sum(~isnan(xp),1);
-            mup = sum(xp,1,nanflag)./nobsp;
-            sumsqp = sum((xp-mup).^2,1,nanflag);
-            dist(:,i) = sumsqp'./v;
-        end
-    catch
-        for i = 1:arg.nboot
-            idx = randi(maxnobs,maxnobs,1,'uint32');
-            xp = xnull(idx,:);
-            nobsp = sum(~isnan(xp),1);
-            mup = sum(xp,1,nanflag)./nobsp;
-            sumsqp = sum((xp-mup).^2,1,nanflag);
-            dist(i,:) = sumsqp./v;
-        end
+    switch nanflag
+        case 'omitnan'
+            % Dynamic N-tracking for missing data
+            for i = 1:arg.nboot
+                idx = randi(maxnobs,maxnobs,1,'uint32');
+                xp = xnull(idx,:);
+                nobsp = sum(~isnan(xp),1);
+                factor = nobsp./(nobsp-1);
+                mup = sum(xp, 1,nanflag)./nobsp;
+                sumsqp = sum((xp-mup).^2,1,nanflag).*factor;
+                dist(i, :) = sumsqp./v;
+            end
+        case 'includenan'
+            factor = nobs./df;
+            try
+                % Fast vectorized calculation for complete data
+                idx = randi(maxnobs,maxnobs,arg.nboot,'uint32');
+                for i = 1:nvar
+                    xcol = xnull(:,i);
+                    xp = xcol(idx);
+                    mup = sum(xp,1,nanflag)./nobs(i);
+                    sumsqp = sum((xp-mup).^2,1,nanflag).*factor(i);
+                    dist(:,i) = sumsqp'./v;
+                end
+            catch
+                % Fallback for massive arrays to prevent out-of-memory
+                for i = 1:arg.nboot
+                    idx = randi(maxnobs,maxnobs,1,'uint32');
+                    xp = xnull(idx,:);
+                    mup = sum(xp,1,nanflag)./nobs;
+                    sumsqp = sum((xp-mup).^2,1,nanflag).*factor;
+                    dist(i,:) = sumsqp./v;
+                end
+            end
     end
 
     % Apply max correction if specified
     if arg.correct
-        pdmax = max(dist,[],2);
-        pdmin = min(dist,[],2);
+        distmax = max(dist,[],2);
+        distmin = min(dist,[],2);
     else
-        pdmax = dist;
-        pdmin = dist;
+        distmax = dist;
+        distmin = dist;
     end
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = min(1,2*(min(sum(chisq<=pdmax),...
-                sum(chisq>=pdmin))+1)/(arg.nboot+1));
+        case 'both'
+            p = min(1,2*(min(sum(stat<=distmax),...
+                sum(stat>=distmin))+1)/(arg.nboot+1));
         case 'right'
-            p = (sum(chisq<=pdmax)+1)/(arg.nboot+1);
+            p = (sum(stat<=distmax)+1)/(arg.nboot+1);
         case 'left'
-            p = (sum(chisq>=pdmin)+1)/(arg.nboot+1);
+            p = (sum(stat>=distmin)+1)/(arg.nboot+1);
     end
 
 end
@@ -174,23 +190,35 @@ end
 % Compute confidence interval
 if nargout > 2
     switch arg.tail
-        case {'both','two'}
-            crit = [prctile(pdmax,100*(1-arg.alpha/2));...
-                prctile(pdmin,100*arg.alpha/2)];
+        case 'both'
+            crit = [prctile(distmax,100*(1-arg.alpha/2));...
+                prctile(distmin,100*arg.alpha/2)];
             ci = sumsq./crit;
         case 'right'
-            crit = prctile(pdmax,100*(1-arg.alpha));
+            crit = prctile(distmax,100*(1-arg.alpha));
             ci = [sumsq./crit;Inf(1,nvar)];
         case 'left'
-            crit = prctile(pdmin,100*arg.alpha);
+            crit = prctile(distmin,100*arg.alpha);
             ci = [zeros(1,nvar);sumsq./crit];
     end
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 3
-    stats.chisqstat = chisq;
+    stats.chisqstat = stat;
     stats.df = df;
     stats.var = varx;
     stats.method = 'chisqtest';
+end
+
+% Format sampling distribution
+if nargout > 4
+    if arg.correct
+        switch arg.tail
+            case {'both','right'}
+                dist = distmax;
+            case 'left'
+                dist = distmin;
+        end
+    end
 end
