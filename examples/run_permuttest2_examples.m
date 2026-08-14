@@ -181,17 +181,17 @@ for t = 1:numel(type)
         switch type{t}
             case 'ttest2'
                 stat1 = stats1.tstat;
-                stat2 = stats2.tstat;
+                stat3 = stats3.tstat;
                 var1 = stats1.sd;
-                var2 = stats2.sd;
+                var2 = stats3.sd;
             case 'ranksum'
                 stat1 = zval1;
-                stat2 = stats2.zstat;
+                stat3 = stats3.zstat;
                 var1 = iqr1;
-                var2 = stats2.iqr;
+                var2 = stats3.iqr;
         end
         subplot(2,2,1), hold on
-        plot(xaxis,stat1,xaxis,stat2,'--','LineWidth',2)
+        plot(xaxis,stat1,xaxis,stat3,'--','LineWidth',2)
         xlim([0,nvar+1]), ylim([-7,7]), box on, grid on
         title('Test Statistic')
         xlabel('variable')
