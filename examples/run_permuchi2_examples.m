@@ -111,9 +111,9 @@ for i = 1:numel(tail)
         legend('Chi2 statistic','Location','best')
     end
     subplot(3,2,i+i), hold on
-    plot(xaxis,chi1,xaxis,chi2,'--','LineWidth',2)
-    plot(xaxis(p1<=alpha),chi2(p1<=alpha),'ok','LineWidth',2)
-    plot(xaxis(p3<=alpha),chi2(p3<=alpha),'xr','LineWidth',2)
+    plot(xaxis,chi1,xaxis,chi3,'--','LineWidth',2)
+    plot(xaxis(p1<=alpha),chi3(p1<=alpha),'ok','LineWidth',2)
+    plot(xaxis(p3<=alpha),chi3(p3<=alpha),'xr','LineWidth',2)
     xlim([0,nvar+1]), ylim([0,25]), box on, grid on
     if i == 1
         title('Max-corrected')
