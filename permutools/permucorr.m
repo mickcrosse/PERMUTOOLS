@@ -1,6 +1,6 @@
-function [r,p,ci,stats,dist] = permucorr(x,varargin)
+function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %PERMUCORR  Permutation-based Pearson, Spearman's rank, and rankit correlation coefficient.
-%   R = PERMUCORR(X) returns a matrix containing the pairwise linear
+%   STAT = PERMUCORR(X) returns a matrix containing the pairwise linear
 %   correlation coefficients between each pair of columns in X based on
 %   Pearson's r.
 %
@@ -11,13 +11,13 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %
-%   R = PERMUCORR(X,Y) returns the pairwise correlation coefficient between
-%   vectors X and Y. X and Y must have the same length. If X and Y are
-%   matrices, the correlation coefficients between each corresponding pair
-%   of columns in X and Y are calculated, and a vector of results is
+%   STAT = PERMUCORR(X,Y) returns the pairwise correlation coefficient
+%   between vectors X and Y. X and Y must have the same length. If X and Y
+%   are matrices, the correlation coefficients between each corresponding
+%   pair of columns in X and Y are calculated, and a vector of results is
 %   returned.
 %
-%   [R,P] = PERMUCORR(...) returns the probability (i.e. p-value) of
+%   [STAT,P] = PERMUCORR(...) returns the probability (i.e. p-value) of
 %   observing the given result by chance if the null hypothesis is true.
 %   As the null distribution is generated empirically by permuting the
 %   data, no assumption is made about the shape of the distribution that
@@ -25,16 +25,16 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %   permutation tests are automatically used. P-values are automatically
 %   adjusted for multiple comparisons using the max correction method.
 %
-%   [R,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence interval
-%   (CI) for each coefficient. CIs are also adjusted for multiple
+%   [STAT,P,CI] = PERMUCORR(...) returns a 100*(1-ALPHA)% confidence
+%   interval (CI) for each coefficient. CIs are also adjusted for multiple
 %   comparisons using the max correction method.
 %
-%   [R,P,CI,STATS] = PERMUCORR(...) returns a structure with the following
-%   fields:
+%   [STAT,P,CI,STATS] = PERMUCORR(...) returns a structure with the
+%   following fields:
 %       'df'        -- the degrees of freedom of each measure
 %       'method'    -- the correlation method used
 %
-%   [R,P,CI,STATS,DIST] = PERMUCORR(...) returns the permuted sampling
+%   [STAT,P,CI,STATS,DIST] = PERMUCORR(...) returns the permuted sampling
 %   distribution of the test statistic.
 %
 %   [...] = PERMUCORR(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -59,7 +59,7 @@ function [r,p,ci,stats,dist] = permucorr(x,varargin)
 %                       'left'      correlation is less than zero
 %       'nperm'     An integer scalar specifying the number of permutations
 %                   (default=10,000 or all possible permutations for less
-%                   than 14 observations).
+%                   than 8 observations).
 %       'correct'   A numeric scalar (0,1) or logical indicating whether to
 %                   control FWER using max correction (default=1).
 %       'rows'      A string specifying the rows to use in the case of any
@@ -148,11 +148,6 @@ end
 [maxnobs,nvar] = size(x);
 nobs = sum(~isnan(x));
 
-% Compute degrees of freedom
-if nargout > 3
-    df = nobs-2;
-end
-
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:))) || any(isnan(y(:)))
     nanflag = 'omitnan';
@@ -177,7 +172,7 @@ end
 sdxy = sqrt((sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)...
     .*(sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobs));
 mu = sum(x,nanflag).*sum(y,nanflag)./nobs;
-r = (sum(x.*y,nanflag)-mu)./sdxy;
+stat = (sum(x.*y,nanflag)-mu)./sdxy;
 
 if nargout > 1
 
@@ -197,85 +192,93 @@ if nargout > 1
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    if any(isnan(x(:))) || any(isnan(y(:)))
-        % Exact pair-wise calculation for missing data
-        for i = 1:arg.nperm
-            xp = x(idx(:,i),:);
-            valid = ~isnan(xp) & ~isnan(y);
-            xp(~valid) = 0;
-            yp = y;
-            yp(~valid) = 0;
-            nobsp = sum(valid);
-            sumx = sum(xp);
-            sumy = sum(yp);
-            sdxyp = sqrt((sum(xp.^2)-(sumx.^2)./nobsp).*...
-                (sum(yp.^2)-(sumy.^2)./nobsp));
-            mup = sumx.*sumy./nobsp;
-            dist(i,:) = (sum(xp.*yp)-mup)./sdxyp;
-        end
-    else
-        % Fast vectorized calculation for complete data
-        for j = 1:nvar
-            xp = x(:,j);
-            yp = y(:,j);
-            sumxy = yp'*xp(idx);
-            dist(:,j) = (sumxy'-mu(j))./sdxy(j);
-        end
+    switch nanflag
+        case 'omitnan'
+            % Exact pair-wise calculation for missing data
+            for i = 1:arg.nperm
+                xp = x(idx(:,i),:);
+                valid = ~isnan(xp) & valid_y;
+                xp(~valid) = 0;
+                yp = y;
+                yp(~valid) = 0;
+                nobsp = sum(valid,1);
+                sumx = sum(xp,1);
+                sumy = sum(yp,1);
+                sdxyp = sqrt((sum(xp.^2,1)-(sumx.^2)./nobsp).*...
+                    (sum(yp.^2,1)-(sumy.^2)./nobsp));
+                mup = sumx.*sumy./nobsp;
+                dist(i,:) = (sum(xp.*yp,1)-mup)./sdxyp;
+            end
+        case 'includenan'
+            % Fast vectorized calculation for complete data
+            for j = 1:nvar
+                xp = x(:,j);
+                yp = y(:,j);
+                sumxy = yp'*xp(idx);
+                dist(:,j) = (sumxy'-mu(j))./sdxy(j);
+            end
     end
 
     % Apply max correction if specified
     if arg.correct
         switch arg.tail
-            case {'both','two'}
-                dist = max(abs(dist),[],2);
+            case 'both'
+                refdist = max(abs(dist),[],2);
             case 'right'
-                dist = max(dist,[],2);
+                refdist = max(dist,[],2);
             case 'left'
-                dist = min(dist,[],2);
+                refdist = min(dist,[],2);
         end
     else
-        switch arg.tail
-            case {'both','two'}
-                dist = abs(dist);
-        end
+        refdist = dist;
     end
 
     % Compute p-value
     switch arg.tail
-        case {'both','two'}
-            p = (sum(abs(r)<=dist)+1)/(arg.nperm+1);
+        case 'both'
+            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(r<=dist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(r>=dist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
     end
 
 end
 
 % Compute confidence interval
 if nargout > 2
+    zstat = atanh(stat);
+    zdist = atanh(refdist);
     switch arg.tail
-        case {'both','two'}
-            crit = prctile(dist,100*(1-arg.alpha));
-            ci = [max(-1,r-crit);min(1,r+crit)];
+        case 'both'
+            crit = prctile(abs(zdist), 100*(1-arg.alpha));
+            ci = [tanh(zstat - crit); tanh(zstat + crit)];
         case 'right'
-            crit = prctile(dist,100*(1-arg.alpha));
-            ci = [max(-1,r-crit);Inf(1,nvar)];
+            crit = prctile(zdist, 100*(1-arg.alpha));
+            ci = [tanh(zstat - crit); Inf(1,nvar)];
         case 'left'
-            crit = prctile(-dist,100*(1-arg.alpha));
-            ci = [-Inf(1,nvar);min(1,r+crit)];
+            crit = prctile(-zdist, 100*(1-arg.alpha));
+            ci = [-Inf(1,nvar); tanh(zstat + crit)];
     end
 end
 
-% Store statistics in a structure
+% Format descriptive statistics
 if nargout > 3
+    df = nobs-2;
     stats.df = df;
     stats.method = arg.type;
 end
 
+% Format sampling distribution
+if nargout > 4
+    if arg.correct
+        dist = refdist;
+    end
+end
+
 % Arrange results in a matrix if specified
 if arg.matrix
-    r = ptvec2mat(r);
+    stat = ptvec2mat(stat);
     if nargout > 1
         p = ptvec2mat(p);
     end
