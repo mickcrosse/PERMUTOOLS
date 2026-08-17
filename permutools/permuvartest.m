@@ -78,9 +78,6 @@ narginchk(2,Inf);
 
 % Parse input arguments
 arg = ptparsevarargin(varargin);
-if strcmpi(arg.tail,'two')
-    arg.tail = 'both';
-end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
