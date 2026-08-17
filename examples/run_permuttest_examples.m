@@ -7,8 +7,8 @@ function run_permuttest_examples
 %   the t-statistic are performed between the corresponding variables of
 %   each sample for two-tailed, right-tailed and left-tailed tests. The
 %   results are compared to those of the equivalent parametric statistical
-%   tests (i.e. paired t-tests) using ttest.m, and non-parametric
-%   statistical tests (i.e. Wilcoxon signed-rank tests) using signrank.m.
+%   test (paired t-test) using MATLAB's ttest.m, and non-parametric
+%   statistical test (Wilcoxon signed-rank test) using MATLAB's signrank.m.
 %
 %   See also PERMUTTEST TTEST SIGNRANK.
 %
@@ -54,7 +54,7 @@ for t = 1:numel(type)
     toc2 = zeros(numel(tail),1);
     toc3 = zeros(numel(tail),1);
 
-    f1 = figure('Name',['Paired ',type{t},': ',ct_metric{t},' & CIs'],...
+    f1 = figure('Name',['Paired ',type{t},': statistic & CIs'],...
         'NumberTitle','off');
     set(gcf,'color','w')
     f2 = figure('Name',['Paired ',type{t},': p-values'],...
@@ -94,7 +94,7 @@ for t = 1:numel(type)
             'correct',1,'verbose',0);
         toc3(i) = toc;
 
-        % Plot central tendancy & CIs
+        % Plot statistic & CIs
         figure(f1)
         switch type{t}
             case 'ttest'
