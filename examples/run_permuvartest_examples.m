@@ -6,8 +6,8 @@ function run_permuvartest_examples
 %   30 observations. One-sample bootstrap tests based on the chi-squared
 %   statistic are performed on each variables of X for two-tailed, right-
 %   tailed and left-tailed tests. The results are compared to those of the
-%   equivalent parametric statistical tests (i.e. one-sample chi-squared
-%   tests) using vartest.m.
+%   equivalent parametric statistical test (one-sample test of variance)
+%   using MATLAB's vartest.m.
 
 %   See also PERMUVARTEST VARTEST.
 %
@@ -40,7 +40,7 @@ if insert_nan
     x(1,1) = NaN;
 end
 
-f1 = figure('Name',['One-sample ',type,': variance & CIs'],...
+f1 = figure('Name',['One-sample ',type,': statistic & CIs'],...
     'NumberTitle','off');
 set(gcf,'color','w')
 f2 = figure('Name',['One-sample ',type,': p-values'],'NumberTitle','off');
@@ -71,7 +71,7 @@ for i = 1:numel(tail)
         'verbose',0);
     toc3(i) = toc;
 
-    % Plot variance & CIs
+    % Plot statistic & CIs
     figure(f1)
     subplot(3,2,i+i-1), hold on
     plot(xaxis,stats2.var,'LineWidth',2)
