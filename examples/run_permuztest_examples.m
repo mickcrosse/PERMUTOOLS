@@ -6,7 +6,7 @@ function run_permuztest_examples
 %   observations. One-sample permutation tests based on the Z-statistic are
 %   performed on each variable for two-tailed, right-tailed and left-tailed
 %   tests. The results are compared to those of the equivalent parametric
-%   statistical tests (i.e. paired Z-tests) using ztest.m.
+%   statistical test (one-sample Z-test) using MATLAB's ztest.m.
 %
 %   See also PERMUZTEST ZTEST.
 %
@@ -49,7 +49,7 @@ toc1 = zeros(numel(tail),1);
 toc2 = zeros(numel(tail),1);
 toc3 = zeros(numel(tail),1);
 
-f1 = figure('Name',['One-sample ',type,': mean & CIs'],'NumberTitle','off');
+f1 = figure('Name',['One-sample ',type,': statistic & CIs'],'NumberTitle','off');
 set(gcf,'color','w')
 f2 = figure('Name',['One-sample ',type,': p-values'],'NumberTitle','off');
 set(gcf,'color','w')
@@ -84,7 +84,7 @@ for i = 1:numel(tail)
         'verbose',0);
     toc3(i) = toc;
 
-    % Plot central tendancy & CIs
+    % Plot statistic & CIs
     figure(f1)
     subplot(3,2,i+i-1), hold on
     plot(xaxis,stats2.mean,'LineWidth',2)
