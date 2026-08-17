@@ -7,7 +7,7 @@ function run_permuvartest2_examples
 %   based on the F-statistic are performed between the corresponding
 %   variables of each sample for two-tailed, right-tailed and left-tailed
 %   tests. The results are compared to those of the equivalent parametric
-%   statistical tests (i.e. two-sample F-tests) using vartest2.m.
+%   statistical test (two-sample F-test) using MATLAB's vartest2.m.
 %
 %   See also PERMUVARTEST2 VARTEST2.
 %
@@ -29,7 +29,6 @@ xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
 type = {'ftest','squarerank'};
-test_metric = {'F-value','t-value'};
 
 % Generate random data
 rng(42);
@@ -45,7 +44,7 @@ for t = 1:numel(type)
     toc2 = zeros(numel(tail),1);
     toc3 = zeros(numel(tail),1);
 
-    f1 = figure('Name',['Two-sample ',type{t},': test statistic & CIs'],...
+    f1 = figure('Name',['Two-sample ',type{t},': statistic & CIs'],...
         'NumberTitle','off');
     set(gcf,'color','w')
     f2 = figure('Name',['Two-sample ',type{t},': p-values'],...
@@ -90,7 +89,7 @@ for t = 1:numel(type)
                 ylims = [-6,6];
         end
 
-        % Plot test stat & CIs
+        % Plot statistic & CIs
         figure(f1)
         subplot(3,2,i+i-1), hold on
         plot(xaxis,stat1,xaxis,stat2,'--','LineWidth',2)
