@@ -82,3 +82,8 @@ for i = 1:numel(fields)
     fn = fields{i};
     arg.(fn) = validatestring(arg.(fn), strOpts.(fn));
 end
+
+% Standardize tail aliases to canonical representation
+if strcmpi(arg.tail,'two')
+    arg.tail = 'both';
+end
