@@ -71,9 +71,6 @@ arg = ptparsevarargin(varargin);
 if ~any(strcmpi(varargin,'tail'))
     arg.tail = 'right';
 end
-if strcmpi(arg.tail,'two')
-    arg.tail = 'both';
-end
 
 % Validate input parameters
 ptvalidateparamin(x,[],arg)
