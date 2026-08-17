@@ -126,9 +126,6 @@ if isempty(arg.type)
 elseif strcmpi(arg.type,'rank')
     arg.type = 'ranksum';
 end
-if strcmpi(arg.tail,'two')
-    arg.tail = 'both';
-end
 
 % Validate input parameters
 ptvalidateparamin(x,y,arg)
