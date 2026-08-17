@@ -7,7 +7,7 @@ function run_permuchi2_examples
 %   independence based on the Chi-square statistic are performed on each
 %   variable for two-tailed, right-tailed and left-tailed tests. The
 %   results are compared to those of the equivalent parametric statistical
-%   tests using chi2cdf.
+%   test (Chi-square test) using MATLAB's chi2cdf.m.
 %
 %   See also PERMUCHI2 CROSSTAB CHI2GOF.
 %
@@ -53,7 +53,8 @@ toc1 = zeros(numel(tail),1);
 toc2 = zeros(numel(tail),1);
 toc3 = zeros(numel(tail),1);
 
-f1 = figure('Name',['One-sample ',type,': chi-square'],'NumberTitle','off');
+f1 = figure('Name',['One-sample ',type,': test statistic'],...
+    'NumberTitle','off');
 set(gcf,'color','w')
 f2 = figure('Name',['One-sample ',type,': p-values'],'NumberTitle','off');
 set(gcf,'color','w')
@@ -95,6 +96,7 @@ for i = 1:numel(tail)
     [chi3,p3] = permuchi2(x,'tail',tail{i},'correct',1);
     toc3(i) = toc;
 
+    % Plot statistic & CIs
     figure(f1)
     subplot(3,2,i+i-1), hold on
     plot(xaxis,chi1,xaxis,chi2,'--','LineWidth',2)
