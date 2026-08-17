@@ -7,9 +7,9 @@ function run_permuttest2_examples
 %   t-statistic are performed between the corresponding variables of each
 %   sample for two-tailed, right-tailed and left-tailed tests, as well as
 %   samples of equal and unequal variances. The results are compared to
-%   those of the equivalent parametric statistical tests (i.e. two-sample
-%   t-tests) using ttest2.m, and non-parametric statistical tests (i.e.
-%   Wilcoxon rank-sum / Mann-Whitney U tests) using ranksum.m.
+%   those of the equivalent parametric statistical test (two-sample
+%   t-tests) using MATLAB's ttest2.m, and non-parametric statistical test
+%   (Wilcoxon rank-sum / Mann-Whitney U tests) using MATLAB's ranksum.m.
 %
 %   See also PERMUTTEST2 TTEST2 RANKSUM.
 %
@@ -68,7 +68,7 @@ for t = 1:numel(type)
         end
 
         f1 = figure('Name',['Unpaired ',type{t},' (',vartype{v},...
-            ' var.): ',ct_metric{t},' & CIs'],'NumberTitle','off');
+            ' var.): statistic & CIs'],'NumberTitle','off');
         set(gcf,'color','w')
         f2 = figure('Name',['Unpaired ',type{t},' (',vartype{v},...
             ' var.): p-values'],'NumberTitle','off');
@@ -108,7 +108,7 @@ for t = 1:numel(type)
                 'tail',tail{i},'vartype',vartype{v},'correct',1);
             toc3((v-1)*3+i) = toc;
 
-            % Plot central tendancy & CIs
+            % Plot statistic & CIs
             figure(f1)
             switch type{t}
                 case 'ttest2'
