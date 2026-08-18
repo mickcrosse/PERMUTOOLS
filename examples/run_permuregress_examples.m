@@ -4,15 +4,14 @@ function run_permuregress_examples
 %   dependent variables Y. Y contains 20 variables, each with a correlation
 %   of 0 to X, except for the first 5 variables which have a positive
 %   relationship, and the second 5 variables which have a negative
-%   relationship. Each variable has 30 observations.
+%   relationship. Each variable has 30 observations. Permutation-based
+%   multiple linear regression is performed using the Freedman-Lane, Manly,
+%   and Rank methods for two-tailed, right-tailed, and left-tailed tests.
+%   The results are compared to those of the equivalent parametric
+%   statistical test (multiple linear regression via least squares) using 
+%   MATLAB's regress.m.
 %
-%   Permutation-based multiple linear regression is performed using the
-%   Freedman-Lane, Manly, and Rank methods for two-tailed, right-tailed,
-%   and left-tailed tests. The results are compared to those of the equivalent
-%   parametric statistical tests (i.e. Ordinary Least Squares regression
-%   and Student's t-distribution).
-%
-%   See also PERMUREGRESS FITLM REGRESS.
+%   See also PERMUREGRESS REGRESS.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -23,6 +22,8 @@ function run_permuregress_examples
 %   © 2018-2026 Mick Crosse <crossemj@tcd.ie>
 %   CNL, Albert Einstein College of Medicine, NY.
 %   TCBE, Trinity College Dublin, Ireland.
+
+close all; clc;
 
 % Set up experiment
 nobs = 30; nvar = 20;
@@ -40,63 +41,87 @@ y(:,6:10) = y(:,6:10)-x*0.8;
 
 for t = 1:numel(type)
 
-     % Parametric multiple linear regression (Ordinary Least Squares)
-    tic
-    if strcmp(type{t}, 'rank')
-        yparam = tiedrank(y);
-        y_lims = [-20,20]; % Rank coefficients scale much higher
-    else
-        yparam = y;
-        y_lims = [-2,2];
-    end
-    xparam = [ones(nobs,1),x];
-%     bparam = xparam\yparam;
-    bparam = zeros(2, 20);
-    for v = 1:20
-        mdl = fitlm(x, yparam(:,v));
-        bparam(:,v) = mdl.Coefficients.Estimate;
-    end
-    df = nobs-2;
-    mse = sum((yparam-xparam*bparam).^2)/df;
-    separam = sqrt(diag(inv(xparam'*xparam)).*mse);
-    b1 = bparam(2,:);
-    se1 = separam(2,:);
-    t1 = b1./se1;
+    disp(type{t})
 
-    % Plot parametric & permutation CIs
-    figure('Name',['Regression (',type{t},'): coefficients & CIs'],...
-        'NumberTitle','off')
+    toc1 = zeros(numel(tail),1);
+    toc2 = zeros(numel(tail),1);
+    toc3 = zeros(numel(tail),1);
+
+    f1 = figure('Name',['Regression (',type{t},'): coefficients & CIs'],...
+        'NumberTitle','off');
+    set(gcf,'color','w')
+    f2 = figure('Name',['Regression (',type{t},'): p-values'],...
+        'NumberTitle','off');
+    set(gcf,'color','w')
+
     for i = 1:numel(tail)
+
+        % Parametric test
+        tic
+        switch type{t}
+            case 'rank'
+                yparam = tiedrank(y);
+                xparam = [ones(nobs,1),tiedrank(x)];
+            otherwise
+                yparam = y;
+                xparam = [ones(nobs,1),x];
+        end
+        b1 = zeros(1,nvar);
+        p1 = zeros(1,nvar);
         ci1 = zeros(2,nvar);
         switch tail{i}
             case 'both'
-                p1 = 2*tcdf(-abs(t1),df);
-                crit = tinv(1-alpha/2,df);
-                ci1 = [b1-crit.*se1;b1+crit.*se1];
-            case 'right'
-                p1 = tcdf(-t1,df);
-                crit = tinv(1-alpha,df);
-                ci1 = [b1-crit.*se1;inf(1,nvar)];
-            case 'left'
-                p1 = tcdf(t1,df);
-                crit = tinv(1-alpha,df);
-                ci1 = [-inf(1,nvar);b1+crit.*se1];
+                cialpha = alpha;
+            case {'right','left'}
+                cialpha = alpha*2;
         end
-        fprintf('Elapsed time (param.): %.3f s\n',toc)
+        for v = 1:nvar
+            [b,bint,~,~,stats] = regress(yparam(:,v),xparam,cialpha);
+            b1(v) = b(2);
+            switch tail{i}
+                case 'both'
+                    p1(v) = stats(3);
+                    ci1(:,v) = bint(2,:);
+                case 'right'
+                    if b(2) > 0
+                        p1(v) = stats(3)/2;
+                    else
+                        p1(v) = 1-(stats(3)/2);
+                    end
+                    ci1(:,v) = [bint(2,1);Inf];
+                case 'left'
+                    if b(2) < 0
+                        p1(v) = stats(3)/2;
+                    else
+                        p1(v) = 1-(stats(3)/2);
+                    end
+                    ci1(:,v) = [-Inf;bint(2,2)];
+            end
+        end
+        toc1(i) = toc;
 
+        % Permutation test (uncorrected)
         tic
         [b2,p2,ci2] = permuregress(x,y,'tail',tail{i},...
             'type',type{t},'correct',0);
         b2 = b2(2,:); p2 = p2(2,:); ci2 = squeeze(ci2(:,:,2));
-        fprintf('Elapsed time (perm. uncorr.): %.3f s\n',toc)
+        toc2(i) = toc;
 
-        set(gcf,'color','w')
+        % Permutation test (max-corrected)
+        tic
+        [b3,p3,ci3] = permuregress(x,y,'tail',tail{i},'type',type{t},...
+            'correct',1);
+        b3 = b3(2,:); p3 = p3(2,:); ci3 = squeeze(ci3(:,:,2));
+        toc3(i) = toc;
+
+        % Plot statistic & CIs
+        figure(f1)
         subplot(3,2,i+i-1), hold on
-        plot(xaxis,b2,'LineWidth',3)
+        plot(xaxis,b1,xaxis,b2,'--','LineWidth',2)
         plot(xaxis,ci1,'k',xaxis,ci2,'--r')
         plot(xaxis(p1<=alpha),b1(p1<=alpha),'ok','LineWidth',2)
         plot(xaxis(p2<=alpha),b2(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,nvar+1]), ylim(y_lims), box on, grid on
+        xlim([0,nvar+1]), ylim([-2,2]), box on, grid on
         if i == 1
             title('Uncorrected')
         elseif i == 3
@@ -104,45 +129,23 @@ for t = 1:numel(type)
         end
         ylabel([label{i},'-tailed'])
         if i == 1
-            legend('\beta coefficient','95% CI (param.)','',...
-                '95% CI (perm.)','Location','best')
+            legend('\beta coef. (param.)','\beta coef. (perm.)',...
+                '95% CI (param.)','','95% CI (perm.)','Location','best')
         end
-        
-        tic
-        [~,p2,ci2] = permuregress(x,y,'tail',tail{i},'type',type{t},...
-            'correct',1);
-        p2 = p2(2,:); ci2 = squeeze(ci2(:,:,2));
-        fprintf('Elapsed time (perm. corr.): %.3f s\n',toc)
-
         subplot(3,2,i+i), hold on
-        plot(xaxis,b2,'LineWidth',3)
-        plot(xaxis,ci1,'k',xaxis,ci2,'--r')
+        plot(xaxis,b1,xaxis,b3,'--','LineWidth',2)
+        plot(xaxis,ci1,'k',xaxis,ci3,'--r')
         plot(xaxis(p1<=alpha),b1(p1<=alpha),'ok','LineWidth',2)
-        plot(xaxis(p2<=alpha),b2(p2<=alpha),'xr','LineWidth',2)
-        xlim([0,nvar+1]), ylim(y_lims), box on, grid on
+        plot(xaxis(p3<=alpha),b3(p3<=alpha),'xr','LineWidth',2)
+        xlim([0,nvar+1]), ylim([-2,2]), box on, grid on
         if i == 1
             title('Max-corrected')
         elseif i == 3
             xlabel('variable')
         end
-    end
 
-    % Plot parametric & permutation p-values
-    figure('Name',['Regression (',type{t},'): p-values'],...
-        'NumberTitle','off')
-    set(gcf,'color','w')
-    for i = 1:numel(tail)
-        switch tail{i}
-            case 'both'
-                p1 = 2*tcdf(-abs(t1),df);
-            case 'right'
-                p1 = tcdf(-t1,df);
-            case 'left'
-                p1 = tcdf(t1,df);
-        end
-        [~,p2] = permuregress(x,y,'tail',tail{i},'type',type{t},...
-            'correct',0);
-        p2 = p2(2,:);
+        % Plot p-values
+        figure(f2)
         subplot(3,2,i+i-1), hold on
         plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on
@@ -156,17 +159,19 @@ for t = 1:numel(type)
             legend('{\itp}-value (param.)','{\itp}-value (perm.)',...
                 'Location','best')
         end
-        [~,p2] = permuregress(x,y,'tail',tail{i},'type',type{t},...
-            'correct',1);
-        p2 = p2(2,:);
         subplot(3,2,i+i), hold on
-        plot(xaxis,p1,'k',xaxis,p2,'--r','LineWidth',2)
+        plot(xaxis,p1,'k',xaxis,p3,'--r','LineWidth',2)
         xlim([0,nvar+1]), ylim([0,1]), box on, grid on
         if i == 1
             title('Max-corrected')
         elseif i == 3
             xlabel('variable')
         end
+
     end
+
+    fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
+    fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
+    fprintf('Permutation (max-corr.): %.1f ms\n',mean(toc3)*1e3)
 
 end
