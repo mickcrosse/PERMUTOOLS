@@ -84,9 +84,6 @@ end
 % Get data dimensions
 [nrow,ncol,nvar] = size(x);
 
-% Compute degrees of freedom
-df = (nrow-1)*(ncol-1);
-
 % Validate sample sizes
 nobsall = squeeze(sum(x,[1,2]));
 if any(nobsall ~= nobsall(1))
@@ -95,6 +92,7 @@ end
 nobs = nobsall(1);
 
 % Compute observed statistics
+df = (nrow-1)*(ncol-1);
 rowsums = sum(x,2);
 colsums = sum(x,1);
 E = (rowsums.*colsums)./nobs;
