@@ -158,8 +158,8 @@ end
 
 % Get data dimensions, ignoring NaNs
 [maxnobsx,nvar] = size(x);
-nobsx = sum(~isnan(x));
-nobsy = sum(~isnan(y));
+nobsx = sum(~isnan(x),1);
+nobsy = sum(~isnan(y),1);
 
 % Compute degrees of freedom
 dfx = nobsx-1;
@@ -175,9 +175,9 @@ end
 % Compute variance using fast algo
 switch arg.type
     case 'ttest2'
-        sumx = sum(x,nanflag); sumy = sum(y,nanflag);
-        varx = (sum(x.^2,nanflag)-(sumx.^2)./nobsx)./dfx;
-        vary = (sum(y.^2,nanflag)-(sumy.^2)./nobsy)./dfy;
+        sumx = sum(x,1,nanflag); sumy = sum(y,nanflag);
+        varx = (sum(x.^2,1,nanflag)-(sumx.^2)./nobsx)./dfx;
+        vary = (sum(y.^2,1,nanflag)-(sumy.^2)./nobsy)./dfy;
     case 'ranksum'
         if nargout > 3
             iqrx = [iqr(x);iqr(y)];
@@ -187,7 +187,7 @@ end
 
 % Concatenate samples
 x = [x;y];
-nobs = sum(~isnan(x));
+nobs = sum(~isnan(x),1);
 sqrtn = sqrt(nobs./(nobsx.*nobsy));
 
 % Compute observed statistics
@@ -314,11 +314,11 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
+            p = (sum(abs(stat)<=abs(refdist),1)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist,1)+1)/(arg.nperm+1);
     end
 
 end

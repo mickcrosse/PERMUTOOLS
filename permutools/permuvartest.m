@@ -95,7 +95,7 @@ end
 
 % Get data dimensions, ignoring NaNs
 [maxnobs,nvar] = size(x);
-nobs = sum(~isnan(x));
+nobs = sum(~isnan(x),1);
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
@@ -106,9 +106,9 @@ end
 
 % Compute observed statistics
 df = nobs-1;
-mu = sum(x,nanflag)./nobs;
+mu = sum(x,1,nanflag)./nobs;
 xdm = x-mu;
-sumsq = sum(xdm.^2,nanflag);
+sumsq = sum(xdm.^2,1,nanflag);
 if v > 0
     stat = sumsq./v;
 else
@@ -121,7 +121,7 @@ if nargout > 1
     rng(arg.seed);
 
     % Compute sample variance using fast algo and scale to V
-    varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)./df;
+    varx = (sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobs)./df;
     xnull = xdm.*sqrt(v./varx);
 
     % Estimate sampling distribution (bias-corrected)
@@ -134,7 +134,7 @@ if nargout > 1
                 xp = xnull(idx,:);
                 nobsp = sum(~isnan(xp),1);
                 factor = nobsp./(nobsp-1);
-                mup = sum(xp, 1,nanflag)./nobsp;
+                mup = sum(xp,1,nanflag)./nobsp;
                 sumsqp = sum((xp-mup).^2,1,nanflag).*factor;
                 dist(i, :) = sumsqp./v;
             end
@@ -174,12 +174,12 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = min(1,2*(min(sum(stat<=distmax),...
+            p = min(1,2*(min(sum(stat<=distmax,1),...
                 sum(stat>=distmin))+1)/(arg.nboot+1));
         case 'right'
-            p = (sum(stat<=distmax)+1)/(arg.nboot+1);
+            p = (sum(stat<=distmax,1)+1)/(arg.nboot+1);
         case 'left'
-            p = (sum(stat>=distmin)+1)/(arg.nboot+1);
+            p = (sum(stat>=distmin,1)+1)/(arg.nboot+1);
     end
 
 end

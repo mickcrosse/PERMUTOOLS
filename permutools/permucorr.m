@@ -146,7 +146,7 @@ end
 
 % Get data dimensions
 [maxnobs,nvar] = size(x);
-nobs = sum(~isnan(x));
+nobs = sum(~isnan(x),1);
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:))) || any(isnan(y(:)))
@@ -169,10 +169,10 @@ switch arg.type
 end
 
 % Compute observed statistics
-sdxy = sqrt((sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobs)...
-    .*(sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobs));
-mu = sum(x,nanflag).*sum(y,nanflag)./nobs;
-stat = (sum(x.*y,nanflag)-mu)./sdxy;
+sdxy = sqrt((sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobs)...
+    .*(sum(y.^2,1,nanflag)-(sum(y,1,nanflag).^2)./nobs));
+mu = sum(x,1,nanflag).*sum(y,1,nanflag)./nobs;
+stat = (sum(x.*y,1,nanflag)-mu)./sdxy;
 
 if nargout > 1
 
@@ -236,11 +236,11 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
+            p = (sum(abs(stat)<=abs(refdist),1)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist,1)+1)/(arg.nperm+1);
     end
 
 end

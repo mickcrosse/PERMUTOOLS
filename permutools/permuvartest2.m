@@ -136,8 +136,8 @@ end
 
 % Get data dimensions, ignoring NaNs
 [maxnobsx,nvar] = size(x);
-nobsx = sum(~isnan(x));
-nobsy = sum(~isnan(y));
+nobsx = sum(~isnan(x),1);
+nobsy = sum(~isnan(y),1);
 df1 = nobsx-1;
 df2 = nobsy-1;
 
@@ -151,8 +151,10 @@ end
 % Compute observed statistics
 switch arg.type
     case 'ftest'
-        varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
-        vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
+        mux = sum(x,1,nanflag)./nobsx;
+        muy = sum(y,1,nanflag)./nobsy;
+        varx = (sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobsx)./df1;
+        vary = (sum(y.^2,1,nanflag)-(sum(y,1,nanflag).^2)./nobsy)./df2;
         stat = varx./vary;
     case 'squarerank'
         if nargout > 3
@@ -163,10 +165,10 @@ switch arg.type
         devxy = tiedrank(abs([x-medx;y-medy]));
         x = devxy(1:size(x,1),:).^2;
         y = devxy(size(x,1)+1:end,:).^2;
-        mux = sum(x,nanflag)./nobsx;
-        muy = sum(y,nanflag)./nobsy;
-        varx = (sum(x.^2,nanflag)-(sum(x,nanflag).^2)./nobsx)./df1;
-        vary = (sum(y.^2,nanflag)-(sum(y,nanflag).^2)./nobsy)./df2;
+        mux = sum(x,1,nanflag)./nobsx;
+        muy = sum(y,1,nanflag)./nobsy;
+        varx = (sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobsx)./df1;
+        vary = (sum(y.^2,1,nanflag)-(sum(y,1,nanflag).^2)./nobsy)./df2;
         sp2 = (df1.*varx+df2.*vary)./(nobsx + nobsy - 2);
         se = sqrt(sp2.*(1./nobsx+1./nobsy));
         stat = (mux-muy)./se;
@@ -179,8 +181,8 @@ if nargout > 1
     rng(arg.seed);
 
     % Demean and concatenate samples
-    x = x-sum(x,nanflag)./nobsx;
-    y = y-sum(y,nanflag)./nobsy;
+    x = x-mux;
+    y = y-muy;
     x = [x;y];
 
     % Generate random permutations
@@ -199,28 +201,28 @@ if nargout > 1
                     for i = 1:arg.nperm
                         x1 = x(idx1(:,i),:);
                         x2 = x(idx2(:,i),:);
-                        nobs1 = sum(~isnan(x1));
-                        nobs2 = sum(~isnan(x2));
-                        var1 = (sum(x1.^2,nanflag)-...
-                            (sum(x1,nanflag).^2)./nobs1)./(nobs1-1);
-                        var2 = (sum(x2.^2,nanflag)-...
-                            (sum(x2,nanflag).^2)./nobs2)./(nobs2-1);
+                        nobs1 = sum(~isnan(x1),1);
+                        nobs2 = sum(~isnan(x2),1);
+                        var1 = (sum(x1.^2,1,nanflag)-...
+                            (sum(x1,1,nanflag).^2)./nobs1)./(nobs1-1);
+                        var2 = (sum(x2.^2,1,nanflag)-...
+                            (sum(x2,1,nanflag).^2)./nobs2)./(nobs2-1);
                         dist(i,:) = var1./var2;
                     end
                 case 'squarerank'
                     for i = 1:arg.nperm
                         x1 = x(idx1(:,i),:);
                         x2 = x(idx2(:,i),:);
-                        nobs1 = sum(~isnan(x1));
-                        nobs2 = sum(~isnan(x2));
+                        nobs1 = sum(~isnan(x1),1);
+                        nobs2 = sum(~isnan(x2),1);
                         df1p = nobs1-1;
                         df2p = nobs2-1;
-                        mu1 = sum(x1,nanflag)./nobs1;
-                        mu2 = sum(x2,nanflag)./nobs2;
-                        var1 = (sum(x1.^2,nanflag)-...
-                            (sum(x1,nanflag).^2)./nobs1)./df1p;
-                        var2 = (sum(x2.^2,nanflag)-...
-                            (sum(x2,nanflag).^2)./nobs2)./df2p;
+                        mu1 = sum(x1,1,nanflag)./nobs1;
+                        mu2 = sum(x2,1,nanflag)./nobs2;
+                        var1 = (sum(x1.^2,1,nanflag)-...
+                            (sum(x1,1,nanflag).^2)./nobs1)./df1p;
+                        var2 = (sum(x2.^2,1,nanflag)-...
+                            (sum(x2,1,nanflag).^2)./nobs2)./df2p;
                         sp2 = (df1p.*var1+df2p.*var2)./(nobs1+nobs2-2);
                         se = sqrt(sp2.*(1./nobs1+1./nobs2));
                         dist(i,:) = (mu1-mu2)./se;
@@ -234,20 +236,16 @@ if nargout > 1
             I(linidx) = 1;
             sum1 = I'*x;
             sum2 = sum(x,1)-sum1;
+            sumsq1 = I'*(x.^2);
+            sumsq2 = sum(x.^2,1)-sumsq1;
+            var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
+            var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
             switch arg.type
                 case 'ftest'
-                    sumsq1 = I'*(x.^2);
-                    sumsq2 = sum(x.^2,1)-sumsq1;
-                    var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
-                    var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
                     dist = var1./var2;
                 case 'squarerank'
                     mu1 = sum1./nobsx;
                     mu2 = sum2./nobsy;
-                    sumsq1 = I'*(x.^2);
-                    sumsq2 = sum(x.^2,1)-sumsq1;
-                    var1 = (sumsq1-(sum1.^2)./nobsx)./df1;
-                    var2 = (sumsq2-(sum2.^2)./nobsy)./df2;
                     sp2 = (df1.*var1+df2.*var2)./(nobsx+nobsy-2);
                     se = sqrt(sp2.*(1./nobsx+1./nobsy));
                     dist = (mu1-mu2)./se;
@@ -266,12 +264,12 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = min(1,2*(min(sum(stat>=distmin),...
-                sum(stat<=distmax))+1)/(arg.nperm+1));
+            p = min(1,2*(min(sum(stat>=distmin,1),...
+                sum(stat<=distmax,1))+1)/(arg.nperm+1));
         case 'right'
-            p = (sum(stat<=distmax)+1)/(arg.nperm+1);
+            p = (sum(stat<=distmax,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=distmin)+1)/(arg.nperm+1);
+            p = (sum(stat>=distmin,1)+1)/(arg.nperm+1);
     end
 
 end

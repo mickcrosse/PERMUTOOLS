@@ -178,7 +178,7 @@ end
 
 % Get data dimensions, ignoring NaNs
 [maxnobs,nvar] = size(x);
-nobs = sum(~isnan(x));
+nobs = sum(~isnan(x),1);
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
@@ -191,8 +191,8 @@ end
 switch arg.type
     case 'ttest'
         df = nobs-1;
-        sd = std(x,nanflag);
-        mu = sum(x,nanflag)./nobs;
+        sd = std(x,1,nanflag);
+        mu = sum(x,1,nanflag)./nobs;
         se = sd./sqrt(nobs);
         stat = mu./se;
     case 'signrank'
@@ -224,7 +224,7 @@ if nargout > 1
     sump = signp*x;
     switch arg.type
         case 'ttest'
-            sumsq = sum(x.^2,nanflag);
+            sumsq = sum(x.^2,1,nanflag);
             varp = (sumsq-(sump.^2)./nobs)./df;
             dist = (sump./nobs)./sqrt(varp./nobs);
         case 'signrank'
@@ -256,11 +256,11 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
+            p = (sum(abs(stat)<=abs(refdist),1)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist,1)+1)/(arg.nperm+1);
     end
 
 end

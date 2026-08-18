@@ -1,4 +1,4 @@
-function [stat,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
+function [stat,p,ci,stats,dist] = permuztesum(st(x,m,sigma,varargin)
 %PERMUZTEST  Permutation-based one-sample Z-test.
 %   STAT = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test
 %   based on the Z-statistic of the null hypothesis that the data in X come
@@ -97,7 +97,7 @@ end
 
 % Get data dimensions, ignoring NaNs
 [maxnobs,nvar] = size(x);
-nobs = sum(~isnan(x));
+nobs = sum(~isnan(x),1);
 
 % For efficiency, only omit NaNs if necessary
 if any(isnan(x(:)))
@@ -107,7 +107,7 @@ else
 end
 
 % Compute observed statistics
-mu = sum(x,nanflag)./nobs;
+mu = sum(x,1,nanflag)./nobs;
 se = sigma./sqrt(nobs);
 stat = (mu-m)./se;
 
@@ -124,7 +124,7 @@ if nargout > 1
         case 'omitnan'
             xdmu(isnan(xdmu)) = 0;
     end
-    sd = std(x,nanflag);
+    sd = std(x,1,nanflag);
     xdmu = xdmu.*(sigma./sd);
     sump = signx*xdmu;
     sen = se.*nobs;
@@ -155,11 +155,11 @@ if nargout > 1
     % Compute p-value
     switch arg.tail
         case 'both'
-            p = (sum(abs(stat)<=abs(refdist))+1)/(arg.nperm+1);
+            p = (sum(abs(stat)<=abs(refdist),1)+1)/(arg.nperm+1);
         case 'right'
-            p = (sum(stat<=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat<=refdist,1)+1)/(arg.nperm+1);
         case 'left'
-            p = (sum(stat>=refdist)+1)/(arg.nperm+1);
+            p = (sum(stat>=refdist,1)+1)/(arg.nperm+1);
     end
 
 end
