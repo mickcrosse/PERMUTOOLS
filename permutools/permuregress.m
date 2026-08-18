@@ -18,17 +18,19 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %   using the max correction method.
 %
 %   [B,P,CI] = PERMUREGRESS(...) returns the 100*(1-ALPHA)% confidence
-%   intervals (CI) for the regression coefficients. CI is a 2-by-V-by-P
-%   array. CIs are adjusted for multiple comparisons using max correction.
+%   interval (CI) for each coefficient. CIs are also adjusted for multiple
+%   comparisons using the max correction method.
 %
 %   [B,P,CI,STATS] = PERMUREGRESS(...) returns a structure with the
 %   following fields:
-%       'method'    -- the statistical method used
 %       'df'        -- the degrees of freedom (error)
 %       'se'        -- the standard errors of the coefficients
 %       'tstat'     -- the observed t-statistics
-%       'r2'        -- the R-squared (coefficient of determination)
+%       'res'       -- the residual values
+%       'r2'        -- the R-square statistic (coefficient of determination)
 %       'fstat'     -- the F-statistic for the overall model
+%       'mse'       -- the estimated error variance
+%       'method'    -- the statistical method used
 %
 %   [B,P,CI,STATS,DIST] = PERMUREGRESS(...) returns the permuted sampling
 %   distributions of the t-statistics. DIST is an NPERM-by-V-by-P array.
@@ -57,7 +59,7 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %       'seed'      An integer scalar specifying the seed value used to
 %                   initialise the permutation generator (default=shuffle).
 %
-%   See also FITLM REGRESS PERMUCORR PERMUANOVA1.
+%   See also REGRESS FITLM PERMUCORR PERMUANOVA1.
 %
 %   PERMUTOOLS https://github.com/mickcrosse/PERMUTOOLS
 
@@ -88,6 +90,11 @@ switch arg.type
         % use raw data
     case 'rank'
         y = tiedrank(y);
+        for j = 1:size(x,2)
+            if length(unique(x(:,j))) > 2
+                x(:,j) = tiedrank(x(:,j));
+            end
+        end
     otherwise
         error('The TYPE parameter value must be FREEDMANLANE, MANLY, or RANK.')
 end
@@ -100,13 +107,14 @@ end
 % Get data dimensions
 [nobs,npred] = size(x);
 nvar = size(y,2);
-df = nobs-npred;
 
 % Compute projection matrices
-H = pinv(x'*x)*x';
-D = diag(pinv(x'*x));
+invxtx = pinv(x'*x);
+H = invxtx*x';
+D = diag(invxtx);
 
 % Compute observed statistics
+df = nobs-npred;
 b = H*y;
 yhat = x*b;
 res = y-yhat;
@@ -116,8 +124,10 @@ tstat = b./se;
 
 if nargout > 1
 
-    % Initialize random number generator
     rng(arg.seed);
+
+    % Generate random permutations
+    [~,idx] = sort(rand(nobs,arg.nperm),1);
 
     % Preallocate output arrays
     p = zeros(npred,nvar);
@@ -128,12 +138,9 @@ if nargout > 1
         dist = zeros(arg.nperm,nvar,npred);
     end
 
-    % Precompute full model identity projection
-    IdH = eye(nobs)-x*H;
-
     % Iterate across predictors
     for j = 1:npred
-        
+
         % Define permutation target
         switch arg.type
             case {'freedmanlane','rank'}
@@ -142,8 +149,7 @@ if nargout > 1
                 if isempty(xred)
                     resred = y;
                 else
-                    Hred = pinv(xred'*xred)*xred';
-                    betared = Hred*y;
+                    betared = xred\y;
                     resred = y-xred*betared;
                 end
             case 'manly'
@@ -151,13 +157,12 @@ if nargout > 1
         end
 
         % Estimate sampling distribution
-        Hj = H(j,:);
         distj = zeros(arg.nperm,nvar);
         for i = 1:arg.nperm
-            randidx = randperm(nobs);
-            resperm = resred(randidx,:);
-            bstarj = Hj*resperm;
-            resstar = IdH*resperm;
+            resperm = resred(idx(:,i),:);
+            bp = H*resperm;
+            bstarj = bp(j,:);
+            resstar = resperm-x*bp;
             msestar = sum(resstar.^2,1)./df;
             sestar = sqrt(D(j).*msestar);
             distj(i,:) = bstarj./sestar;
@@ -166,7 +171,7 @@ if nargout > 1
         % Apply max-correction if specified
         if arg.correct
             switch arg.tail
-                case {'both','two'}
+                case 'both'
                     distj = max(abs(distj),[],2);
                 case 'right'
                     distj = max(distj,[],2);
@@ -175,14 +180,14 @@ if nargout > 1
             end
         else
             switch arg.tail
-                case {'both','two'}
+                case 'both'
                     distj = abs(distj);
             end
         end
 
         % Compute p-values
         switch arg.tail
-            case {'both','two'}
+            case 'both'
                 p(j,:) = (sum(abs(tstat(j,:))<=distj,1)+1)./(arg.nperm+1);
             case 'right'
                 p(j,:) = (sum(tstat(j,:)<=distj,1)+1)./(arg.nperm+1);
@@ -193,19 +198,19 @@ if nargout > 1
         % Compute confidence intervals
         if nargout > 2
             switch arg.tail
-                case {'both','two'}
-                    crit=prctile(distj,100*(1-arg.alpha),1);
+                case 'both'
+                    crit = prctile(distj,100*(1-arg.alpha),1);
                     ci(:,:,j) = [b(j,:)-crit.*se(j,:);b(j,:)+crit.*se(j,:)];
                 case 'right'
-                    crit=prctile(distj,100*(1-arg.alpha),1);
+                    crit = prctile(distj,100*(1-arg.alpha),1);
                     ci(:,:,j) = [b(j,:)-crit.*se(j,:);Inf(1,nvar)];
                 case 'left'
-                    crit=prctile(distj,100*arg.alpha,1);
+                    crit = prctile(distj,100*arg.alpha,1);
                     ci(:,:,j) = [-Inf(1,nvar);b(j,:)-crit.*se(j,:)];
             end
         end
 
-        % Store null distribution
+        % Store sampling distribution
         if nargout > 4
             dist(:,:,j) = distj;
         end
@@ -214,16 +219,19 @@ if nargout > 1
 
 end
 
-% Store statistics in a structure
+% Compute & format descriptive statistics
 if nargout > 3
+    dfmodel = npred-any(all(x==1,1));
     sst = sum((y-mean(y,1)).^2,1);
     sse = sum(res.^2,1);
     r2 = 1-(sse./sst);
-    fstat = (r2./(npred-1))./((1-r2)./df);
-    stats.method = arg.type;
+    fstat = (r2./dfmodel)./((1-r2)./df);
     stats.df = df;
     stats.se = se;
     stats.tstat = tstat;
+    stats.res = res;
     stats.r2 = r2;
     stats.fstat = fstat;
+    stats.mse = mse;
+    stats.method = arg.type;
 end
