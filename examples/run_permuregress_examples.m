@@ -69,6 +69,10 @@ for t = 1:numel(type)
         b1 = zeros(1,nvar);
         p1 = zeros(1,nvar);
         ci1 = zeros(2,nvar);
+        res = zeros(1,nvar);
+        r2 = zeros(1,nvar);
+        fstat = zeros(1,nvar);
+        mse = zeros(1,nvar);
         switch tail{i}
             case 'both'
                 cialpha = alpha;
@@ -76,24 +80,28 @@ for t = 1:numel(type)
                 cialpha = alpha*2;
         end
         for v = 1:nvar
-            [b,bint,~,~,stats] = regress(yparam(:,v),xparam,cialpha);
+            [b,bint,r,~,stats1] = regress(yparam(:,v),xparam,cialpha);
             b1(v) = b(2);
+            p1(v) = stats1(3);
+            res(v) = r(2);
+            r2(v) = stats1(1);
+            fstat(v) = stats1(2);
+            mse(v) = stats1(4);
             switch tail{i}
                 case 'both'
-                    p1(v) = stats(3);
                     ci1(:,v) = bint(2,:);
                 case 'right'
-                    if b(2) > 0
-                        p1(v) = stats(3)/2;
+                    if b1(v) > 0
+                        p1(v) = p1(v)/2;
                     else
-                        p1(v) = 1-(stats(3)/2);
+                        p1(v) = 1-(p1(v)/2);
                     end
                     ci1(:,v) = [bint(2,1);Inf];
                 case 'left'
-                    if b(2) < 0
-                        p1(v) = stats(3)/2;
+                    if b1(v) < 0
+                        p1(v) = p1(v)/2;
                     else
-                        p1(v) = 1-(stats(3)/2);
+                        p1(v) = 1-(p1(v)/2);
                     end
                     ci1(:,v) = [-Inf;bint(2,2)];
             end
@@ -102,14 +110,14 @@ for t = 1:numel(type)
 
         % Permutation test (uncorrected)
         tic
-        [b2,p2,ci2] = permuregress(x,y,'tail',tail{i},...
+        [b2,p2,ci2,stats2] = permuregress(x,y,'tail',tail{i},...
             'type',type{t},'correct',0);
         b2 = b2(2,:); p2 = p2(2,:); ci2 = squeeze(ci2(:,:,2));
         toc2(i) = toc;
 
         % Permutation test (max-corrected)
         tic
-        [b3,p3,ci3] = permuregress(x,y,'tail',tail{i},'type',type{t},...
+        [b3,p3,ci3,stats3] = permuregress(x,y,'tail',tail{i},'type',type{t},...
             'correct',1);
         b3 = b3(2,:); p3 = p3(2,:); ci3 = squeeze(ci3(:,:,2));
         toc3(i) = toc;
@@ -169,6 +177,34 @@ for t = 1:numel(type)
         end
 
     end
+
+    % Plot descriptive statistics
+    figure('Name',['Paired ',type{t},': descriptive statistics'],...
+        'NumberTitle','off');
+    set(gcf,'color','w')
+    subplot(2,2,1), hold on
+    plot(xaxis,r2,xaxis,stats3.r2,'--','LineWidth',2)
+    xlim([0,nvar+1]), ylim([0,1]), box on, grid on
+    title('R^2 Statistic')
+    ylabel('\itR^2')
+    legend('param.','perm.','Location','best')
+    subplot(2,2,2), hold on
+    plot(xaxis,fstat,xaxis,stats3.fstat,'--','LineWidth',2)
+    xlim([0,nvar+1]), box on, grid on
+    title('F Statistic')
+    ylabel('\itF')
+    subplot(2,2,3), hold on
+    plot(xaxis,res,xaxis,stats3.res(2,:),'--','LineWidth',2)
+    xlim([0,nvar+1]), box on, grid on
+    title('Residuals')
+    xlabel('variable')
+    ylabel('\ite')
+    subplot(2,2,4), hold on
+    plot(xaxis,mse,xaxis,stats3.mse,'--','LineWidth',2)
+    xlim([0,nvar+1]), box on, grid on
+    title('Error Variance')
+    xlabel('variable')
+    ylabel('MSE')
 
     fprintf('Parametric (uncorrect): %.1f ms\n',mean(toc1)*1e3)
     fprintf('Permutation (uncorrect): %.1f ms\n',mean(toc2)*1e3)
