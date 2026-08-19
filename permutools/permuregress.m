@@ -135,7 +135,11 @@ if nargout > 1
         ci = zeros(2,nvar,npred);
     end
     if nargout > 4
-        dist = zeros(arg.nperm,nvar,npred);
+        if arg.correct
+            dist = zeros(arg.nperm,npred);
+        else
+            dist = zeros(arg.nperm,nvar,npred);
+        end
     end
 
     % Iterate across predictors
@@ -172,47 +176,49 @@ if nargout > 1
         if arg.correct
             switch arg.tail
                 case 'both'
-                    distj = max(abs(distj),[],2);
+                    refdist = max(abs(distj),[],2);
                 case 'right'
-                    distj = max(distj,[],2);
+                    refdist = max(distj,[],2);
                 case 'left'
-                    distj = min(distj,[],2);
+                    refdist = min(distj,[],2);
             end
         else
-            switch arg.tail
-                case 'both'
-                    distj = abs(distj);
-            end
+            refdist = distj;
         end
 
         % Compute p-values
         switch arg.tail
             case 'both'
-                p(j,:) = (sum(abs(tstat(j,:))<=distj,1)+1)./(arg.nperm+1);
+                p(j,:) = (sum(abs(tstat(j,:))<=abs(refdist),1)+1)./...
+                    (arg.nperm+1);
             case 'right'
-                p(j,:) = (sum(tstat(j,:)<=distj,1)+1)./(arg.nperm+1);
+                p(j,:) = (sum(tstat(j,:)<=refdist,1)+1)./(arg.nperm+1);
             case 'left'
-                p(j,:) = (sum(tstat(j,:)>=distj,1)+1)./(arg.nperm+1);
+                p(j,:) = (sum(tstat(j,:)>=refdist,1)+1)./(arg.nperm+1);
         end
 
         % Compute confidence intervals
         if nargout > 2
             switch arg.tail
                 case 'both'
-                    crit = prctile(distj,100*(1-arg.alpha),1);
+                    crit = prctile(abs(refdist),100*(1-arg.alpha),1);
                     ci(:,:,j) = [b(j,:)-crit.*se(j,:);b(j,:)+crit.*se(j,:)];
                 case 'right'
-                    crit = prctile(distj,100*(1-arg.alpha),1);
+                    crit = prctile(refdist,100*(1-arg.alpha),1);
                     ci(:,:,j) = [b(j,:)-crit.*se(j,:);Inf(1,nvar)];
                 case 'left'
-                    crit = prctile(distj,100*arg.alpha,1);
+                    crit = prctile(refdist,100*arg.alpha,1);
                     ci(:,:,j) = [-Inf(1,nvar);b(j,:)-crit.*se(j,:)];
             end
         end
 
         % Store sampling distribution
         if nargout > 4
-            dist(:,:,j) = distj;
+            if arg.correct
+                dist(:,j) = refdist;
+            else
+                dist(:,:,j) = distj;
+            end
         end
 
     end
