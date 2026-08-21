@@ -1,4 +1,4 @@
-function [stat,p,ci,stats,dist] = permuztesum(st(x,m,sigma,varargin)
+function [stat,p,ci,stats,dist] = permuztest(x,m,sigma,varargin)
 %PERMUZTEST  Permutation-based one-sample Z-test.
 %   STAT = PERMUZTEST(X,M,SIGMA) performs a one-sample permutation test
 %   based on the Z-statistic of the null hypothesis that the data in X come
@@ -124,7 +124,7 @@ if nargout > 1
         case 'omitnan'
             xdmu(isnan(xdmu)) = 0;
     end
-    sd = std(x,1,nanflag);
+    sd = std(x,0,1,nanflag);
     xdmu = xdmu.*(sigma./sd);
     sump = signx*xdmu;
     sen = se.*nobs;
