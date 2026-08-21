@@ -1,13 +1,14 @@
 function [stat,p,ci,stats,dist] = permucorr(x,varargin)
-%PERMUCORR  Permutation-based Pearson, Spearman's rank, and rankit correlation coefficient.
+%PERMUCORR  Permutation-based linear or rank correlation coefficient.
 %   STAT = PERMUCORR(X) returns a matrix containing the pairwise linear
-%   correlation coefficients between each pair of columns in X based on
-%   Pearson's r.
+%   correlation coefficients between every pair of columns in X based on
+%   Pearson's r. X must have at least two columns.
 %
-%   For nonlinear correlations, the raw data may be transformed to rank
-%   orders in order to compute a Spearman's rank correlation by setting
-%   the 'type' parameter to 'spearman' or 'rank', or a rankit correlation
-%   by setting the 'type' parameter to 'rankit'.
+%   For non-normal, ordinal, or monotonic data, the raw data may be
+%   transformed to rank orders in order to compute a Spearman's or Kendall
+%   rank correlation by setting the 'type' parameter to 'spearman' or
+%   'kendall' respectively, or a rankit correlation by setting the 'type'
+%   parameter to 'rankit'.
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %
@@ -44,10 +45,14 @@ function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %       Parameter   Value
 %       'type'      A string specifying the type of correlation coefficient
 %                   to compute:
-%                       'pearson'   Pearson correlation coefficient
-%                                   (default)
+%                       'pearson'   Pearson linear correlation coefficient
+%                                   (default) for normal continuous data
 %                       'spearman'  Spearman's rank correlation coefficient
-%                       'rankit'    rankit correlation coefficient
+%                                   for skewed continuous or ordinal data
+%                       'kendall'   Kendall rank correlation coefficient
+%                                   for small sample sizes or numerous ties
+%                       'rankit'    Rankit correlation coefficient for
+%                                   non-normal data mapped to normal scores
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
@@ -157,22 +162,38 @@ end
 
 % Transform raw data to rank orders if specified
 switch arg.type
-    case 'pearson'
-    case {'spearman','rank'}
+    case {'pearson','kendall'}
+    case 'spearman'
         x = tiedrank(x);
         y = tiedrank(y);
     case 'rankit'
         x = norminv((tiedrank(x)-0.5)./nobs);
         y = norminv((tiedrank(y)-0.5)./nobs);
     otherwise
-        error('The TYPE parameter value must be PEARSON, SPEARMAN, or RANKIT.')
+        error('The TYPE parameter value must be PEARSON, SPEARMAN, KENDALL, or RANKIT.')
 end
 
 % Compute observed statistics
-sdxy = sqrt((sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobs)...
-    .*(sum(y.^2,1,nanflag)-(sum(y,1,nanflag).^2)./nobs));
-mu = sum(x,1,nanflag).*sum(y,1,nanflag)./nobs;
-stat = (sum(x.*y,1,nanflag)-mu)./sdxy;
+switch arg.type
+    case 'kendall'
+        [r,c] = find(tril(ones(maxnobs),-1));
+        Sx = sign(x(r,:)-x(c,:));
+        Sy = sign(y(r,:)-y(c,:));
+        validxy = ~isnan(Sx) & ~isnan(Sy);
+        M = sum(validxy,1);
+        tiesx = sum(Sx==0 & validxy,1);
+        tiesy = sum(Sy==0 & validxy,1);
+        denom = sqrt((M-tiesx).*(M-tiesy));
+        Sx(~validxy) = 0;
+        Syvalid = Sy;
+        Syvalid(~validxy) = 0;
+        stat = sum(Sx.*Syvalid,1)./denom;
+    otherwise
+        sdxy = sqrt((sum(x.^2,1,nanflag)-(sum(x,1,nanflag).^2)./nobs)...
+            .*(sum(y.^2,1,nanflag)-(sum(y,1,nanflag).^2)./nobs));
+        mu = sum(x,1,nanflag).*sum(y,1,nanflag)./nobs;
+        stat = (sum(x.*y,1,nanflag)-mu)./sdxy;
+end
 
 if nargout > 1
 
@@ -192,30 +213,59 @@ if nargout > 1
 
     % Estimate sampling distribution
     dist = zeros(arg.nperm,nvar);
-    switch nanflag
-        case 'omitnan'
-            % Exact pair-wise calculation for missing data
-            for i = 1:arg.nperm
-                xp = x(idx(:,i),:);
-                valid = ~isnan(xp) & valid_y;
-                xp(~valid) = 0;
-                yp = y;
-                yp(~valid) = 0;
-                nobsp = sum(valid,1);
-                sumx = sum(xp,1);
-                sumy = sum(yp,1);
-                sdxyp = sqrt((sum(xp.^2,1)-(sumx.^2)./nobsp).*...
-                    (sum(yp.^2,1)-(sumy.^2)./nobsp));
-                mup = sumx.*sumy./nobsp;
-                dist(i,:) = (sum(xp.*yp,1)-mup)./sdxyp;
+    switch arg.type
+        case 'kendall'
+            switch nanflag
+                case 'omitnan'
+                    % Exact pair-wise calculation for missing data
+                    for i = 1:arg.nperm
+                        xp = x(idx(:,i),:);
+                        Sxp = sign(xp(r,:)-xp(c,:));
+                        validp = ~isnan(Sxp) & ~isnan(Sy);
+                        Mp = sum(validp,1);
+                        tiesxp = sum(Sxp==0 & validp,1);
+                        tiesyp = sum(Sy==0 & validp,1);
+                        denomp = sqrt((Mp-tiesxp).*(Mp-tiesyp));
+                        Sxp(~validp) = 0;
+                        Syp = Sy;
+                        Syp(~validp) = 0;
+                        dist(i,:) = sum(Sxp.*Syp,1)./denomp;
+                    end
+                case 'includenan'
+                    % Fast vectorized calculation for complete data
+                    for i = 1:arg.nperm
+                        xp = x(idx(:,i),:);
+                        Sxp = sign(xp(r,:)-xp(c,:));
+                        dist(i,:) = sum(Sxp.*Sy,1)./denom;
+                    end
             end
-        case 'includenan'
-            % Fast vectorized calculation for complete data
-            for j = 1:nvar
-                xp = x(:,j);
-                yp = y(:,j);
-                sumxy = yp'*xp(idx);
-                dist(:,j) = (sumxy'-mu(j))./sdxy(j);
+        otherwise
+            switch nanflag
+                case 'omitnan'
+                    % Exact pair-wise calculation for missing data
+                    validy = ~isnan(y);
+                    for i = 1:arg.nperm
+                        xp = x(idx(:,i),:);
+                        valid = ~isnan(xp) & validy;
+                        xp(~valid) = 0;
+                        yp = y;
+                        yp(~valid) = 0;
+                        nobsp = sum(valid,1);
+                        sumx = sum(xp,1);
+                        sumy = sum(yp,1);
+                        sdxyp = sqrt((sum(xp.^2,1)-(sumx.^2)./nobsp).*...
+                            (sum(yp.^2,1)-(sumy.^2)./nobsp));
+                        mup = sumx.*sumy./nobsp;
+                        dist(i,:) = (sum(xp.*yp,1)-mup)./sdxyp;
+                    end
+                case 'includenan'
+                    % Fast vectorized calculation for complete data
+                    for j = 1:nvar
+                        xp = x(:,j);
+                        yp = y(:,j);
+                        sumxy = yp'*xp(idx);
+                        dist(:,j) = (sumxy'-mu(j))./sdxy(j);
+                    end
             end
     end
 
