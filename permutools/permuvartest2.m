@@ -9,10 +9,10 @@ function [stat,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %   is empty, two-tailed permutation tests between every pair of columns in
 %   X are performed, and a matrix of results is returned.
 %
-%   For continuous heavy-tailed data, the raw observations may be
-%   transformed to squared ranks in order to compute a permutation-based
-%   Conover squared ranks test by setting the 'type' parameter to
-%   'squarerank' or 'rank'.
+%   For continuous heavy-tailed data, raw observations may be transformed
+%   to squared ranks in order to compute a permutation-based Conover
+%   squared ranks test by setting the 'type' parameter to 'squarerank' (or
+%   'rank').
 %
 %   PERMUVARTEST2 treats NaNs as missing values, and ignores them.
 %

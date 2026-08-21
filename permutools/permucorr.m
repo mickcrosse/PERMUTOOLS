@@ -4,12 +4,11 @@ function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %   correlation coefficients between every pair of columns in X based on
 %   Pearson's r. X must have at least two columns.
 %
-%   For ordinal, monotonic or heavy-tailed data, the raw observations may
-%   be transformed to rank orders to compute a permutation-based Spearman's
-%   or Kendall rank correlation by setting the 'type' parameter to
-%   'spearman' or 'kendall', respectively, or mapped to normal scores to
-%   compute a permutation-based rankit correlation by setting 'type' to
-%   'rankit'.
+%   For ordinal, monotonic or heavy-tailed data, raw observations may be
+%   transformed to rank orders to compute a permutation-based Spearman's or
+%   Kendall rank correlation by setting the 'type' parameter to 'spearman'
+%   or 'kendall', respectively, or mapped to normal scores to compute a
+%   permutation-based rankit correlation by setting 'type' to 'rankit'.
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %

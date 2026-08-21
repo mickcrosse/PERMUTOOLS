@@ -14,10 +14,10 @@ function [stat,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   sensitive to differences in variance (but also less sensitive to
 %   differences in means).
 %
-%   For severe outliers or ordinal data, the raw observations may be
+%   For severe outliers or ordinal data, raw observations may be
 %   transformed to rank orders to compute a permutation-based Wilcoxon
 %   rank-sum / Mann-Whitney U test by setting the 'type' parameter to
-%   'ranksum' or 'rank'.
+%   'ranksum' (or 'rank').
 %
 %   PERMUTTEST2 treats NaNs as missing values, and ignores them.
 %
