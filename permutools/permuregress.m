@@ -8,7 +8,13 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %
 %   PERMUREGRESS leverages the Freedman-Lane algorithm by default to
 %   isolate the unique variance of each predictor, properly controlling
-%   for collinearity among covariates during permutation.
+%   for collinearity among covariates during permutation. Alternatively,
+%   the Manly method may be selected for simple linear regression or when
+%   evaluating overall model fit by setting the 'type' parameter to
+%   'manly'.
+%
+%   For severe outliers or heavy-tailed data, the raw data may be
+%   transformed to rank orders by setting the 'type' parameter to 'rank'.
 %
 %   [B,P] = PERMUREGRESS(...) returns the probabilities (i.e. p-values) of
 %   observing the given result by chance if the null hypothesis is true. As

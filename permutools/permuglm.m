@@ -6,9 +6,15 @@ function [b,p,ci,stats,dist] = permuglm(x,y,varargin)
 %   N-by-V matrix of dependent variables, and B is a P-by-V matrix of
 %   coefficients.
 %
-%   PERMUGLM leverages the Freedman-Lane algorithm using a one-step
-%   Newton-Raphson approximation to isolate the unique variance of each
-%   predictor, properly controlling for collinearity among covariates.
+%   PERMUGLM leverages the Freedman-Lane algorithm by default using a one-
+%   step Newton-Raphson approximation to isolate the unique variance of
+%   each predictor, properly controlling for collinearity among covariates.
+%   Alternatively, the Manly method may be selected for simple GLMs,
+%   evaluating overall model fit, or fitting Binomial or Poisson response
+%   distributions by setting the 'type' parameter to 'manly'.
+%
+%   For severe outliers or heavy-tailed data, the raw data may be
+%   transformed to rank orders by setting the 'type' parameter to 'rank'.
 %
 %   [B,P] = PERMUGLM(...) returns the probabilities (i.e. p-values) of
 %   observing the given result by chance if the null hypothesis is true. As
@@ -49,7 +55,7 @@ function [b,p,ci,stats,dist] = permuglm(x,y,varargin)
 %                           'freedmanlane'  permutes reduced residuals for
 %                                           GLMs with covariates (default)
 %                           'manly'         permutes raw response data for
-%                                           simple or binomial/poisson GLMs
+%                                           simple or Binomial/Poisson GLMs
 %                           'rank'          permutes rank-transformed data
 %                                           for outliers or heavy tails
 %       'alpha'         A scalar between 0 and 1 specifying the
