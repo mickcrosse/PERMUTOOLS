@@ -46,7 +46,7 @@ function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %       'type'      A string specifying the type of correlation coefficient
 %                   to compute:
 %                       'pearson'   Pearson linear correlation coefficient
-%                                   (default) for normal continuous data
+%                                   for normal continuous data (default)
 %                       'spearman'  Spearman's rank correlation coefficient
 %                                   for skewed continuous or ordinal data
 %                       'kendall'   Kendall rank correlation coefficient
