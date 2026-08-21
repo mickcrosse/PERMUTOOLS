@@ -41,9 +41,12 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %
 %       Parameter   Value
 %       'type'      A string specifying the type of permutation to use:
-%                       'freedmanlane'  permutes reduced residuals (default)
-%                       'manly'         permutes raw data unrestricted
-%                       'rank'          rank-transformed Freedman-Lane
+%                       'freedmanlane'  permutes reduced model residuals
+%                                       to control for covariates (default)
+%                       'manly'         permutes raw response data for
+%                                       simple regression or overall fit
+%                       'rank'          permutes rank-transformed data for
+%                                       severe outliers or non-normality
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'tail'      A string specifying the alternative hypothesis:
