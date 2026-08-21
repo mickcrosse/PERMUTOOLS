@@ -8,9 +8,10 @@ function [stat,p,ci,stats,dist] = permuttest(x,m,varargin)
 %   set to 'pairwise', two-tailed permutation tests between every pair of
 %   columns in X are performed, and a matrix of results is returned.
 %
-%   For severe outliers or ordinal data, the raw data may be transformed to
-%   signed ranks in order to compute a permutation-based Wilcoxon signed-
-%   rank test by setting the 'type' parameter to 'signrank' or 'rank'.
+%   For severe outliers or ordinal data, the raw observations may be
+%   transformed to signed ranks to compute a permutation-based Wilcoxon
+%   signed-rank test by setting the 'type' parameter to 'signrank'  or 
+%   'rank'.
 %
 %   PERMUTTEST treats NaNs as missing values, and ignores them.
 %

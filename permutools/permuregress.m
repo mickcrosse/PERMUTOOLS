@@ -13,7 +13,7 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %   evaluating overall model fit by setting the 'type' parameter to
 %   'manly'.
 %
-%   For severe outliers or heavy-tailed data, the raw data may be
+%   For severe outliers or heavy-tailed data, the raw observations may be
 %   transformed to rank orders by setting the 'type' parameter to 'rank'.
 %
 %   [B,P] = PERMUREGRESS(...) returns the probabilities (i.e. p-values) of

@@ -13,7 +13,7 @@ function [b,p,ci,stats,dist] = permuglm(x,y,varargin)
 %   evaluating overall model fit, or fitting Binomial or Poisson response
 %   distributions by setting the 'type' parameter to 'manly'.
 %
-%   For severe outliers or heavy-tailed data, the raw data may be
+%   For severe outliers or heavy-tailed data, the raw observations may be
 %   transformed to rank orders by setting the 'type' parameter to 'rank'.
 %
 %   [B,P] = PERMUGLM(...) returns the probabilities (i.e. p-values) of

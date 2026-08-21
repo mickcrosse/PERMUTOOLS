@@ -4,11 +4,12 @@ function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %   correlation coefficients between every pair of columns in X based on
 %   Pearson's r. X must have at least two columns.
 %
-%   For non-normal, ordinal, or monotonic data, the raw data may be
-%   transformed to rank orders in order to compute a Spearman's or Kendall
-%   rank correlation by setting the 'type' parameter to 'spearman' or
-%   'kendall' respectively, or a rankit correlation by setting the 'type'
-%   parameter to 'rankit'.
+%   For ordinal, monotonic or heavy-tailed data, the raw observations may
+%   be transformed to rank orders to compute a permutation-based Spearman's
+%   or Kendall rank correlation by setting the 'type' parameter to
+%   'spearman' or 'kendall', respectively, or mapped to normal scores to
+%   compute a permutation-based rankit correlation by setting 'type' to
+%   'rankit'.
 %
 %   PERMUCORR treats NaNs as missing values, and ignores them.
 %
@@ -43,16 +44,15 @@ function [stat,p,ci,stats,dist] = permucorr(x,varargin)
 %   following:
 %
 %       Parameter   Value
-%       'type'      A string specifying the type of correlation coefficient
-%                   to compute:
+%       'type'      A string specifying the correlation coefficient type:
 %                       'pearson'   Pearson linear correlation coefficient
-%                                   for normal continuous data (default)
+%                                   for continuous data (default)
 %                       'spearman'  Spearman's rank correlation coefficient
-%                                   for skewed continuous or ordinal data
+%                                   for monotonic, ordinal, or heavy-tails
 %                       'kendall'   Kendall rank correlation coefficient
-%                                   for small sample sizes or numerous ties
-%                       'rankit'    Rankit correlation coefficient for
-%                                   non-normal data mapped to normal scores
+%                                   for small sample sizes or frequent ties
+%                       'rankit'    Rankit correlation coefficient to map
+%                                   ranks to normal scores for heavy tails
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
