@@ -38,8 +38,8 @@ nobs = 30; nvar = 20;
 xaxis = 1:nvar; alpha = 0.05;
 tail = {'both','right','left'};
 label = {'two','right','left'};
-type = {'pearson','spearman'};
-symbol = {'{\itr}','{\itρ}'};
+type = {'pearson','spearman','kendall'};
+symbol = {'{\itr}','{\itρ}','{\itτ}'};
 
 % Generate random data
 rng(42);
@@ -89,6 +89,17 @@ for t = 1:numel(type)
                 case 'spearman'
                     [~,~,clwr,cupr] = corrcoef(tiedrank(x(:,j)),...
                         tiedrank(y(:,j)),'Alpha',cialpha);
+                case 'kendall'
+                    valid = ~isnan(x(:,j)) & ~isnan(y(:,j));
+                    nj = sum(valid);
+                    tau = r1(j);
+                    tauz = atanh(tau);
+                    sez = sqrt(0.437/(nj-4));
+                    crit = norminv(1-alpha/2);
+                    lwr = tanh(tauz-crit*sez);
+                    upr = tanh(tauz+crit*sez);
+                    clwr = [1,lwr;lwr,1];
+                    cupr = [1,upr;upr,1];
             end
             switch tail{i}
                 case 'both'
