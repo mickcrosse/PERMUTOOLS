@@ -48,10 +48,11 @@ function [stat,p,ci,stats,dist] = permuvartest2(x,y,varargin)
 %   following:
 %
 %       Parameter   Value
-%       'type'      A string specifying the type of permutation test to
-%                   perform:
-%                       'ftest'         two-sample F-test (default)
-%                       'squarerank'    Conover squared ranks test
+%       'type'      A string specifying the type of test to perform:
+%                       'ftest'         two-sample F-test of variance for
+%                                       continuous unpaired data (default)
+%                       'squarerank'    Conover squared ranks test of scale
+%                                       for continuous heavy-tailed data
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass

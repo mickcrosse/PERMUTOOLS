@@ -39,15 +39,21 @@ function [b,p,ci,stats,dist] = permuglm(x,y,varargin)
 %
 %       Parameter       Value
 %       'distribution'  A string specifying the distribution family:
-%                           'normal'    identity link (default)
-%                           'binomial'  logit link (logistic regression)
-%                           'poisson'   log link (count regression)
+%                           'normal'        identity link for continuous
+%                                           data (default)
+%                           'binomial'      logit link for proportion or
+%                                           binary data (logistic regress.)
+%                           'poisson'       log link for non-negative count
+%                                           data (Poisson regression)
 %       'type'          A string specifying the type of permutation to use:
-%                           'freedmanlane'  permutes working residuals (default)
-%                           'manly'         permutes raw data unrestricted
-%                           'rank'          forces normal distribution & ranks Y
-%       'alpha'         A scalar between 0 and 1 specifying the significance
-%                       level as 100*ALPHA% (default=0.05).
+%                           'freedmanlane'  permutes reduced residuals for
+%                                           GLMs with covariates (default)
+%                           'manly'         permutes raw response data for
+%                                           simple or binomial/poisson GLMs
+%                           'rank'          permutes rank-transformed data
+%                                           for outliers or heavy tails
+%       'alpha'         A scalar between 0 and 1 specifying the
+%                       significance level as 100*ALPHA% (default=0.05).
 %       'tail'          A string specifying the alternative hypothesis:
 %                           'both'      coefficient is not 0 (default)
 %                           'right'     coefficient is greater than 0
@@ -312,7 +318,7 @@ for iter = 1:50
     else
         W = mu;
     end
-    W(W < 1e-5) = 1e-5; % regularize
+    W(W < 1e-5) = 1e-5;
     z = eta+(y-mu)./W;
     XW = X.*W;
     bnew = pinv(XW'*X)*(XW'*z);

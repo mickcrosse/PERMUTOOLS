@@ -63,10 +63,11 @@ function [stat,p,ci,stats,dist] = permuttest(x,m,varargin)
 %   following:
 %
 %       Parameter   Value
-%       'type'      A string specifying the type of permutation test to
-%                   perform:
-%                       'ttest'     one/paired-sample t-test (default)
-%                       'signrank'  Wilcoxon signed-rank test
+%       'type'      A string specifying the type of test to perform:
+%                       'ttest'     one-sample or paired-sample t-test for
+%                                   continuous paired data (default)
+%                       'signrank'  Wilcoxon signed-rank test for severe
+%                                   outliers or ordinal paired data
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass

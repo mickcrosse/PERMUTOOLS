@@ -46,7 +46,7 @@ function [b,p,ci,stats,dist] = permuregress(x,y,varargin)
 %                       'manly'         permutes raw response data for
 %                                       simple regression or overall fit
 %                       'rank'          permutes rank-transformed data for
-%                                       severe outliers or non-normality
+%                                       severe outliers or heavy tails
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'tail'      A string specifying the alternative hypothesis:

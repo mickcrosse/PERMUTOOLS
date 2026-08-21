@@ -61,10 +61,11 @@ function [stat,p,ci,stats,dist] = permuttest2(x,y,varargin)
 %   following:
 %
 %       Parameter   Value
-%       'type'      A string specifying the type of permutation test to
-%                   perform:
-%                       'ttest2'    two-sample t-test (default)
+%       'type'      A string specifying the type of test to perform:
+%                       'ttest2'    two-sample t-test for continuous
+%                                   unpaired data (default)
 %                       'ranksum'   Wilcoxon rank-sum / Mann-Whitney U test
+%                                   for outliers or ordinal unpaired data
 %       'alpha'     A scalar between 0 and 1 specifying the significance
 %                   level as 100*ALPHA% (default=0.05).
 %       'dim'       A scalar specifying the dimension to work along: pass
